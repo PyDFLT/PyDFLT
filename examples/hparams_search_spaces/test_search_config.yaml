@@ -1,0 +1,11 @@
+decision_maker:
+  learning_rate:
+    type: float
+    low: 1.0e-5
+    high: 1.0e-3
+    log: true
+  batch_size:
+    type: int
+    low: 1
+    high: 512
+    log: true

@@ -1,0 +1,35 @@
+model:
+  name: grbpy_knapsack_pyepo
+
+data:
+  name: 'knapsack_pyepo'
+  noise_width: 1
+
+runner:
+  num_epochs: 10
+  seed: 5
+  use_wandb: false
+  project_name: knapsack
+  experiment_name: experiment
+  main_metric: abs_regret
+  experiments_folder: 'results/'
+  save_best: true
+  store_min_and_max: true
+  val_metrics: ['objective', 'abs_regret', 'rel_regret', 'sym_rel_regret']
+
+problem:
+  train_ratio: 0.5
+  val_ratio: 0.3
+  seed: 5
+  compute_optimal_objectives: true
+  compute_optimal_decisions: true
+  time_respecting_split: true
+
+decision_maker:
+  name: pfl
+  seed: 5
+  batch_size: 32
+  learning_rate: 0.005
+  predictor_str: MLP
+  predictor_kwargs:
+    n_layers: 0
