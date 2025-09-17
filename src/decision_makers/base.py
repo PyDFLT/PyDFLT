@@ -457,6 +457,31 @@ class DecisionMaker:
         # Concatenate all tensors into a single tensor
         return torch.cat(predictions_list, dim=0)
 
+    def dict_to_decisions(self, decisions_batch: dict[str, torch.Tensor], use_optimal: bool = False) -> torch.Tensor:
+        """
+        Reverts a dictionary of named parameter predictions back into a single flat tensor.
+        This is the inverse operation of `predictions_to_dict` (for the non-scenario case).
+
+        Args:
+            decisions_batch (dict[str, torch.Tensor]): A dictionary mapping decision variable names
+                to tensors. Tensors are expected to be of shape
+                (batch_size, *dec_var_shape) or (batch_size, *dec_var_shape, num_scenarios).
+            use_optimal (bool): Whether to use the optimal decisions
+
+        Returns:
+            torch.Tensor: A 2D tensor of shape (batch_size, num_total_predicted_values_flat)
+                or 3D if scenarios are present (batch_size, num_total_predicted_values_flat_per_scenario, num_scenarios).
+                The order of concatenation follows `self.decision_model.param_to_predict_shapes`.
+        """
+        decisions_list = []
+        for key, shape in self.decision_model.var_shapes.items():
+            if use_optimal:
+                key = key + "_optimal"
+            decisions_list.append(decisions_batch[key].reshape(-1, int(np.prod(shape))))
+
+        # Concatenate all tensors into a single tensor
+        return torch.cat(decisions_list, dim=0)
+
     def dict_to_tensor(
         self,
         predictions_dict: dict[str, torch.Tensor],

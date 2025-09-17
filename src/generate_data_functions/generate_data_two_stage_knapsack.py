@@ -22,6 +22,6 @@ def gen_data_two_stage_knapsack(
     )
 
     print(f"Shape of weights: {weights.shape}, values: {values.shape}, features: {features.shape}.")
-    data_dict = {"weights": weights, "features": features}
+    data_dict = {"item_weights": weights, "features": features}
 
     return data_dict

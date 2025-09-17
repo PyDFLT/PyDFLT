@@ -26,6 +26,6 @@ def gen_data_knapsack(
     if torch_tensors:
         values = torch.tensor(values, dtype=torch.float32)
         features = torch.tensor(features, dtype=torch.float32)
-    data_dict = {"c": values, "features": features}
+    data_dict = {"item_value": values, "features": features}
 
     return data_dict

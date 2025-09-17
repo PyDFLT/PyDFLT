@@ -44,8 +44,8 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
 
         # Setting basic model parameters
         model_sense = "MIN"
-        decision_variables = {"x": (self.num_covers,)}
-        #'y': (self.num_covers, num_scenarios)}
+        decision_variables = {"select_cover": (self.num_covers,)}
+        # "unmet_coverage": (self.num_covers, num_scenarios)}
         _shape = (self.num_items, num_scenarios) if num_scenarios > 1 else (num_items,)
         param_to_predict_shapes = {"coverage_requirements": _shape}
         extra_param_shapes = None
@@ -74,15 +74,15 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
 
         # Define variables
         # number of each cover that is picked
-        x = self.gp_model.addMVar((self.num_covers,), vtype=GRB.INTEGER, name="x")
-        self.vars_dict["x"] = x
-        # Coverage an item missed in x
-        y = self.gp_model.addMVar((self.num_items, self.num_scenarios), vtype=GRB.INTEGER, name="y")
-        self.second_stage_vars_dict["y"] = y
+        x = self.gp_model.addMVar((self.num_covers,), vtype=GRB.INTEGER, name="select_cover")
+        self.vars_dict["select_cover"] = x
+        # Unmet coverage based on cover selection
+        y = self.gp_model.addMVar((self.num_items, self.num_scenarios), vtype=GRB.INTEGER, name="unmet_coverage")
+        self.second_stage_vars_dict["unmet_coverage"] = y
 
-        if self.recovery_ratio > 0:  # Over-coverage that is taken away
-            z = self.gp_model.addMVar((self.num_items, self.num_scenarios), vtype=GRB.INTEGER, name="z")
-            self.second_stage_vars_dict["z"] = z
+        if self.recovery_ratio > 0:  # Excess coverage that is not needed
+            z = self.gp_model.addMVar((self.num_items, self.num_scenarios), vtype=GRB.INTEGER, name="excess_coverage")
+            self.second_stage_vars_dict["excess_coverage"] = z
 
         # It is a minimization problem
         self.gp_model.modelSense = GRB.MINIMIZE
@@ -116,10 +116,10 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
         self.gp_model.remove(self.gp_model.getConstrs())
 
         # Set new constraints
-        x = self.vars_dict["x"]
-        y = self.second_stage_vars_dict["y"]
+        x = self.vars_dict["select_cover"]
+        y = self.second_stage_vars_dict["unmet_coverage"]
         if self.recovery_ratio > 0:
-            z = self.second_stage_vars_dict["z"]
+            z = self.second_stage_vars_dict["excess_coverage"]
             self.gp_model.addConstrs(z[i, k] <= x[i] for i in range(self.num_items) for k in range(self.num_scenarios))
             self.gp_model.addConstrs(
                 gp.quicksum(self.item_cover_matrix[i, j] * x[j] for j in range(self.num_covers)) + y[i, k] - z[i, k] >= cover_requirements[i, k]
@@ -201,10 +201,10 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
     @staticmethod
     def get_var_domains() -> dict[str, dict[str, bool]]:
         # Since this function is to create a quadratic variant, we only care about first stage variables
-        var_domain_dict = {"x": {"integer": True}}  # boolean, integer, nonneg, nonpos, pos, imag, complex
+        var_domain_dict = {"select_cover": {"integer": True}}  # boolean, integer, nonneg, nonpos, pos, imag, complex
         return var_domain_dict
 
     @staticmethod
     def get_constraints(vars_dict: dict[str, cp.Variable]) -> Optional[list[Any]]:
-        x = vars_dict["x"]
+        x = vars_dict["select_cover"]
         return [x >= 0]

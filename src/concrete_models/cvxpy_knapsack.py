@@ -27,9 +27,9 @@ class CVXPYDiffKnapsackModel(CVXPYDiffModel):
 
         # Setting basic model parameters
         model_sense = "MAX"
-        var_shapes = {"x": (num_decisions,)}
+        var_shapes = {"select_item": (num_decisions,)}
         _shape = (num_decisions, num_scenarios) if num_scenarios > 1 else (num_decisions,)
-        param_to_predict_shapes = {"c": _shape}
+        param_to_predict_shapes = {"item_value": _shape}
         extra_param_shapes = None
 
         # Setting additional model parameters
@@ -50,13 +50,13 @@ class CVXPYDiffKnapsackModel(CVXPYDiffModel):
         decisions_batch: dict[str, torch.Tensor],
         predictions_batch: dict[str, torch.Tensor] = None,
     ) -> torch.float:
-        c = data_batch["c"]
-        x = decisions_batch["x"]
-        return (c * x).sum(-1)
+        v = data_batch["item_value"]
+        x = decisions_batch["select_item"]
+        return (v * x).sum(-1)
 
     def _create_cp_model(self):
-        x_var = self.cp_vars_dict["x"]
-        c_par = self.cp_params_dict["c"]
+        x_var = self.cp_vars_dict["select_item"]
+        v_par = self.cp_params_dict["item_value"]
         constraints = [x_var >= 0, x_var <= 1, self.weights @ x_var <= self.capacity]
-        obj = cp.sum(c_par @ x_var)
+        obj = cp.sum(v_par @ x_var)
         self.cp_model = cp.Problem(cp.Maximize(obj), constraints)

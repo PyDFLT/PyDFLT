@@ -195,12 +195,7 @@ class DifferentiableDecisionMaker(DecisionMaker):
                 total_loss += loss
             return total_loss
 
-        assert "c" in predictions_batch, (
-            "If loss_function_str is not objective, regret, smooth or mse, it has to be a PyEPO loss function and"
-            "the uncertain parameter has to be called 'c'."
-        )
-
-        predictions = predictions_batch["c"]
+        predictions = self.dict_to_predictions(predictions_batch)
         if self.loss_function_str in [
             "blackboxOpt",
             "negativeIdentity",
@@ -209,13 +204,15 @@ class DifferentiableDecisionMaker(DecisionMaker):
         ]:
             return self.loss_function(predictions)
 
-        optimal_decisions = data_batch["x_optimal"]
+        optimal_decisions = self.dict_to_decisions(data_batch, use_optimal=True)
         if self.loss_function_str == "perturbedFenchelYoung":
             return self.loss_function(predictions, optimal_decisions)
 
         if self.loss_function_str == "SPOPlus":
-            true_parameters = data_batch["c"]
-            optimal_decisions_batch = {"x": optimal_decisions}
+            true_parameters = self.dict_to_predictions(data_batch)
+            optimal_decisions_batch = {}
+            for key in self.decision_model.var_names:
+                optimal_decisions_batch[key] = data_batch[key + "_optimal"]
             optimal_objectives = self.problem.get_objective(data_batch, optimal_decisions_batch, predictions_batch).view(-1, 1)
             return self.loss_function(predictions, true_parameters, optimal_decisions, optimal_objectives)
 

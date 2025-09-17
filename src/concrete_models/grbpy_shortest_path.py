@@ -22,13 +22,13 @@ class ShortestPath(GRBPYModel, optGrbModel):
         model_sense = "MIN"
         num_coefficients = grid[0] * (grid[1] - 1) + grid[1] * (grid[0] - 1)
         _shape = (num_coefficients, num_scenarios) if num_scenarios > 1 else (num_coefficients,)
-        param_to_predict_shapes = {"c": _shape}
+        param_to_predict_shapes = {"arc_costs": _shape}
         extra_param_shapes = None
 
         # Setting additional model parameters
         self.arcs = self._get_arcs()
         self.arcs_to_index = {arc: i for i, arc in enumerate(self.arcs)}
-        var_shapes = {"x": (len(self.arcs),)}
+        var_shapes = {"select_arc": (len(self.arcs),)}
 
         GRBPYModel.__init__(
             self,
@@ -41,11 +41,11 @@ class ShortestPath(GRBPYModel, optGrbModel):
     def _create_model(self):
         """Creates model AND vars_dict dimension"""
         # Create a GP model
-        self.gp_model = gp.Model("knapsack")
+        self.gp_model = gp.Model("shortestpath")
         self.vars_dict = {}
 
         # Define vars
-        name = "x"
+        name = "select_arc"
         x = self.gp_model.addMVar((len(self.arcs),), name=name, vtype=GRB.BINARY)
         self.vars_dict[name] = x
         # Set model sense
@@ -99,9 +99,9 @@ class ShortestPath(GRBPYModel, optGrbModel):
     def _set_params(self, *params_i: np.ndarray):
         (c_i,) = params_i
         if self.num_scenarios > 1:
-            self.gp_model.setObjective(gp.quicksum(self.vars_dict["x"] @ np.array(c_i)))
+            self.gp_model.setObjective(gp.quicksum(self.vars_dict["select_arc"] @ np.array(c_i)))
         else:
-            self.gp_model.setObjective(self.vars_dict["x"] @ np.array(c_i))
+            self.gp_model.setObjective(self.vars_dict["select_arc"] @ np.array(c_i))
 
     def get_objective(
         self,
@@ -109,15 +109,15 @@ class ShortestPath(GRBPYModel, optGrbModel):
         decisions_batch: dict[str, torch.Tensor],
         predictions_batch: dict[str, torch.Tensor] = None,
     ) -> torch.float:
-        return (data_batch["c"] * decisions_batch["x"]).sum(-1)
+        return (data_batch["arc_costs"] * decisions_batch["select_arc"]).sum(-1)
 
     def _getModel(
         self,
     ):  # This function overrides the _getModel from the optGrbModel class
         self._create_model()
-        return self.gp_model, self.vars_dict["x"]
+        return self.gp_model, self.vars_dict["select_arc"]
 
     def get_constraints(self, vars_dict: dict[str, cp.Variable]):
         # These constraints are cvxpy style constraints
-        x = vars_dict["x"]
+        x = vars_dict["select_arc"]
         return [self.weights @ x <= self.capacity_np]

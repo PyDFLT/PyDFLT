@@ -31,7 +31,7 @@ class TestQuadratic(unittest.TestCase):
         # 2. Act: Create the quadratic proxy and solve it with the target vector
         qp_model = opt_model.create_quadratic_variant()
         decisions_dict = qp_model._solve_sample(target_vector)
-        decision_x = decisions_dict["x"]
+        decision_x = decisions_dict["select_item"]
 
         # 3. Assert: The decision should be the closest feasible point to the target
         # The model must select 2 items to satisfy the capacity constraint (sum(x) <= 2).

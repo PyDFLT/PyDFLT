@@ -53,7 +53,7 @@ class TestWSMC(unittest.TestCase):
         opt_model.cover_costs = np.array([2, 2, 100])
         opt_model.cover_costs = np.array([[1, 0], [0, 1], [0, 0]])
         decisions_dict = opt_model._solve_sample(np.array([1, 0]))
-        self.assertEqual(decisions_dict["x"][0], 1)
+        self.assertEqual(decisions_dict["select_cover"][0], 1)
 
         # Test it selects the only cover that has the right item
         opt_model = WeightedSetMultiCover(
@@ -69,7 +69,7 @@ class TestWSMC(unittest.TestCase):
         opt_model.cover_costs = np.array([2, 2, 100])
         opt_model.cover_costs = np.array([[1, 0], [0, 1], [0, 0]])
         decisions_dict = opt_model._solve_sample(np.array([0, 1]))
-        self.assertEqual(decisions_dict["x"][1], 1)
+        self.assertEqual(decisions_dict["select_cover"][1], 1)
 
 
 if __name__ == "__main__":

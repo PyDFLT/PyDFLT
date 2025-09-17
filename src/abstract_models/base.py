@@ -45,7 +45,7 @@ class OptimizationModel(ABC):
 
         Args:
             var_shapes (dict[str, tuple[int, ...]]): A dictionary specifying the names and shapes of
-                                                      decision variables (e.g., {'x': (10,)}).
+                                                      decision variables (e.g., {'decision': (10,)}).
             param_to_predict_shapes (dict[str, tuple[int, ...]]): A dictionary specifying the names and shapes of
                                                                  parameters that must be provided prior to
                                                                  running optimization.

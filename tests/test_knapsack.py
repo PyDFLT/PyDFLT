@@ -33,7 +33,7 @@ class TestKnapsack(unittest.TestCase):
             seed=5,
         )
         decisions_dict = opt_model._solve_sample(np.array([10, 5, 4]))
-        self.assertEqual(sum(decisions_dict["x"]), 0)
+        self.assertEqual(sum(decisions_dict["select_item"]), 0)
 
     def test_use_opt_model_all_items(self):
         # Test select no item
@@ -47,7 +47,7 @@ class TestKnapsack(unittest.TestCase):
             seed=5,
         )
         decisions_dict = opt_model._solve_sample(np.array([10, 5, 4]))
-        self.assertEqual(sum(decisions_dict["x"]), 3)
+        self.assertEqual(sum(decisions_dict["select_item"]), 3)
 
     def test_use_opt_one_item(self):
         # Test select no item
@@ -63,10 +63,10 @@ class TestKnapsack(unittest.TestCase):
         decisions_dict = opt_model._solve_sample(np.array([10, 5, 4]))
 
         # Test that only item is selected
-        self.assertEqual(sum(decisions_dict["x"]), 1)
+        self.assertEqual(sum(decisions_dict["select_item"]), 1)
 
         # Test that the item with the highest value is selected
-        self.assertEqual(decisions_dict["x"][0], 1)
+        self.assertEqual(decisions_dict["select_item"][0], 1)
 
     def test_generate_data_seed(self):
         """
@@ -75,9 +75,9 @@ class TestKnapsack(unittest.TestCase):
         data_knapsack_one = gen_data_knapsack(seed=1, num_data=3, num_features=1, num_items=1)
         data_knapsack_two = gen_data_knapsack(seed=1, num_data=3, num_features=1, num_items=1)
         self.assertEqual(data_knapsack_one["features"][0], data_knapsack_two["features"][0])
-        self.assertEqual(data_knapsack_one["c"][0], data_knapsack_two["c"][0])
+        self.assertEqual(data_knapsack_one["item_value"][0], data_knapsack_two["item_value"][0])
         self.assertEqual(data_knapsack_one["features"][1], data_knapsack_two["features"][1])
-        self.assertEqual(data_knapsack_one["c"][1], data_knapsack_two["c"][1])
+        self.assertEqual(data_knapsack_one["item_value"][1], data_knapsack_two["item_value"][1])
 
 
 if __name__ == "__main__":

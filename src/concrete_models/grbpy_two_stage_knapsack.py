@@ -32,13 +32,13 @@ class TwoStageKnapsack(GRBPYTwoStageModel):
         # Setting basic model parameters
         model_sense = "MAX"
         decision_variables = {
-            "x": (num_decisions,),
+            "select_item": (num_decisions,),
         }
         #'y_add': (num_decisions, num_scenarios),
         #'y_remove': (num_decisions, num_scenarios)}
 
         _shape = (num_decisions, num_scenarios) if num_scenarios > 1 else (num_decisions,)
-        param_to_predict_shapes = {"weights": _shape}
+        param_to_predict_shapes = {"item_weights": _shape}
         extra_param_shapes = None
 
         # Setting additional model parameters
@@ -62,10 +62,10 @@ class TwoStageKnapsack(GRBPYTwoStageModel):
         self.second_stage_vars_dict = {}
 
         # Define variables
-        x = self.gp_model.addMVar(self.num_decisions, name="x", vtype=GRB.BINARY)
+        x = self.gp_model.addMVar(self.num_decisions, name="select_item", vtype=GRB.BINARY)
         y_add = self.gp_model.addMVar((self.num_decisions, self.num_scenarios), name="y_add", vtype=GRB.BINARY)
         y_remove = self.gp_model.addMVar((self.num_decisions, self.num_scenarios), name="y_remove", vtype=GRB.BINARY)
-        self.vars_dict["x"] = x
+        self.vars_dict["select_item"] = x
         self.second_stage_vars_dict["y_remove"] = y_remove
         self.second_stage_vars_dict["y_add"] = y_add
 
@@ -104,7 +104,7 @@ class TwoStageKnapsack(GRBPYTwoStageModel):
         self.gp_model.remove(self.gp_model.getConstrs())
 
         # Set new constraints
-        x = self.vars_dict["x"]
+        x = self.vars_dict["select_item"]
         y_add = self.second_stage_vars_dict["y_add"]
         y_remove = self.second_stage_vars_dict["y_remove"]
         self.gp_model.addConstrs(
@@ -115,7 +115,7 @@ class TwoStageKnapsack(GRBPYTwoStageModel):
     @staticmethod
     def get_var_domains() -> dict[str, dict[str, bool]]:
         # Since this function is to create a quadratic variant, we only care about first stage variables
-        var_domain_dict = {"x": {"boolean": True}}  # boolean, integer, nonneg, nonpos, pos, imag, complex
+        var_domain_dict = {"select_item": {"boolean": True}}  # boolean, integer, nonneg, nonpos, pos, imag, complex
         return var_domain_dict
 
     @staticmethod

@@ -133,7 +133,9 @@ class TestDecisionMakersUsingWSMC(unittest.TestCase):
         data_batch = problem.read_data(idx)
 
         # For simplicity, we use the optimal decisions and true parameters
-        decisions_batch = {"x": data_batch["x_optimal"]}
+        decisions_batch = {}
+        for key in model.var_names:
+            decisions_batch[key] = data_batch[key + "_optimal"]
 
         # Calculate the loss using the decision maker
         loss_min = decision_maker_min.get_loss(data_batch, decisions_batch, data_batch)
@@ -164,7 +166,9 @@ class TestDecisionMakersUsingWSMC(unittest.TestCase):
         data_batch = problem.read_data(idx)
 
         # For simplicity, we use the optimal decisions and true parameters
-        decisions_batch = {"x": data_batch["x_optimal"]}
+        decisions_batch = {}
+        for key in model.var_names:
+            decisions_batch[key] = data_batch[key + "_optimal"]
 
         # Calculate loss using the new decision maker on the same data
         loss_max = decision_maker_max.get_loss(data_batch, decisions_batch, data_batch)

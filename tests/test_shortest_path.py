@@ -20,9 +20,9 @@ class TestShortestPath(unittest.TestCase):
         data_sp_two = gen_data_shortestpath(seed=1, num_data=2, grid=(2, 2), num_features=1)
 
         self.assertEqual(data_sp_one["features"][0], data_sp_two["features"][0])
-        self.assertEqual(data_sp_one["c"][0][0], data_sp_two["c"][0][0])
+        self.assertEqual(data_sp_one["arc_costs"][0][0], data_sp_two["arc_costs"][0][0])
         self.assertEqual(data_sp_one["features"][1], data_sp_two["features"][1])
-        self.assertEqual(data_sp_one["c"][1][0], data_sp_two["c"][1][0])
+        self.assertEqual(data_sp_one["arc_costs"][1][0], data_sp_two["arc_costs"][1][0])
 
 
 if __name__ == "__main__":

@@ -42,9 +42,9 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
 
         # Setting basic model parameters
         model_sense = "MAX"
-        var_shapes = {"x": (num_decisions,)}
+        var_shapes = {"select_item": (num_decisions,)}  # x: take item decision
         _shape = (num_decisions, num_scenarios) if num_scenarios > 1 else (num_decisions,)
-        param_to_predict_shapes = {"c": _shape}
+        param_to_predict_shapes = {"item_value": _shape}
         extra_param_shapes = None
 
         # Setting additional model parameters
@@ -69,7 +69,7 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
         self.vars_dict = {}
 
         # Define vars
-        name = "x"
+        name = "select_item"
         x = self.gp_model.addMVar(self.num_vars, name=name, vtype=GRB.BINARY)
         self.vars_dict[name] = x
         # It is a maximization problem
@@ -85,9 +85,9 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
     def _set_params(self, *params_i: np.ndarray):
         (c_i,) = params_i
         if self.num_scenarios > 1:
-            self.gp_model.setObjective(gp.quicksum(self.vars_dict["x"] @ np.array(c_i)))
+            self.gp_model.setObjective(gp.quicksum(self.vars_dict["select_item"] @ np.array(c_i)))
         else:
-            self.gp_model.setObjective(self.vars_dict["x"] @ np.array(c_i))
+            self.gp_model.setObjective(self.vars_dict["select_item"] @ np.array(c_i))
 
     def get_objective(
         self,
@@ -95,21 +95,21 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
         decisions_batch: dict[str, torch.Tensor],
         predictions_batch: dict[str, torch.Tensor] = None,
     ) -> torch.float:
-        return (data_batch["c"] * decisions_batch["x"]).sum(-1)
+        return (data_batch["item_value"] * decisions_batch["select_item"]).sum(-1)
 
     def _getModel(
         self,
     ):  # This function overrides the _getModel from the optGrbModel class
         self._create_model()
-        return self.gp_model, self.vars_dict["x"]
+        return self.gp_model, self.vars_dict["select_item"]
 
     @staticmethod
     def get_var_domains() -> dict[str, dict[str, bool]]:
         # Since this function is to create a quadratic variant, we only care about first stage variables
-        var_domain_dict = {"x": {"boolean": True}}  # boolean, integer, nonneg, nonpos, pos, imag, complex
+        var_domain_dict = {"select_item": {"boolean": True}}  # boolean, integer, nonneg, nonpos, pos, imag, complex
         return var_domain_dict
 
     def get_constraints(self, vars_dict: dict[str, cp.Variable]):
         # These constraints are cvxpy style constraints
-        x = vars_dict["x"]
+        x = vars_dict["select_item"]
         return [self.weights @ x <= self.capacity_np]

@@ -37,7 +37,7 @@ class TestKnapsack(unittest.TestCase):
             penalty_remove=2,
         )
         decisions_dict = opt_model._solve_sample(np.array([10, 5, 4]))
-        self.assertEqual(sum(decisions_dict["x"]), 0)
+        self.assertEqual(sum(decisions_dict["select_item"]), 0)
 
     def test_use_opt_model_all_items(self):
         # Test select no item
@@ -58,7 +58,7 @@ class TestKnapsack(unittest.TestCase):
         decisions_dict = opt_model._solve_sample(predicted_weights)
 
         opt_model.solve_second_stage(decisions_dict, *actual_weights)
-        self.assertEqual(sum(decisions_dict["x"]), 3)
+        self.assertEqual(sum(decisions_dict["select_item"]), 3)
 
     def test_use_opt_model_no_items_and_zero_obj(self):
         # Test select no item
@@ -79,7 +79,7 @@ class TestKnapsack(unittest.TestCase):
         decisions_dict = opt_model._solve_sample(predicted_weights)
 
         obj = opt_model.solve_second_stage(decisions_dict, *actual_weights)
-        self.assertEqual(sum(decisions_dict["x"]), 0)
+        self.assertEqual(sum(decisions_dict["select_item"]), 0)
         self.assertEqual(obj["objective_value"], 0)
 
 
