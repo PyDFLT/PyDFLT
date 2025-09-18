@@ -22,9 +22,32 @@ PYEPO_LOSS_FUNCTIONS = {
     "blackboxOpt": blackboxOpt,
     "negativeIdentity": negativeIdentity,
 }
+"""
+Mapping of PyEPO loss function names to their corresponding implementations.
+These are differentiable loss functions designed for end-to-end learning in
+optimization problems.
+"""
 
 
 class DifferentiableDecisionMaker(DecisionMaker):
+    """
+    A decision maker that supports differentiable optimization through PyEPO loss functions.
+    This class extends the base DecisionMaker to provide training capabilities using
+    gradient-based optimization with various differentiable loss functions.
+
+    Supports multiple loss functions including:
+    - Traditional losses: MSE, objective, regret
+    - PyEPO differentiable losses: SPOPlus, perturbedOpt, perturbedFenchelYoung, etc.
+    - Smooth loss for quadratic decision models
+
+    Attributes:
+        batch_size (int): The batch size used for training iterations.
+        residual_SAA (bool): Whether to use residual Sample Average Approximation.
+        residual_SAA_scenarios (int): Number of scenarios for residual SAA.
+        optimizer (torch.optim.Optimizer): The optimizer used for training the predictive model.
+        loss_function (callable): The loss function used for training.
+    """
+
     allowed_losses: list[str] = [
         "mse",
         "objective",
@@ -68,6 +91,27 @@ class DifferentiableDecisionMaker(DecisionMaker):
         residual_SAA: bool = False,
         residual_SAA_scenarios: int = 1,
     ):
+        """
+        Initializes the DifferentiableDecisionMaker.
+
+        Args:
+            problem (Problem): The problem instance containing data and optimization model.
+            learning_rate (float): Learning rate for the optimizer. Defaults to 1e-4.
+            batch_size (int): Batch size for training iterations. Defaults to 32.
+            device_str (str): Device for computations ('cpu' or 'cuda'). Defaults to 'cpu'.
+            predictor_str (str): Type of predictor to use. Defaults to 'MLP'.
+            decision_model_str (str): Type of decision model ('base', 'quadratic', 'scenario_based'). Defaults to 'base'.
+            loss_function_str (str): Loss function to use for training. Defaults to 'objective'.
+            to_decision_pars (str): Strategy for converting predictions to decision parameters. Defaults to 'none'.
+            use_dist_at_mode (str): When to use distributional predictions. Defaults to 'none'.
+            standardize_predictions (bool): Whether to standardize predictions. Defaults to True.
+            init_OLS (bool): Whether to initialize with OLS. Defaults to False.
+            seed (Union[int, None]): Random seed for reproducibility. Defaults to None.
+            predictor_kwargs (dict): Additional arguments for predictor initialization. Defaults to None.
+            decision_model_kwargs (dict): Additional arguments for decision model initialization. Defaults to None.
+            residual_SAA (bool): Whether to use residual Sample Average Approximation. Defaults to False.
+            residual_SAA_scenarios (int): Number of scenarios for residual SAA. Defaults to 1.
+        """
         super().__init__(
             problem,
             learning_rate,
@@ -94,9 +138,16 @@ class DifferentiableDecisionMaker(DecisionMaker):
         self._set_loss_function()
 
     def _set_optimizer(self):
+        """
+        Initializes the Adam optimizer for training the trainable predictive model.
+        """
         self.optimizer = torch.optim.Adam(self.trainable_predictive_model.parameters(), lr=self.learning_rate)
 
     def _set_loss_function(self):
+        """
+        Sets the loss function based on the specified loss_function_str.
+        Supports various loss types including traditional losses and PyEPO differentiable losses.
+        """
         if self.loss_function_str == "objective":
             self.loss_function = lambda *args, **kwargs: (self.problem.opt_model.model_sense_int * self.problem.opt_model.get_objective(*args, **kwargs))
             # self.loss_function = self.problem.opt_model.get_objective
@@ -130,6 +181,19 @@ class DifferentiableDecisionMaker(DecisionMaker):
         decisions_batch: dict[str, torch.tensor],
         predictions_batch: dict[str, torch.tensor] = None,
     ) -> torch.float32:
+        """
+        Computes the regret for given decisions compared to optimal decisions.
+        Regret is defined as the difference between the objective value of the current
+        decisions and the optimal decisions.
+
+        Args:
+            data_batch (dict[str, torch.tensor]): Input data batch.
+            decisions_batch (dict[str, torch.tensor]): Current decisions to evaluate.
+            predictions_batch (dict[str, torch.tensor], optional): Predictions used for decisions. Defaults to None.
+
+        Returns:
+            torch.float32: The regret values for the batch.
+        """
         objectives = self.problem.opt_model.get_objective(data_batch, decisions_batch, predictions_batch)
         optimal_decisions = self.problem.opt_model.solve_batch(data_batch)
         optimal_objectives = self.problem.opt_model.get_objective(data_batch, optimal_decisions)
@@ -137,6 +201,17 @@ class DifferentiableDecisionMaker(DecisionMaker):
         return self.problem.opt_model.model_sense_int * (objectives - optimal_objectives)
 
     def update(self, data_batch: dict[str, torch.tensor]) -> dict[str, float]:
+        """
+        Performs a single training update step using the specified loss function.
+        Computes predictions, decisions (if needed), loss, gradients, and updates parameters.
+
+        Args:
+            data_batch (dict[str, torch.tensor]): A batch of training data.
+
+        Returns:
+            dict[str, float]: Dictionary containing loss values, solver calls, gradient norm,
+                             and evaluation metrics.
+        """
         # Compute the predictions
         predictions_batch = self.predict(data_batch)
         # Compute decisions
@@ -183,6 +258,18 @@ class DifferentiableDecisionMaker(DecisionMaker):
         decisions_batch: dict[str, torch.tensor],
         predictions_batch: dict[str, torch.tensor],
     ) -> torch.float32:
+        """
+        Computes the loss value based on the specified loss function.
+        Handles different loss types including objective, regret, MSE, smooth, and PyEPO losses.
+
+        Args:
+            data_batch (dict[str, torch.tensor]): Input data batch.
+            decisions_batch (dict[str, torch.tensor]): Decision variables.
+            predictions_batch (dict[str, torch.tensor]): Predicted parameters.
+
+        Returns:
+            torch.float32: The computed loss value.
+        """
         if (self.loss_function_str == "objective") or (self.loss_function_str == "regret"):
             return self.loss_function(data_batch, decisions_batch, predictions_batch)
         if self.loss_function_str == "smooth":
@@ -219,6 +306,18 @@ class DifferentiableDecisionMaker(DecisionMaker):
         return NotImplementedError
 
     def run_epoch(self, mode: str, epoch_num: int, metrics: list[str] = None) -> list[dict[str, float]]:
+        """
+        Runs one complete epoch in the specified mode (train/validation/test).
+        Handles residual SAA updates if configured and processes all batches.
+
+        Args:
+            mode (str): The mode to run ('train', 'validation', or 'test').
+            epoch_num (int): The current epoch number.
+            metrics (list[str], optional): List of metrics to evaluate. Defaults to None.
+
+        Returns:
+            list[dict[str, float]]: List of dictionaries containing results for each batch.
+        """
         assert mode in [
             "train",
             "validation",
@@ -250,6 +349,13 @@ class DifferentiableDecisionMaker(DecisionMaker):
         return epoch_results
 
     def get_residuals(self):
+        """
+        Computes residuals (prediction errors) for residual SAA.
+        Used when residual_SAA is enabled to gather error samples for improving predictions.
+
+        Returns:
+            list: List of residual tensors (prediction - true_values) for each sample.
+        """
         errors = []
         # Note that the mode in problem is still set to the previous mode, which we want
         for idx in self.problem.generate_batch_indices(self.batch_size):

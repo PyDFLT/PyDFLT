@@ -7,6 +7,24 @@ from src.abstract_models.grbpy_two_stage import GRBPYTwoStageModel
 
 
 class TwoStageKnapsack(GRBPYTwoStageModel):
+    """
+    A Gurobi-based two-stage knapsack optimization model.
+    This model solves a two-stage knapsack problem where decisions are made in two stages:
+    first stage selects items, and second stage allows adding or removing items with penalties.
+
+    Attributes:
+        num_decisions (int): Number of items (decision variables) in the knapsack.
+        capacity (float): The capacity constraint of the knapsack.
+        penalty_remove (float): Penalty for removing an item in the second stage.
+        penalty_add (float): Penalty for adding an item in the second stage.
+        values_lb (float): Lower bound for item values during random generation.
+        values_ub (float): Upper bound for item values during random generation.
+        num_scenarios (int): Number of scenarios for multi-scenario optimization.
+        seed (int): Random seed for reproducible value generation.
+        capacity_np (np.ndarray): Capacity constraint as a numpy array.
+        values (np.ndarray): Fixed values for the knapsack items.
+    """
+
     def __init__(
         self,
         num_decisions: int,
@@ -19,6 +37,19 @@ class TwoStageKnapsack(GRBPYTwoStageModel):
         num_scenarios: int = 1,
         # dimension: int = 1,
     ):
+        """
+        Initializes the TwoStageKnapsack model.
+
+        Args:
+            num_decisions (int): Number of items (decision variables) in the knapsack.
+            capacity (float): The capacity constraint of the knapsack.
+            penalty_remove (float): Penalty for removing an item in the second stage.
+            penalty_add (float): Penalty for adding an item in the second stage.
+            values_lb (float): Lower bound for item values during random generation. Defaults to 3.0.
+            values_ub (float): Upper bound for item values during random generation. Defaults to 8.0.
+            seed (int): Random seed for reproducible value generation. Defaults to 5.
+            num_scenarios (int): Number of scenarios for multi-scenario optimization. Defaults to 1.
+        """
         # Setting input parameters
         self.num_decisions = num_decisions
         self.capacity = capacity
@@ -55,7 +86,10 @@ class TwoStageKnapsack(GRBPYTwoStageModel):
         )
 
     def _create_model(self):
-        """Creates model AND variables_dict"""
+        """
+        Creates the Gurobi optimization model for the two-stage knapsack problem.
+        This method defines the first and second stage variables, constraints, and objective function.
+        """
         # Create a GP model
         self.gp_model = gp.Model("two_stage_knapsack")
         self.vars_dict = {}
@@ -87,7 +121,11 @@ class TwoStageKnapsack(GRBPYTwoStageModel):
 
     def _set_params(self, *parameters_i: np.ndarray):
         """
-        Set parameters for two-stage knapsack, this corresponds to adjusting the weight scenarios in the constraints.
+        Sets the parameters for the two-stage knapsack model for a single instance.
+        This corresponds to adjusting the weight scenarios in the constraints.
+
+        Args:
+            *parameters_i (np.ndarray): Item weights for the current instance scenarios.
         """
         # Obtain the weight parameters
         weights = parameters_i[0]
@@ -114,11 +152,28 @@ class TwoStageKnapsack(GRBPYTwoStageModel):
 
     @staticmethod
     def get_var_domains() -> dict[str, dict[str, bool]]:
+        """
+        Returns the variable domains for the two-stage knapsack problem when creating a quadratic variant.
+        Only considers first stage variables since that's what's relevant for the quadratic variant.
+
+        Returns:
+            dict[str, dict[str, bool]]: A dictionary specifying variable domains for first stage variables.
+        """
         # Since this function is to create a quadratic variant, we only care about first stage variables
         var_domain_dict = {"select_item": {"boolean": True}}  # boolean, integer, nonneg, nonpos, pos, imag, complex
         return var_domain_dict
 
     @staticmethod
     def get_constraints(vars_dict: dict[str, cp.Variable]):
+        """
+        Returns the constraints for the two-stage knapsack problem in CVXPY format.
+        Used when creating a quadratic variant.
+
+        Args:
+            vars_dict (dict[str, cp.Variable]): A dictionary mapping variable names to CVXPY variables.
+
+        Returns:
+            list: An empty list since no additional constraints are needed for the quadratic variant.
+        """
         # These constraints are cvxpy style constraints
         return []

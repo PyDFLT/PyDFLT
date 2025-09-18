@@ -9,11 +9,30 @@ from src.abstract_models.grbpy import GRBPYModel
 
 
 class ShortestPath(GRBPYModel, optGrbModel):
+    """
+    A Gurobi-based shortest path optimization model.
+    This model solves a shortest path problem on a grid network where the goal is to find
+    the path with minimum cost from the source to the sink.
+
+    Attributes:
+        grid (tuple[int, int]): The dimensions of the grid network.
+        num_scenarios (int): Number of scenarios for multi-scenario optimization.
+        arcs (list): List of arcs (edges) in the grid network.
+        arcs_to_index (dict): Mapping from arcs to their indices.
+    """
+
     def __init__(
         self,
         grid: tuple[int, int],
         num_scenarios: int = 1,
     ):
+        """
+        Initializes the ShortestPath model.
+
+        Args:
+            grid (tuple[int, int]): The dimensions of the grid network (rows, columns).
+            num_scenarios (int): Number of scenarios for multi-scenario optimization. Defaults to 1.
+        """
         # Setting input parameters
         self.grid = grid
         self.num_scenarios = num_scenarios
@@ -39,6 +58,10 @@ class ShortestPath(GRBPYModel, optGrbModel):
         )
 
     def _create_model(self):
+        """
+        Creates the Gurobi optimization model for the shortest path problem.
+        This method defines the decision variables, flow conservation constraints, and model sense.
+        """
         """Creates model AND vars_dict dimension"""
         # Create a GP model
         self.gp_model = gp.Model("shortestpath")
@@ -79,8 +102,11 @@ class ShortestPath(GRBPYModel, optGrbModel):
 
     def _get_arcs(self):
         """
-        A method to get list of arcs for grid network
+        Generates the list of arcs (edges) for the grid network.
         Source: PyEPO
+
+        Returns:
+            list: A list of tuples representing arcs (source_node, destination_node).
         """
         arcs = []
         for i in range(self.grid[0]):
@@ -97,6 +123,13 @@ class ShortestPath(GRBPYModel, optGrbModel):
         return arcs
 
     def _set_params(self, *params_i: np.ndarray):
+        """
+        Sets the parameters for the shortest path model for a single instance.
+        Updates the objective function with the provided arc costs.
+
+        Args:
+            *params_i (np.ndarray): Arc costs for the current instance.
+        """
         (c_i,) = params_i
         if self.num_scenarios > 1:
             self.gp_model.setObjective(gp.quicksum(self.vars_dict["select_arc"] @ np.array(c_i)))
@@ -109,15 +142,45 @@ class ShortestPath(GRBPYModel, optGrbModel):
         decisions_batch: dict[str, torch.Tensor],
         predictions_batch: dict[str, torch.Tensor] = None,
     ) -> torch.float:
+        """
+        Computes the objective function value for the shortest path problem.
+        The objective is to minimize the total cost of selected arcs.
+
+        Args:
+            data_batch (dict[str, torch.Tensor]): A dictionary containing input data, including 'arc_costs'.
+            decisions_batch (dict[str, torch.Tensor]): A dictionary containing decision variables, including 'select_arc'.
+            predictions_batch (dict[str, torch.Tensor], optional): Unused for this implementation. Defaults to None.
+
+        Returns:
+            torch.float: The total cost of selected arcs for the batch.
+        """
         return (data_batch["arc_costs"] * decisions_batch["select_arc"]).sum(-1)
 
     def _getModel(
         self,
-    ):  # This function overrides the _getModel from the optGrbModel class
+    ):
+        """
+        Returns the Gurobi model and decision variables.
+        This function overrides the _getModel from the optGrbModel class.
+
+        Returns:
+            tuple: A tuple containing the Gurobi model and the decision variables.
+        """
         self._create_model()
         return self.gp_model, self.vars_dict["select_arc"]
 
     def get_constraints(self, vars_dict: dict[str, cp.Variable]):
+        """
+        Returns the constraints for the shortest path problem in CVXPY format.
+        Used when creating a quadratic variant.
+        Note: This implementation appears to be incorrect and should be updated for shortest path constraints.
+
+        Args:
+            vars_dict (dict[str, cp.Variable]): A dictionary mapping variable names to CVXPY variables.
+
+        Returns:
+            list: A list of CVXPY constraints (currently returns knapsack constraints, needs correction).
+        """
         # These constraints are cvxpy style constraints
         x = vars_dict["select_arc"]
         return [self.weights @ x <= self.capacity_np]

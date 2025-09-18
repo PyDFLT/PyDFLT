@@ -30,6 +30,21 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
         density: float = 0.25,
         num_scenarios: int = 1,
     ):
+        """
+        Initializes the WeightedSetMultiCover model.
+
+        Args:
+            num_items (int): Number of items that need to be covered.
+            num_covers (int): Number of available covers (sets).
+            penalty (float): Penalty for unmet coverage requirements.
+            cover_costs_lb (int): Lower bound for cover costs.
+            cover_costs_ub (int): Upper bound for cover costs.
+            recovery_ratio (float): Ratio for recovering costs from unused covers. Defaults to 0.
+            seed (int): Random seed for reproducible generation. Defaults to 0.
+            silvestri2023 (bool): Whether to use Silvestri2023 parameter generation method. Defaults to False.
+            density (float): Density of the item-cover matrix when using Silvestri2023 method. Defaults to 0.25.
+            num_scenarios (int): Number of scenarios for multi-scenario optimization. Defaults to 1.
+        """
         # Setting input parameters
         self.num_items = num_items
         self.num_covers = num_covers
@@ -66,6 +81,10 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
         )
 
     def _create_model(self):
+        """
+        Creates the Gurobi optimization model for the weighted set multi-cover problem.
+        This method defines the first and second stage variables, constraints, and objective function.
+        """
         """Creates model AND variables_dict"""
         # Create a GP model
         self.gp_model = gp.Model("wsmc")
@@ -105,7 +124,11 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
 
     def _set_params(self, *parameters_i: np.ndarray):
         """
-        Set parameters for the second stage, this corresponds to adjusting the cover_requirement scenarios in the constraints.
+        Sets the parameters for the weighted set multi-cover model for a single instance.
+        This corresponds to adjusting the coverage requirement scenarios in the constraints.
+
+        Args:
+            *parameters_i (np.ndarray): Coverage requirements for the current instance scenarios.
         """
         # Obtain the weight parameters
         cover_requirements = parameters_i[0]
@@ -134,6 +157,18 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
             )
 
     def _set_fixed_parameters(self, cover_costs_lb: int, cover_costs_ub: int, seed: int):
+        """
+        Generates fixed parameters for the weighted set multi-cover problem.
+        This method creates covers and their costs such that all sets are relevant.
+
+        Args:
+            cover_costs_lb (int): Lower bound for cover costs.
+            cover_costs_ub (int): Upper bound for cover costs.
+            seed (int): Random seed for reproducible generation.
+
+        Returns:
+            tuple: A tuple containing cover costs and item-cover matrix.
+        """
         np.random.seed(seed)
         random.seed(seed)
 
@@ -176,6 +211,19 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
         return cover_costs, item_cover_matrix
 
     def _set_fixed_parameters_silvestri2023(self, cover_costs_lb: float, cover_costs_ub: float, density: float, seed: int):
+        """
+        Generates fixed parameters using the Silvestri2023 method.
+        This method creates covers and their costs using a different approach.
+
+        Args:
+            cover_costs_lb (float): Lower bound for cover costs.
+            cover_costs_ub (float): Upper bound for cover costs.
+            density (float): Target density for the item-cover matrix.
+            seed (int): Random seed for reproducible generation.
+
+        Returns:
+            tuple: A tuple containing cover costs and item-cover matrix.
+        """
         np.random.seed(seed)
         cover_costs = np.random.uniform(cover_costs_lb, cover_costs_ub, self.num_covers)
         item_cover_matrix = np.zeros((self.num_items, self.num_covers))
@@ -200,11 +248,28 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
 
     @staticmethod
     def get_var_domains() -> dict[str, dict[str, bool]]:
+        """
+        Returns the variable domains for the weighted set multi-cover problem when creating a quadratic variant.
+        Only considers first stage variables since that's what's relevant for the quadratic variant.
+
+        Returns:
+            dict[str, dict[str, bool]]: A dictionary specifying variable domains for first stage variables.
+        """
         # Since this function is to create a quadratic variant, we only care about first stage variables
         var_domain_dict = {"select_cover": {"integer": True}}  # boolean, integer, nonneg, nonpos, pos, imag, complex
         return var_domain_dict
 
     @staticmethod
     def get_constraints(vars_dict: dict[str, cp.Variable]) -> Optional[list[Any]]:
+        """
+        Returns the constraints for the weighted set multi-cover problem in CVXPY format.
+        Used when creating a quadratic variant.
+
+        Args:
+            vars_dict (dict[str, cp.Variable]): A dictionary mapping variable names to CVXPY variables.
+
+        Returns:
+            Optional[list[Any]]: A list of CVXPY constraints ensuring non-negativity.
+        """
         x = vars_dict["select_cover"]
         return [x >= 0]

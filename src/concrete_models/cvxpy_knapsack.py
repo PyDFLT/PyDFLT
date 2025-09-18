@@ -6,6 +6,23 @@ from src.abstract_models.cvxpy_diff import CVXPYDiffModel
 
 
 class CVXPYDiffKnapsackModel(CVXPYDiffModel):
+    """
+    A CVXPY-based differentiable knapsack optimization model.
+    This model solves a knapsack problem where the goal is to maximize the total value
+    of selected items subject to capacity constraints.
+
+    Attributes:
+        num_decisions (int): Number of items (decision variables) in the knapsack.
+        capacity (float): The capacity constraint of the knapsack.
+        values_lb (float): Lower bound for item values during random generation.
+        values_ub (float): Upper bound for item values during random generation.
+        dimension (int): Dimension of the weights for the items.
+        seed (int): Random seed for reproducible weight generation.
+        num_scenarios (int): Number of scenarios for multi-scenario optimization.
+        weights (np.ndarray): Fixed weights for the knapsack items.
+        capacity_np (np.ndarray): Capacity constraints as a numpy array.
+    """
+
     def __init__(
         self,
         num_decisions: int,
@@ -16,6 +33,18 @@ class CVXPYDiffKnapsackModel(CVXPYDiffModel):
         seed: int = 5,
         num_scenarios: int = 1,
     ):
+        """
+        Initializes the CVXPYDiffKnapsackModel.
+
+        Args:
+            num_decisions (int): Number of items (decision variables) in the knapsack.
+            capacity (float): The capacity constraint of the knapsack.
+            values_lb (float): Lower bound for item values used in random weight generation. Defaults to 3.0.
+            values_ub (float): Upper bound for item values used in random weight generation. Defaults to 8.0.
+            dimension (int): Dimension of the weights for the items. Defaults to 1.
+            seed (int): Random seed for reproducible weight generation. Defaults to 5.
+            num_scenarios (int): Number of scenarios for multi-scenario optimization. Defaults to 1.
+        """
         # Setting input parameters
         self.num_decisions = num_decisions
         self.capacity = capacity
@@ -50,11 +79,27 @@ class CVXPYDiffKnapsackModel(CVXPYDiffModel):
         decisions_batch: dict[str, torch.Tensor],
         predictions_batch: dict[str, torch.Tensor] = None,
     ) -> torch.float:
+        """
+        Computes the objective function value for the knapsack problem.
+        The objective is to maximize the total value of selected items.
+
+        Args:
+            data_batch (dict[str, torch.Tensor]): A dictionary containing input data, including 'item_value'.
+            decisions_batch (dict[str, torch.Tensor]): A dictionary containing decision variables, including 'select_item'.
+            predictions_batch (dict[str, torch.Tensor], optional): Unused for this implementation. Defaults to None.
+
+        Returns:
+            torch.float: The total value of selected items for the batch.
+        """
         v = data_batch["item_value"]
         x = decisions_batch["select_item"]
         return (v * x).sum(-1)
 
     def _create_cp_model(self):
+        """
+        Creates the CVXPY optimization model for the knapsack problem.
+        This method defines the decision variables, constraints, and objective function.
+        """
         x_var = self.cp_vars_dict["select_item"]
         v_par = self.cp_params_dict["item_value"]
         constraints = [x_var >= 0, x_var <= 1, self.weights @ x_var <= self.capacity]

@@ -9,6 +9,23 @@ from src.abstract_models.grbpy import GRBPYModel
 
 
 class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
+    """
+    A Gurobi-based knapsack optimization model.
+    This model solves a knapsack problem where the goal is to maximize the total value
+    of selected items subject to capacity constraints using the Gurobi solver.
+
+    Attributes:
+        num_decisions (int): Number of items (decision variables) in the knapsack.
+        capacity (float): The capacity constraint of the knapsack.
+        weights_lb (float): Lower bound for item weights during random generation.
+        weights_ub (float): Upper bound for item weights during random generation.
+        dimension (int): Dimension of the weights for the items.
+        seed (int): Random seed for reproducible weight generation.
+        num_scenarios (int): Number of scenarios for multi-scenario optimization.
+        weights (np.ndarray): Fixed weights for the knapsack items.
+        capacity_np (np.ndarray): Capacity constraints as a numpy array.
+    """
+
     def __init__(
         self,
         num_decisions: int,
@@ -20,16 +37,16 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
         num_scenarios: int = 1,
     ):
         """
-        Creates a GRBPYKnapsackModel instance
+        Initializes the GRBPYKnapsackModel.
 
         Args:
-            num_decisions (int): Number of decision variables/items for the knapsack
-            capacity (float): Capacity of the knapsack
-            weights_lb (float): Lower bound of the items weights, to generate item weights
-            weights_ub (float): Upper bound of the items weights, to generate item weights
-            dimension (int): Dimension of weights of the items
-            seed (int): Seed (influences weight generation)
-            num_scenarios (int): Number of scenarios the problem consists of
+            num_decisions (int): Number of items (decision variables) in the knapsack.
+            capacity (float): The capacity constraint of the knapsack.
+            weights_lb (float): Lower bound for item weights during random generation. Defaults to 3.0.
+            weights_ub (float): Upper bound for item weights during random generation. Defaults to 8.0.
+            dimension (int): Dimension of the weights for the items. Defaults to 1.
+            seed (int): Random seed for reproducible weight generation. Defaults to None.
+            num_scenarios (int): Number of scenarios for multi-scenario optimization. Defaults to 1.
         """
         # Setting input parameters
         self.num_decisions = num_decisions
@@ -63,6 +80,10 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
         )
 
     def _create_model(self):
+        """
+        Creates the Gurobi optimization model for the knapsack problem.
+        This method defines the decision variables, constraints, and model sense.
+        """
         """Creates model and vars_dict"""
         # Create a GP model
         self.gp_model = gp.Model("knapsack")
@@ -83,6 +104,13 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
         self._model = self.gp_model
 
     def _set_params(self, *params_i: np.ndarray):
+        """
+        Sets the parameters for the knapsack model for a single instance.
+        Updates the objective function with the provided item values.
+
+        Args:
+            *params_i (np.ndarray): Item values for the current instance.
+        """
         (c_i,) = params_i
         if self.num_scenarios > 1:
             self.gp_model.setObjective(gp.quicksum(self.vars_dict["select_item"] @ np.array(c_i)))
@@ -95,21 +123,57 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
         decisions_batch: dict[str, torch.Tensor],
         predictions_batch: dict[str, torch.Tensor] = None,
     ) -> torch.float:
+        """
+        Computes the objective function value for the knapsack problem.
+        The objective is to maximize the total value of selected items.
+
+        Args:
+            data_batch (dict[str, torch.Tensor]): A dictionary containing input data, including 'item_value'.
+            decisions_batch (dict[str, torch.Tensor]): A dictionary containing decision variables, including 'select_item'.
+            predictions_batch (dict[str, torch.Tensor], optional): Unused for this implementation. Defaults to None.
+
+        Returns:
+            torch.float: The total value of selected items for the batch.
+        """
         return (data_batch["item_value"] * decisions_batch["select_item"]).sum(-1)
 
     def _getModel(
         self,
-    ):  # This function overrides the _getModel from the optGrbModel class
+    ):
+        """
+        Returns the Gurobi model and decision variables.
+        This function overrides the _getModel from the optGrbModel class.
+
+        Returns:
+            tuple: A tuple containing the Gurobi model and the decision variables.
+        """
         self._create_model()
         return self.gp_model, self.vars_dict["select_item"]
 
     @staticmethod
     def get_var_domains() -> dict[str, dict[str, bool]]:
+        """
+        Returns the variable domains for the knapsack problem when creating a quadratic variant.
+        Specifies that the decision variables are boolean.
+
+        Returns:
+            dict[str, dict[str, bool]]: A dictionary specifying variable domains.
+        """
         # Since this function is to create a quadratic variant, we only care about first stage variables
         var_domain_dict = {"select_item": {"boolean": True}}  # boolean, integer, nonneg, nonpos, pos, imag, complex
         return var_domain_dict
 
     def get_constraints(self, vars_dict: dict[str, cp.Variable]):
+        """
+        Returns the constraints for the knapsack problem in CVXPY format.
+        Used when creating a quadratic variant.
+
+        Args:
+            vars_dict (dict[str, cp.Variable]): A dictionary mapping variable names to CVXPY variables.
+
+        Returns:
+            list: A list of CVXPY constraints for the knapsack problem.
+        """
         # These constraints are cvxpy style constraints
         x = vars_dict["select_item"]
         return [self.weights @ x <= self.capacity_np]

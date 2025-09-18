@@ -12,6 +12,32 @@ from src.problem import Problem
 
 
 class LancerDecisionMaker(DecisionMaker):
+    """
+    LANCER decision maker implementation based on the paper:
+    "Landscape Surrogate: Learning Decision Losses for Mathematical Optimization Under Partial Information"
+    (NeurIPS 2023) by Zharmagambetov A. et al.
+
+    The algorithm is loosely based on the actor-critic algorithm and trains both a predictive model
+    and a surrogate model that mimics the regret loss. The surrogate model learns to approximate
+    the decision loss landscape, enabling gradient-based learning even when the optimization problem
+    is non-differentiable.
+
+    Attributes:
+        relative_regret (bool): Whether to use relative regret for loss computation.
+        learning_rate_surrogate (float): Learning rate for the surrogate model.
+        learning_rate_predictor (float): Learning rate for the predictor model.
+        weight_decay_surrogate (float): Weight decay for surrogate model regularization.
+        weight_decay_predictor (float): Weight decay for predictor model regularization.
+        regularizer (float): Regularization strength for the surrogate model.
+        batch_size_surrogate_update (int): Batch size for surrogate model updates.
+        batch_size_predictor_update (int): Batch size for predictor model updates.
+        max_iters_surrogate_update (int): Maximum iterations for surrogate model updates per epoch.
+        max_iters_predictor_update (int): Maximum iterations for predictor model updates per epoch.
+        use_replay_buffer (bool): Whether to use a replay buffer for training.
+        surrogate_model_str (str): Type of surrogate model to use.
+        surrogate_model_kwargs (dict): Additional arguments for surrogate model initialization.
+    """
+
     allowed_losses: list[str] = ["lancer"]
 
     allowed_decision_models: list[str] = [
@@ -22,13 +48,6 @@ class LancerDecisionMaker(DecisionMaker):
         "LinearSKL",
         "MLP",
     ]
-
-    """
-    This decision-maker implementation is based on the paper : Landscape Surrogate: Learning Decision Losses for
-    Mathematical Optimization Under Partial Information (NeurIPS 2023) by Zharmagambetov A. et al.
-    The algorithm is loosely based on the actor-critic algorithm, and trains both a predictive model, and a surrogate
-    model that mimics the regret loss.
-    """
 
     def __init__(
         self,
@@ -60,6 +79,38 @@ class LancerDecisionMaker(DecisionMaker):
         pretraining_surrogate: bool = False,
         **kwargs,
     ):
+        """
+        Initializes the LancerDecisionMaker.
+
+        Args:
+            problem (Problem): The problem instance containing data and optimization model.
+            learning_rate_predictor (float): Learning rate for the predictor model. Defaults to 0.005.
+            learning_rate_surrogate (float): Learning rate for the surrogate model. Defaults to 0.001.
+            device_str (str): Device for computations ('cpu' or 'cuda'). Defaults to 'cpu'.
+            predictor_str (str): Type of predictor to use. Defaults to 'MLP'.
+            decision_model_str (str): Type of decision model. Defaults to 'base'.
+            to_decision_pars (str): Strategy for converting predictions to decision parameters. Defaults to 'none'.
+            use_dist_at_mode (str): When to use distributional predictions. Defaults to 'none'.
+            standardize_predictions (bool): Whether to standardize predictions. Defaults to True.
+            init_OLS (bool): Whether to initialize with OLS. Defaults to False.
+            seed (Union[int, None]): Random seed for reproducibility. Defaults to None.
+            predictor_kwargs (dict): Additional arguments for predictor initialization. Defaults to None.
+            decision_model_kwargs (dict): Additional arguments for decision model initialization. Defaults to None.
+            regularizer (float): Regularization strength for the surrogate model. Defaults to 0.1.
+            surrogate_model_str (str): Type of surrogate model ('MLP'). Defaults to 'MLP'.
+            surrogate_model_kwargs (dict): Additional arguments for surrogate model. Defaults to None.
+            batch_size_surrogate_update (int): Batch size for surrogate model updates. Defaults to 1024.
+            batch_size_predictor_update (int): Batch size for predictor model updates. Defaults to 128.
+            max_iters_surrogate_update (int): Maximum iterations for surrogate updates per epoch. Defaults to 5.
+            max_iters_predictor_update (int): Maximum iterations for predictor updates per epoch. Defaults to 5.
+            use_replay_buffer (bool): Whether to use a replay buffer for training. Defaults to True.
+            weight_decay_predictor (float): Weight decay for predictor regularization. Defaults to 0.01.
+            weight_decay_surrogate (float): Weight decay for surrogate regularization. Defaults to 0.01.
+            relative_regret (bool): Whether to use relative regret for loss computation. Defaults to True.
+            num_epochs_pretraining_surrogate (int): Number of epochs for surrogate pretraining. Defaults to 100.
+            pretraining_surrogate (bool): Whether to pretrain the surrogate model. Defaults to False.
+            **kwargs: Additional keyword arguments.
+        """
         super().__init__(
             problem,
             learning_rate_predictor,
