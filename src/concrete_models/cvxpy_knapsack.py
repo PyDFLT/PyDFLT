@@ -9,7 +9,7 @@ class CVXPYDiffKnapsackModel(CVXPYDiffModel):
     """
     A CVXPY-based differentiable knapsack optimization model.
     This model solves a knapsack problem where the goal is to maximize the total value
-    of selected items subject to capacity constraints.
+    of selected items subject to capacity constraints, allowing partial item selection.
 
     Attributes:
         num_decisions (int): Number of items (decision variables) in the knapsack.
@@ -104,4 +104,5 @@ class CVXPYDiffKnapsackModel(CVXPYDiffModel):
         v_par = self.cp_params_dict["item_value"]
         constraints = [x_var >= 0, x_var <= 1, self.weights @ x_var <= self.capacity]
         obj = cp.sum(v_par @ x_var)
-        self.cp_model = cp.Problem(cp.Maximize(obj), constraints)
+
+        return cp.Problem(cp.Maximize(obj), constraints)

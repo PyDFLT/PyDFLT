@@ -91,24 +91,24 @@ class TwoStageKnapsack(GRBPYTwoStageModel):
         This method defines the first and second stage variables, constraints, and objective function.
         """
         # Create a GP model
-        self.gp_model = gp.Model("two_stage_knapsack")
-        self.vars_dict = {}
-        self.second_stage_vars_dict = {}
+        gp_model = gp.Model("two_stage_knapsack")
+        vars_dict = {}
+        second_stage_vars_dict = {}
 
         # Define variables
-        x = self.gp_model.addMVar(self.num_decisions, name="select_item", vtype=GRB.BINARY)
-        y_add = self.gp_model.addMVar((self.num_decisions, self.num_scenarios), name="y_add", vtype=GRB.BINARY)
-        y_remove = self.gp_model.addMVar((self.num_decisions, self.num_scenarios), name="y_remove", vtype=GRB.BINARY)
-        self.vars_dict["select_item"] = x
-        self.second_stage_vars_dict["y_remove"] = y_remove
-        self.second_stage_vars_dict["y_add"] = y_add
+        x = gp_model.addMVar(self.num_decisions, name="select_item", vtype=GRB.BINARY)
+        y_add = gp_model.addMVar((self.num_decisions, self.num_scenarios), name="y_add", vtype=GRB.BINARY)
+        y_remove = gp_model.addMVar((self.num_decisions, self.num_scenarios), name="y_remove", vtype=GRB.BINARY)
+        vars_dict["select_item"] = x
+        second_stage_vars_dict["y_remove"] = y_remove
+        second_stage_vars_dict["y_add"] = y_add
 
         # It is a maximization problem
-        self.gp_model.modelSense = self.model_sense_int
+        gp_model.modelSense = self.model_sense_int
 
         # Set constraints
-        self.gp_model.addConstrs(x[i] >= y_remove[i, j] for i in range(self.num_decisions) for j in range(self.num_scenarios))
-        self.gp_model.addConstrs(x[i] <= 1 - y_add[i, j] for i in range(self.num_decisions) for j in range(self.num_scenarios))
+        gp_model.addConstrs(x[i] >= y_remove[i, j] for i in range(self.num_decisions) for j in range(self.num_scenarios))
+        gp_model.addConstrs(x[i] <= 1 - y_add[i, j] for i in range(self.num_decisions) for j in range(self.num_scenarios))
 
         # Set objective
         obj = gp.quicksum(
@@ -117,7 +117,11 @@ class TwoStageKnapsack(GRBPYTwoStageModel):
             for j in range(self.num_scenarios)
         )
 
-        self.gp_model.setObjective(obj)
+        gp_model.setObjective(obj)
+
+        self.second_stage_vars_dict = second_stage_vars_dict
+
+        return gp_model, vars_dict
 
     def _set_params(self, *parameters_i: np.ndarray):
         """

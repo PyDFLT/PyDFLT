@@ -64,15 +64,15 @@ class ShortestPath(GRBPYModel, optGrbModel):
         """
         """Creates model AND vars_dict dimension"""
         # Create a GP model
-        self.gp_model = gp.Model("shortestpath")
-        self.vars_dict = {}
+        gp_model = gp.Model("shortestpath")
+        vars_dict = {}
 
         # Define vars
         name = "select_arc"
-        x = self.gp_model.addMVar((len(self.arcs),), name=name, vtype=GRB.BINARY)
-        self.vars_dict[name] = x
+        x = gp_model.addMVar((len(self.arcs),), name=name, vtype=GRB.BINARY)
+        vars_dict[name] = x
         # Set model sense
-        self.gp_model.modelSense = self.modelSense = self.model_sense_int
+        gp_model.modelSense = self.modelSense = self.model_sense_int
 
         # Constraints
         for i in range(self.grid[0]):
@@ -88,17 +88,15 @@ class ShortestPath(GRBPYModel, optGrbModel):
                         expr -= x[self.arcs_to_index[e]]
                 # source
                 if i == 0 and j == 0:
-                    self.gp_model.addConstr(expr == -1)
+                    gp_model.addConstr(expr == -1)
                 # sink
                 elif i == self.grid[0] - 1 and j == self.grid[0] - 1:
-                    self.gp_model.addConstr(expr == 1)
+                    gp_model.addConstr(expr == 1)
                 # transition
                 else:
-                    self.gp_model.addConstr(expr == 0)
+                    gp_model.addConstr(expr == 0)
 
-        # To make sure pyepo losses work
-        self.x = x
-        self._model = self.gp_model
+        return gp_model, vars_dict
 
     def _get_arcs(self):
         """
@@ -172,15 +170,34 @@ class ShortestPath(GRBPYModel, optGrbModel):
     def get_constraints(self, vars_dict: dict[str, cp.Variable]):
         """
         Returns the constraints for the shortest path problem in CVXPY format.
-        Used when creating a quadratic variant.
-        Note: This implementation appears to be incorrect and should be updated for shortest path constraints.
+        Used when creating a quadratic variant. These are flow conservation constraints.
 
         Args:
             vars_dict (dict[str, cp.Variable]): A dictionary mapping variable names to CVXPY variables.
 
         Returns:
-            list: A list of CVXPY constraints (currently returns knapsack constraints, needs correction).
+            list: A list of CVXPY constraints for the shortest path problem.
         """
-        # These constraints are cvxpy style constraints
         x = vars_dict["select_arc"]
-        return [self.weights @ x <= self.capacity_np]
+        constraints = []
+        for i in range(self.grid[0]):
+            for j in range(self.grid[1]):
+                v = i * self.grid[1] + j
+                expr = 0
+                for e in self.arcs:
+                    # flow in
+                    if v == e[1]:
+                        expr += x[self.arcs_to_index[e]]
+                    # flow out
+                    elif v == e[0]:
+                        expr -= x[self.arcs_to_index[e]]
+                # source
+                if i == 0 and j == 0:
+                    constraints.append(expr == -1)
+                # sink
+                elif i == self.grid[0] - 1 and j == self.grid[1] - 1:
+                    constraints.append(expr == 1)
+                # transition
+                else:
+                    constraints.append(expr == 0)
+        return constraints

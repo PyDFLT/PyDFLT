@@ -6,6 +6,7 @@ import cvxpy as cp
 import gurobipy as gp
 import numpy as np
 import torch
+from pyepo.model.opt import optModel
 
 from src.abstract_models.base import MIN, OptimizationModel
 from src.abstract_models.cvxpy_diff import CVXPYDiffModel
@@ -55,14 +56,16 @@ class GRBPYModel(OptimizationModel):
                                                                        but are known.
         """
         super().__init__(var_shapes, param_to_predict_shapes, model_sense, extra_param_shapes)
-        self._create_model()
+        self.gp_model, self.vars_dict = self._create_model()
+        if isinstance(self, optModel):  # when the concrete model is an PyEPO optModel, we need to set attributes
+            self._set_optmodel_attributes()
         self.feasibility_tol = feasibility_tol
         self.rounding_decimal = rounding_decimal
         self.gp_model.setParam("FeasibilityTol", self.feasibility_tol)
         self.lazy_constraints_method = None
 
     @abstractmethod
-    def _create_model(self) -> None:
+    def _create_model(self) -> tuple[gp.Model, dict[str, gp.MVar | gp.Var]]:
         """
         Abstract method to create the Gurobipy model and initialize the `vars_dict`.
         Subclasses must implement this method to define the Gurobi problem structure,
@@ -207,6 +210,12 @@ class GRBPYModel(OptimizationModel):
             GRBPYModel.__init__(qp, **qp_init_args)
 
         return qp
+
+    def _set_optmodel_attributes(self) -> None:
+        assert len(self.vars_dict) == 1, "When the concrete model is specified as an optModel, only one decision variables can be defined"
+        self.x = next(iter(self.vars_dict.values()))
+        self.modelSense = self.model_sense_int
+        self._model = self.gp_model
 
     @staticmethod
     def _set_params_qp(self: Any, *params_i: np.ndarray) -> None:

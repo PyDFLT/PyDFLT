@@ -86,22 +86,20 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
         """
         """Creates model and vars_dict"""
         # Create a GP model
-        self.gp_model = gp.Model("knapsack")
-        self.vars_dict = {}
+        gp_model = gp.Model("knapsack")
+        vars_dict = {}
 
         # Define vars
         name = "select_item"
-        x = self.gp_model.addMVar(self.num_vars, name=name, vtype=GRB.BINARY)
-        self.vars_dict[name] = x
+        x = gp_model.addMVar(self.num_vars, name=name, vtype=GRB.BINARY)
+        vars_dict[name] = x
         # It is a maximization problem
-        self.gp_model.modelSense = self.modelSense = self.model_sense_int
+        gp_model.modelSense = self.modelSense = self.model_sense_int
 
         # Constraints
-        self.gp_model.addConstr(self.weights @ x <= self.capacity_np)
+        gp_model.addConstr(self.weights @ x <= self.capacity_np)
 
-        # To make sure pyepo losses work
-        self.x = x
-        self._model = self.gp_model
+        return gp_model, vars_dict
 
     def _set_params(self, *params_i: np.ndarray):
         """

@@ -85,27 +85,26 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
         Creates the Gurobi optimization model for the weighted set multi-cover problem.
         This method defines the first and second stage variables, constraints, and objective function.
         """
-        """Creates model AND variables_dict"""
         # Create a GP model
-        self.gp_model = gp.Model("wsmc")
-        self.vars_dict = {}
-        self.second_stage_vars_dict = {}
+        gp_model = gp.Model("wsmc")
+        vars_dict = {}
+        second_stage_vars_dict = {}
 
         # Define variables
         # number of each cover that is picked
-        x = self.gp_model.addMVar((self.num_covers,), vtype=GRB.INTEGER, name="select_cover")
-        self.vars_dict["select_cover"] = x
+        x = gp_model.addMVar((self.num_covers,), vtype=GRB.INTEGER, name="select_cover")
+        vars_dict["select_cover"] = x
         # Unmet coverage based on cover selection
-        y = self.gp_model.addMVar((self.num_items, self.num_scenarios), vtype=GRB.INTEGER, name="unmet_coverage")
-        self.second_stage_vars_dict["unmet_coverage"] = y
+        y = gp_model.addMVar((self.num_items, self.num_scenarios), vtype=GRB.INTEGER, name="unmet_coverage")
+        second_stage_vars_dict["unmet_coverage"] = y
 
         if self.recovery_ratio > 0:  # Excess coverage that is not needed
-            z = self.gp_model.addMVar((self.num_items, self.num_scenarios), vtype=GRB.INTEGER, name="excess_coverage")
-            self.second_stage_vars_dict["excess_coverage"] = z
+            z = gp_model.addMVar((self.num_items, self.num_scenarios), vtype=GRB.INTEGER, name="excess_coverage")
+            second_stage_vars_dict["excess_coverage"] = z
 
         # It is a minimization problem
-        self.gp_model.modelSense = GRB.MINIMIZE
-        assert self.model_sense_int == self.gp_model.modelSense, "Is it a maximization or minimization problem? Check model sense."
+        gp_model.modelSense = GRB.MINIMIZE
+        assert self.model_sense_int == gp_model.modelSense, "Is it a maximization or minimization problem? Check model sense."
 
         # Set objective (there are no first stage constraints in this problem)
         obj = gp.quicksum(self.cover_costs[j] * x[j] for j in range(self.num_covers)) + gp.quicksum(
@@ -118,9 +117,13 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
             )
 
             # The first num_items of covers are the single item covers, in order
-            self.gp_model.addConstrs(z[i, k] <= x[i] for i in range(self.num_items) for k in range(self.num_scenarios))
+            gp_model.addConstrs(z[i, k] <= x[i] for i in range(self.num_items) for k in range(self.num_scenarios))
 
-        self.gp_model.setObjective(obj)
+        gp_model.setObjective(obj)
+
+        self.second_stage_vars_dict = second_stage_vars_dict
+
+        return gp_model, vars_dict
 
     def _set_params(self, *parameters_i: np.ndarray):
         """

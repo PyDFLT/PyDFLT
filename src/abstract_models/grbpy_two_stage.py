@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from typing import Any, Optional
 
+import gurobipy as gp
 import numpy as np
 import torch
 
@@ -41,7 +42,6 @@ class GRBPYTwoStageModel(GRBPYModel):
                                                                        parameters that change from sample to sample
                                                                        but are known.
         """
-        self.second_stage_vars_dict = {}
         GRBPYModel.__init__(
             self,
             variable_shapes,
@@ -49,26 +49,6 @@ class GRBPYTwoStageModel(GRBPYModel):
             model_sense,
             extra_param_shapes=extra_param_shapes,
         )
-
-    @abstractmethod
-    def _create_model(self) -> None:
-        """
-        Abstract method to create the Gurobipy model and initialize the `vars_dict`.
-        Subclasses must implement this method to define the Gurobi problem structure,
-        including variables, objective, and constraints.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def _set_params(self, *params_i: np.ndarray) -> None:
-        """
-        Abstract method to set the parameters of the Gurobipy model for a single instance.
-        Subclasses must implement this method to update the model's parameters based on the input.
-
-        Args:
-            *params_i (np.ndarray): Parameters (as numpy arrays) to set in the Gurobi model.
-        """
-        raise NotImplementedError
 
     def get_objective(
         self,

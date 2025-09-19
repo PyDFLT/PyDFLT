@@ -49,11 +49,11 @@ class CVXPYDiffModel(OptimizationModel):
         """
         super().__init__(var_shapes, param_to_predict_shapes, model_sense, extra_param_shapes)
         self._init_vars_and_params()
-        self._create_cp_model()
+        self.cp_model = self._create_cp_model()
         self.set_layer()
 
     @abstractmethod
-    def _create_cp_model(self) -> None:
+    def _create_cp_model(self) -> cp.Problem:
         """
         Creates the CVXPY optimization model (`self.cp_model`).
         Users should override this method to implement their specific optimization problem.
