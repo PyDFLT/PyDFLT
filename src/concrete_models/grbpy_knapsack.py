@@ -83,8 +83,10 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
         """
         Creates the Gurobi optimization model for the knapsack problem.
         This method defines the decision variables, constraints, and model sense.
+
+        Returns:
+            tuple: A tuple containing the Gurobi model and the variables dictionary.
         """
-        """Creates model and vars_dict"""
         # Create a GP model
         gp_model = gp.Model("knapsack")
         vars_dict = {}

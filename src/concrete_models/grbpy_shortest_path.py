@@ -61,8 +61,10 @@ class ShortestPath(GRBPYModel, optGrbModel):
         """
         Creates the Gurobi optimization model for the shortest path problem.
         This method defines the decision variables, flow conservation constraints, and model sense.
+
+        Returns:
+            tuple: A tuple containing the Gurobi model and the variables dictionary.
         """
-        """Creates model AND vars_dict dimension"""
         # Create a GP model
         gp_model = gp.Model("shortestpath")
         vars_dict = {}

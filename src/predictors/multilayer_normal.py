@@ -24,6 +24,19 @@ _str_to_activation = {
 
 
 class MLPNormalPredictor(Predictor, nn.Module):
+    """
+    A Multi-Layer Perceptron (MLP) predictor that outputs parameters for a Normal distribution.
+    This class extends both Predictor and nn.Module to create a neural network that predicts
+    both the mean and standard deviation (sigma) of a Normal distribution.
+
+    Attributes:
+        num_inputs (int): The number of input features for the predictor.
+        num_outputs (int): The total number of output features (2 * original num_outputs for mean and sigma).
+        num_scenarios (int): The number of scenarios the predictor is designed to handle.
+        mu_layer (nn.Sequential): The neural network layers for predicting the mean.
+        sigma_layer (nn.Sequential): The neural network layers for predicting the log-sigma.
+    """
+
     def __init__(
         self,
         num_inputs: int,
@@ -40,6 +53,24 @@ class MLPNormalPredictor(Predictor, nn.Module):
         *args,
         **kwargs,
     ):
+        """
+        Initializes the MLPNormalPredictor.
+
+        Args:
+            num_inputs (int): The number of input features.
+            num_outputs (int): The number of output features (will be doubled for mean and sigma).
+            num_scenarios (int): The number of scenarios to predict for. Defaults to 1.
+            n_layers (int): The number of hidden layers in the MLP. Defaults to 2.
+            size (int): The number of neurons in each hidden layer. Defaults to 100.
+            activation (Activation): The activation function for hidden layers. Defaults to 'tanh'.
+            output_activation (Activation): The activation function for output layers. Defaults to 'identity'.
+            init_bias (Union[float, np.array]): Initial bias for the mean layer. Defaults to 0.0.
+            init_bias_sigma (Union[float, np.array]): Initial bias for the sigma layer. Defaults to 0.0.
+            scale (float): Scale factor for the scale-shift output activation. Defaults to 0.1.
+            shift (Union[float, np.array]): Shift factor for the scale-shift output activation. Defaults to 0.0.
+            *args: Variable length argument list for nn.Module.
+            **kwargs: Arbitrary keyword arguments for nn.Module.
+        """
         Predictor.__init__(self, num_inputs, num_outputs, num_scenarios)
         nn.Module.__init__(self, *args, **kwargs)
         self.num_inputs = num_inputs
@@ -63,25 +94,72 @@ class MLPNormalPredictor(Predictor, nn.Module):
         self.mlp = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor):
+        """
+        Performs the forward pass of the MLPNormalPredictor.
+        Returns concatenated mean and sigma parameters for a Normal distribution.
+
+        Args:
+            x (torch.Tensor): The input tensor to the MLP.
+
+        Returns:
+            torch.Tensor: Concatenated tensor of mean and sigma parameters.
+        """
         output = self.mlp(x)
         mu, log_sigma = torch.chunk(output, 2, dim=-1)
         sigma = torch.exp(log_sigma)
         return torch.cat((mu, sigma), dim=-1)
 
     def forward_mean(self, x: torch.Tensor):
+        """
+        Performs the forward pass and returns only the mean parameters.
+
+        Args:
+            x (torch.Tensor): The input tensor to the MLP.
+
+        Returns:
+            torch.Tensor: The mean parameters only.
+        """
         output = self.forward(x)
         mu, log_sigma = torch.chunk(output, 2, dim=-1)
         return mu
 
     def forward_dist(self, x: torch.Tensor):
+        """
+        Performs the forward pass and returns a Normal distribution object.
+
+        Args:
+            x (torch.Tensor): The input tensor to the MLP.
+
+        Returns:
+            torch.distributions.Normal: A Normal distribution with predicted parameters.
+        """
         output = self.forward(x)
         return self.output_to_dist(output)
 
     def parameters(self, recurse: bool = True) -> Iterator[Parameter]:
+        """
+        Returns an iterator over the module's parameters.
+
+        Args:
+            recurse (bool): If True, yields parameters of this module and all submodules. Defaults to True.
+
+        Returns:
+            Iterator[Parameter]: An iterator over the parameters.
+        """
         return self.mlp.parameters()
 
     @staticmethod
     def output_to_dist(output: torch.Tensor):
+        """
+        Converts raw output tensor to a Normal distribution.
+        Static method that splits the output into mean and sigma and creates a Normal distribution.
+
+        Args:
+            output (torch.Tensor): Raw output tensor containing concatenated mean and sigma.
+
+        Returns:
+            torch.distributions.Normal: A Normal distribution with the specified parameters.
+        """
         mu, sigma = torch.chunk(output, 2, dim=-1)
         dist = Normal(mu, sigma)
 

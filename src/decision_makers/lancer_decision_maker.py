@@ -207,8 +207,15 @@ class LancerDecisionMaker(DecisionMaker):
 
     def update_surrogate_model(self, predictions, true_values, objectives, max_iter):
         """
-        Fitting LANCER model
-        Arguments: predictions, true_values, objectives (from experience replay buffer)
+        Updates the surrogate model by training it on collected experience data.
+        The surrogate model learns to approximate the regret landscape using prediction errors
+        and corresponding objective values from the experience replay buffer.
+
+        Args:
+            predictions (torch.Tensor): Predicted parameter values from the predictor model.
+            true_values (torch.Tensor): True parameter values from the data.
+            objectives (torch.Tensor): Objective values (regrets) corresponding to the predictions.
+            max_iter (int): Maximum number of training iterations for the surrogate model.
         """  # Use keys to predict somehow to obtain predictions and true values
         # Compute nr batches based on nr samples / batch size
         # Iterate through iterations
@@ -240,7 +247,15 @@ class LancerDecisionMaker(DecisionMaker):
 
     def update_predictor(self, data):
         """
-        Fitting prediction model on the training data
+        Updates the predictor model using the surrogate model's approximated gradients.
+        This implements the actor-critic approach where the surrogate model (critic) guides
+        the predictor model (actor) training.
+
+        Args:
+            data (dict[str, torch.Tensor]): Training data batch containing features and true values.
+
+        Returns:
+            dict[str, float]: Dictionary containing loss and gradient norm information.
         """
         self.surrogate_model.eval()
         self.trainable_predictive_model.train()
@@ -270,7 +285,7 @@ class LancerDecisionMaker(DecisionMaker):
                 # logger.info(f'Fitting predictor, itr:  {total_iter} , lancer loss:  {torch.mean(total_loss)}')
                 if total_iter >= self.max_iters_predictor_update:
                     break
-        # TODO: GV -- are you sure you want to return the loss on the last batch only?
+
         return total_loss
 
     def run_epoch(self, mode: str, epoch_num: int, metrics: list[str] = None) -> list[dict[str, float]]:

@@ -99,6 +99,9 @@ class CVXPYDiffKnapsackModel(CVXPYDiffModel):
         """
         Creates the CVXPY optimization model for the knapsack problem.
         This method defines the decision variables, constraints, and objective function.
+
+        Returns:
+            cp.Problem: The CVXPY optimization problem instance.
         """
         x_var = self.cp_vars_dict["select_item"]
         v_par = self.cp_params_dict["item_value"]

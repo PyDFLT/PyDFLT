@@ -84,6 +84,9 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
         """
         Creates the Gurobi optimization model for the weighted set multi-cover problem.
         This method defines the first and second stage variables, constraints, and objective function.
+
+        Returns:
+            tuple: A tuple containing the Gurobi model and the variables dictionary.
         """
         # Create a GP model
         gp_model = gp.Model("wsmc")

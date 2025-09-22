@@ -1,7 +1,5 @@
-from abc import abstractmethod
 from typing import Any, Optional
 
-import gurobipy as gp
 import numpy as np
 import torch
 
