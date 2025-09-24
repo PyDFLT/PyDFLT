@@ -25,7 +25,7 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
         cover_costs_lb: int,
         cover_costs_ub: int,
         recovery_ratio: float = 0,
-        seed: int = 0,
+        seed: int = 5,
         silvestri2023: bool = False,
         density: float = 0.25,
         num_scenarios: int = 1,
