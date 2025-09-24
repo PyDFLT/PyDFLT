@@ -33,7 +33,7 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
         weights_lb: float = 3.0,
         weights_ub: float = 8.0,
         dimension: int = 1,
-        seed: int = None,
+        seed: int = 5,
         num_scenarios: int = 1,
     ):
         """
