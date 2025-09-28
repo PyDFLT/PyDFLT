@@ -11,13 +11,12 @@ The core functionality includes:
 import copy
 from typing import Any, Callable, Tuple
 
-from utils.load import load_data_from_dict
-
 from src.generate_data_functions import (
     gen_data_knapsack,
     gen_data_shortestpath,
     gen_data_wsmc,
 )
+from src.utils.load import load_data_from_dict
 
 data_registry: dict[str, Tuple[Callable, dict[str, Any]]] = {}
 

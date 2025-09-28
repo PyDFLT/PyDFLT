@@ -41,7 +41,7 @@ class MLPPredictor(Predictor, nn.Module):
         num_inputs: int,
         num_outputs: int,
         num_scenarios: int = 1,
-        n_layers: int = 2,  # 0 for a linear predictor
+        num_hidden_layers: int = 2,  # 0 for a linear predictor
         size: int = 252,
         activation: Activation = "leaky_relu",
         output_activation: Activation = "identity",
@@ -57,7 +57,7 @@ class MLPPredictor(Predictor, nn.Module):
             num_inputs (int): The number of input features.
             num_outputs (int): The number of output features.
             num_scenarios (int): The number of scenarios to predict for. Defaults to 1.
-            n_layers (int): The number of hidden layers in the MLP. 0 means a linear predictor. Defaults to 2.
+            num_hidden_layers (int): The number of hidden layers in the MLP. 0 means a linear predictor. Defaults to 2.
             size (int): The number of neurons in each hidden layer. Defaults to 252.
             activation (Activation): The activation function to use for hidden layers.
                                      Can be a string (e.g., 'relu', 'leaky_relu') or an nn.Module.
@@ -80,7 +80,7 @@ class MLPPredictor(Predictor, nn.Module):
 
         layers = []
         in_size = num_inputs
-        for _ in range(n_layers):
+        for _ in range(num_hidden_layers):
             layers.append(nn.Linear(in_size, size))
             layers.append(activation)
             in_size = size

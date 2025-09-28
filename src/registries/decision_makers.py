@@ -13,6 +13,7 @@ from typing import Any, Tuple
 
 from src.decision_makers import (
     DifferentiableDecisionMaker,
+    LancerDecisionMaker,
     SFGEDecisionMaker,
 )
 
@@ -61,31 +62,6 @@ def make_decision_maker(problem: Any, name: str, **override_params: Any) -> Tupl
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # DECISION MAKERS # # # # # # # # # # # # # # # # # # # # # # # #
-
-register_decision_maker(
-    name="sfge",
-    model_class=SFGEDecisionMaker,
-    learning_rate=0.01,
-    batch_size=32,
-    device_str="cpu",
-    loss_function_str="sfge",
-    predictor_str="MLP",
-    predictor_kwargs={"bias": True},
-    noisifier_kwargs={"bias": True, "sigma_setting": "independent"},
-)
-
-register_decision_maker(
-    name="sfge_warmstart",
-    model_class=SFGEDecisionMaker,
-    learning_rate=0.01,
-    batch_size=32,
-    device_str="cpu",
-    loss_function_str="sfge",
-    predictor_str="MLP",
-    predictor_kwargs={"bias": True, "init_bias_setting": "OLS"},
-    noisifier_kwargs={"bias": True, "sigma_setting": "independent"},
-)
-
 register_decision_maker(
     name="differentiable",
     model_class=DifferentiableDecisionMaker,
@@ -96,11 +72,41 @@ register_decision_maker(
 )
 
 register_decision_maker(
-    name="pfl",
+    name="PFL linear",
     model_class=DifferentiableDecisionMaker,
     learning_rate=0.001,
     device_str="cpu",
     loss_function_str="mse",
     predictor_str="MLP",
-    predictor_kwargs={"n_layers": 2, "size": 256},
+    predictor_kwargs={"num_hidden_layers": 0},
+)
+
+register_decision_maker(
+    name="SPO+ linear",
+    model_class=DifferentiableDecisionMaker,
+    learning_rate=0.001,
+    device_str="cpu",
+    loss_function_str="SPOPlus",
+    predictor_str="MLP",
+    predictor_kwargs={"num_hidden_layers": 0},
+)
+
+register_decision_maker(
+    name="SFGE",
+    model_class=SFGEDecisionMaker,
+    learning_rate=0.01,
+    batch_size=32,
+    device_str="cpu",
+    loss_function_str="regret",
+    predictor_str="MLP",
+    noisifier_kwargs={"sigma_setting": "independent"},
+)
+
+register_decision_maker(
+    name="Lancer",
+    model_class=LancerDecisionMaker,
+    learning_rate=0.01,
+    batch_size=32,
+    device_str="cpu",
+    predictor_str="MLP",
 )

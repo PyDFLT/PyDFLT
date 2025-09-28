@@ -103,8 +103,6 @@ register_model(
 )
 
 # Relevant models ---------------------------------------------------------------------------------------------------- #
-
-
 register_model(
     name="knapsack_2_stage",
     model_class=TwoStageKnapsack,

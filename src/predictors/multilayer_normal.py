@@ -42,7 +42,7 @@ class MLPNormalPredictor(Predictor, nn.Module):
         num_inputs: int,
         num_outputs: int,
         num_scenarios: int = 1,
-        n_layers: int = 2,
+        num_hidden_layers: int = 2,
         size: int = 100,
         activation: Activation = "tanh",
         output_activation: Activation = "identity",
@@ -60,7 +60,7 @@ class MLPNormalPredictor(Predictor, nn.Module):
             num_inputs (int): The number of input features.
             num_outputs (int): The number of output features (will be doubled for mean and sigma).
             num_scenarios (int): The number of scenarios to predict for. Defaults to 1.
-            n_layers (int): The number of hidden layers in the MLP. Defaults to 2.
+            num_hidden_layers (int): The number of hidden layers in the MLP. Defaults to 2.
             size (int): The number of neurons in each hidden layer. Defaults to 100.
             activation (Activation): The activation function for hidden layers. Defaults to 'tanh'.
             output_activation (Activation): The activation function for output layers. Defaults to 'identity'.
@@ -83,7 +83,7 @@ class MLPNormalPredictor(Predictor, nn.Module):
             output_activation = _str_to_activation[output_activation](scale, shift)
         layers = []
         in_size = num_inputs
-        for _ in range(n_layers):
+        for _ in range(num_hidden_layers):
             layers.append(nn.Linear(in_size, size))
             layers.append(activation)
             in_size = size
