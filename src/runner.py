@@ -118,7 +118,12 @@ class Runner:
             ), "If early_stop is True, min_delta_early_stop and patience_early_stop are required."
 
         # State variables
-        self.best_val_metric = np.inf
+        if self.main_metric == 'objective' and self.decision_maker.problem.opt_model.model_sense == 'MAX':
+            self.main_metric_sense = 'MAX'
+            self.best_val_metric = -np.inf
+        else:
+            self.main_metric_sense = 'MIN'
+            self.best_val_metric = np.inf
 
         self.val_metrics = self.allowed_metrics if val_metrics is None else val_metrics
         self.test_metrics = self.allowed_metrics if test_metrics is None else test_metrics
@@ -233,7 +238,12 @@ class Runner:
         Returns:
             bool: True if early stopping should be triggered, False otherwise.
         """
-        if current_val_metric < self.best_val_metric + self.min_delta_early_stop:
+        if self.main_metric_sense == 'MAX':
+            early_stop_condition_holds = current_val_metric > self.best_val_metric + self.min_delta_early_stop
+        else:
+            early_stop_condition_holds = current_val_metric < self.best_val_metric + self.min_delta_early_stop
+
+        if early_stop_condition_holds:
             self.best_val_metric = current_val_metric  # Update the best validation metric
             self.no_improvement_count = 0  # Reset the no improvement counter
         else:  # No significant improvement

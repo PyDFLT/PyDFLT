@@ -1,7 +1,7 @@
 import copy
 import inspect
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, Literal
 
 import numpy as np
 import torch
@@ -36,7 +36,7 @@ class OptimizationModel(ABC):
         self,
         var_shapes: dict[str, tuple[int, ...]],
         param_to_predict_shapes: dict[str, tuple[int, ...]],
-        model_sense: str,
+        model_sense: Literal["MIN", "MAX"],
         extra_param_shapes: Optional[dict[str, tuple[int, ...]]] = None,
         num_scenarios: int = 1,
     ) -> None:
