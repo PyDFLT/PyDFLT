@@ -1,7 +1,8 @@
-import numpy as np
-import pytest
 import unittest
 from types import SimpleNamespace
+
+import numpy as np
+import pytest
 
 from src.runner import Runner
 
@@ -57,6 +58,7 @@ def test_runner_maximization_updates_main_metric(tmp_path) -> None:
     assert runner._check_early_stopping(1.05) is True
     assert runner.best_val_metric == pytest.approx(1.07)
     assert runner.no_improvement_count == 2
+
 
 # This allows running the tests directly from the file
 if __name__ == "__main__":

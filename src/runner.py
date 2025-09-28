@@ -32,6 +32,7 @@ class Runner:
         main_metric (str): The primary metric used for model selection and early stopping.
         store_min_and_max (bool): Whether to store min and max values of metrics in the logger.
         verbose (bool): If True, print status messages to the console.
+        main_metric_sense (str): Direction of optimisation for the main metric, either 'MIN' or 'MAX'.
         no_improvement_count (int): Counter for epochs without significant improvement, used for early stopping.
         best_val_metric (float): Stores the best validation metric value achieved so far.
         logger (Logger): The logger instance used for recording experiment results.
@@ -118,11 +119,11 @@ class Runner:
             ), "If early_stop is True, min_delta_early_stop and patience_early_stop are required."
 
         # State variables
-        if self.main_metric == 'objective' and self.decision_maker.problem.opt_model.model_sense == 'MAX':
-            self.main_metric_sense = 'MAX'
+        if self.main_metric == "objective" and self.decision_maker.problem.opt_model.model_sense == "MAX":
+            self.main_metric_sense = "MAX"
             self.best_val_metric = -np.inf
         else:
-            self.main_metric_sense = 'MIN'
+            self.main_metric_sense = "MIN"
             self.best_val_metric = np.inf
 
         self.val_metrics = self.allowed_metrics if val_metrics is None else val_metrics
@@ -238,7 +239,7 @@ class Runner:
         Returns:
             bool: True if early stopping should be triggered, False otherwise.
         """
-        if self.main_metric_sense == 'MAX':
+        if self.main_metric_sense == "MAX":
             early_stop_condition_holds = current_val_metric > self.best_val_metric + self.min_delta_early_stop
         else:
             early_stop_condition_holds = current_val_metric < self.best_val_metric + self.min_delta_early_stop

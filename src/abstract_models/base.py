@@ -1,7 +1,7 @@
 import copy
 import inspect
 from abc import ABC, abstractmethod
-from typing import Optional, Literal
+from typing import Literal, Optional
 
 import numpy as np
 import torch
