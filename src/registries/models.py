@@ -64,67 +64,46 @@ def make_model(name: str, **override_params: Any) -> Tuple[Any, dict[str, Any]]:
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # REGISTER MODELS # # # # # # # # # # # # # # # # # # # # # # # #
-# Models directly from literature ------------------------------------------------------------------------------------ #
+# Models from literature --------------------------------------------------------------------------------------------- #
 register_model(
-    name="cvxpy_knapsack_pyepo",
-    model_class=CVXPYDiffKnapsackModel,
-    num_decisions=10,
-    capacity=8,
-    values_lb=3,
-    values_ub=8,
-    dimension=2,
-    seed=None,
-)
-
-register_model(
-    name="grbpy_knapsack_pyepo",
+    name="knapsack_2D_Tang2022",
     model_class=GRBPYKnapsackModel,
-    num_decisions=10,
+    num_decisions=32,
     capacity=20,
     weights_lb=3,
     weights_ub=8,
     dimension=2,
+    seed=5,  # unknown seed
 )
 
-# TODO: Naming consistency, gbpy/cvx
-register_model(name="shortestpath_5x5", model_class=ShortestPath, grid=(5, 5), num_scenarios=1)
+register_model(name="shortest_path", model_class=ShortestPath, grid=(5, 5))
 
-# TODO: Check parameters
-register_model(
-    name="knapsack_2_stage",
-    model_class=TwoStageKnapsack,
-    num_decision=10,
-    capacity=22,
-    penalty_add=0.1,
-    penalty_remove=10,
-    values_lb=3.0,
-    values_ub=8.0,
-    seed=5,
-)
-
-# Relevant models ---------------------------------------------------------------------------------------------------- #
-register_model(
-    name="knapsack_2_stage",
-    model_class=TwoStageKnapsack,
-    num_decision=10,
-    capacity=22,
-    penalty_add=0.1,
-    penalty_remove=10,
-    values_lb=3.0,
-    values_ub=8.0,
-    seed=5,
-)
+# Parameters for "shortest_path" in different works:
+# Elmachtoub 2022: grid = (5, 5)
+# Tang 2022: grid = (5, 5)
+# Schutte 2024: gird = (10, 10)
 
 register_model(
-    name="wsmc_5x25",
+    name="WSMC_Silvestri2024",
     model_class=WeightedSetMultiCover,
     num_items=5,
     num_covers=25,
     penalty=5,
-    cover_costs_lb=5,
-    cover_costs_ub=50,
+    cover_costs_lb=1,
+    cover_costs_ub=100,
+    Silvestri2024=True,
     seed=5,
-    num_scenarios=1,
+)
+
+# Silvestri 2024: num_items, num_covers \in [(5, 25), (10, 50)], penalty \in [1, 5, 10]
+
+
+# Additional models -------------------------------------------------------------------------------------------------- #
+register_model(name="knapsack_continuous", model_class=CVXPYDiffKnapsackModel, num_decisions=10, capacity=20, values_lb=3, values_ub=8, dimension=2, seed=5)
+
+
+register_model(
+    name="knapsack_2_stage", model_class=TwoStageKnapsack, num_decision=10, capacity=20, penalty_add=0.1, penalty_remove=10, values_lb=3, values_ub=8, seed=5
 )
 
 register_model(
@@ -136,17 +115,5 @@ register_model(
     cover_costs_lb=5,
     cover_costs_ub=50,
     recovery_ratio=0.8,
-    seed=5,
-    num_scenarios=1,
-)
-
-register_model(
-    name="knapsack_2D",
-    model_class=GRBPYKnapsackModel,
-    dimension=2,
-    num_decisions=10,
-    capacity=22,
-    weights_lb=3.0,
-    weights_ub=8.0,
     seed=5,
 )

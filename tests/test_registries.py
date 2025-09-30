@@ -48,7 +48,7 @@ class TestRegistries(unittest.TestCase):
         Verify that calling make_model with override_params does not modify
         the original parameters stored in the model_registry.
         """
-        model_name = "grbpy_knapsack_pyepo"
+        model_name = "knapsack_2D_Tang2022"
         original_params = copy.deepcopy(model_registry[model_name][1])  # Get original registered params
 
         # Call make_model with some overriding parameters
@@ -76,7 +76,7 @@ class TestRegistries(unittest.TestCase):
         Verify that calling get_data with override_params does not modify
         the original parameters stored in the data_registry.
         """
-        data_name = "knapsack_pyepo"
+        data_name = "knapsack"
         original_params = copy.deepcopy(data_registry[data_name][1])
 
         # Call get_data with some overriding parameters
