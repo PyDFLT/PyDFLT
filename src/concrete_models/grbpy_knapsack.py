@@ -68,7 +68,8 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
         np.random.seed(seed)
 
         # Initialize fixed parameters
-        self.weights = np.random.uniform(weights_lb, weights_ub, (dimension, num_decisions))
+        unrounded_weights = np.random.uniform(weights_lb, weights_ub, (dimension, num_decisions))
+        self.weights = np.round(unrounded_weights, 1)
         self.capacity_np = self.capacity * np.ones(dimension)
 
         GRBPYModel.__init__(

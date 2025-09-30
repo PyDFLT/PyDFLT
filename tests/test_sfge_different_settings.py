@@ -51,7 +51,7 @@ class TestDecisionMakersUsingWSMC(unittest.TestCase):
         # Predictor kwargs
         predictor_kwargs = {
             "size": 10,
-            "n_layers": 2,
+            "num_hidden_layers": 2,
             "activation": "leaky_relu",
             "output_activation": "leaky_relu",
         }
@@ -96,7 +96,7 @@ class TestDecisionMakersUsingWSMC(unittest.TestCase):
         # Predictor kwargs
         predictor_kwargs = {
             "size": 10,
-            "n_layers": 2,
+            "num_hidden_layers": 2,
             "activation": "leaky_relu",
             "output_activation": "leaky_relu",
         }
@@ -142,7 +142,7 @@ class TestDecisionMakersUsingWSMC(unittest.TestCase):
         # Predictor kwargs
         predictor_kwargs = {
             "size": 10,
-            "n_layers": 2,
+            "num_hidden_layers": 2,
             "activation": "leaky_relu",
             "output_activation": "leaky_relu",
         }

@@ -30,5 +30,5 @@ decision_maker:
   loss_function_str: mse
   predictor_kwargs:
     size: 256
-    n_layers: 2
+    num_hidden_layers: 2
     output_activation: identity

@@ -573,7 +573,9 @@ class DecisionMaker:
         # scales with the mean and he std of the training data (only implemented for MLP predictor)
         if self.init_OLS:
             assert not self.standardize_predictions, "When init_OLS is True, standardize_predictions has to be set to False"
-            assert predictor_kwargs_processed.get("n_layers", 1) == 0, "When init_OLS is True, predictor_kwargs n_layers has to be set to 0 (linear model)."
+            assert (
+                predictor_kwargs_processed.get("num_hidden_layers", 1) == 0
+            ), "When init_OLS is True, predictor_kwargs num_hidden_layers has to be set to 0 (linear model)."
         if self.standardize_predictions:
             assert (
                 "shift" not in predictor_kwargs_processed and "scale" not in predictor_kwargs_processed

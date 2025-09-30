@@ -32,4 +32,4 @@ decision_maker:
   learning_rate: 0.005
   predictor_str: MLP
   predictor_kwargs:
-    n_layers: 0
+    num_hidden_layers: 0

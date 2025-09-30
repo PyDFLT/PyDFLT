@@ -36,7 +36,7 @@ problem = Problem(
 )
 
 # Predictor kwargs
-predictor_kwargs = {"n_layers": 0}
+predictor_kwargs = {"num_hidden_layers": 0}
 predictor_str = "MLP"
 
 
