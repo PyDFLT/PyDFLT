@@ -1,6 +1,6 @@
 # PyDFLT
 
-![alt text](https://github.com/PyDFLT/PyDFLT/main/logo.jpg?raw=true)
+![alt text](https://github.com/PyDFLT/PyDFLT/update-readme/logo.jpg?raw=true)
 
 [![CI](https://github.com/PyDFLT/PyDFLT/actions/workflows/CI.yml/badge.svg)](https://github.com/NoahJSchutte/decision-focused-learning-codebase/actions/workflows/CI.yml)
 
