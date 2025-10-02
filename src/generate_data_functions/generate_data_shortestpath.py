@@ -18,6 +18,6 @@ def gen_data_shortestpath(
         seed=seed,
     )
 
-    print(f"Shape of values: {values.shape}, features: {features.shape}.")
+    # print(f"Shape of values: {values.shape}, features: {features.shape}.")
     data_dict = {"arc_costs": values, "features": features}
     return data_dict
