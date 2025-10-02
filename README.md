@@ -1,6 +1,8 @@
 # PyDFLT
 
-[![CI](https://github.com/NoahJSchutte/decision-focused-learning-codebase/actions/workflows/CI.yml/badge.svg)](https://github.com/NoahJSchutte/decision-focused-learning-codebase/actions/workflows/CI.yml)
+![alt text](https://github.com/PyDFLT/PyDFLT/main/logo.jpg?raw=true)
+
+[![CI](https://github.com/PyDFLT/PyDFLT/actions/workflows/CI.yml/badge.svg)](https://github.com/NoahJSchutte/decision-focused-learning-codebase/actions/workflows/CI.yml)
 
 
 PyDFLT is a (to be published) Python package for benchmarking decision-focused learning (DFL) algorithms.
