@@ -2,40 +2,11 @@ import os
 from datetime import datetime
 from typing import Any, Dict
 
+import numpy as np
 import optuna
 import yaml
 
-
-def create_study(study_name, prunner=None, storage_url=None):
-    """Create or load an existing study."""
-    if storage_url is None:
-        storage_url = f"sqlite:////{study_name}.db"
-    print("Storage url:", storage_url)
-    return optuna.create_study(
-        study_name=study_name,
-        storage=storage_url,
-        pruner=prunner,
-        direction="minimize",
-        load_if_exists=True,
-    )
-
-
-def save_progress(study, search_space, output_dir):
-    """Save the best configuration to a YAML file."""
-    best_config = search_space.get_trial_config(study.best_trial)
-    # Add metadata
-    save_config = {
-        "best_value": study.best_value,
-        "best_iteration": study.best_trial.number,
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "parameters": best_config,
-    }
-    os.makedirs(output_dir, exist_ok=True)
-    # Save to YAML
-    output_file = os.path.join(output_dir, "best_config.yaml")
-    with open(output_file, "w") as f:
-        yaml.dump(save_config, f, default_flow_style=False)
-    print(f"Best configuration saved to {output_file}")
+from src.utils.experiments import run, update_config
 
 
 class SearchSpaceConfig:
@@ -78,3 +49,63 @@ class SearchSpaceConfig:
             for param_name, param_config in self.config[component].items():
                 config[component][param_name] = self.suggest_value(trial, param_name, param_config)
         return config
+
+
+def create_study(study_name, prunner=None, storage_url=None):
+    """Create or load an existing study."""
+    if storage_url is None:
+        storage_url = f"sqlite:////{study_name}.db"
+    print("Storage url:", storage_url)
+    return optuna.create_study(
+        study_name=study_name,
+        storage=storage_url,
+        pruner=prunner,
+        direction="minimize",
+        load_if_exists=True,
+    )
+
+
+def save_progress(study, search_space: SearchSpaceConfig, output_dir):
+    """Save the best configuration to a YAML file."""
+    best_config = search_space.get_trial_config(study.best_trial)
+    # Add metadata
+    save_config = {
+        "best_value": study.best_value,
+        "best_iteration": study.best_trial.number,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "parameters": best_config,
+    }
+    os.makedirs(output_dir, exist_ok=True)
+    # Save to YAML
+    output_file = os.path.join(output_dir, "best_config.yaml")
+    with open(output_file, "w") as f:
+        yaml.dump(save_config, f, default_flow_style=False)
+    print(f"Best configuration saved to {output_file}")
+
+
+def run_trial(trial, search_space: SearchSpaceConfig, base_config, seeds: list):
+    assert len(seeds) > 0, "Provide at least one seed!"
+
+    # Parse Optuna Trial to get a config of the values
+    trial_config = search_space.get_trial_config(trial)
+
+    # For more robust evaluation, we run each hyperparameter configuration for multiple seeds (same across different configurations)
+    # Make sure to use different seeds for the experiments after
+    per_seeds_results = []
+    for seed in seeds:
+        # Update config based on trial
+        config = update_config(base_config=base_config, updates_config=trial_config)
+
+        # Initialize all objects with the seed
+        config["seed"] = seed
+        for key in config:
+            if isinstance(config[key], dict) and "seed" in config[key]:
+                config[key]["seed"] = seed
+
+        results = run(config, optuna_trial=trial)
+        per_seeds_results.append(results)
+
+    try:
+        return np.mean(per_seeds_results)
+    except optuna.TrialPruned:
+        raise

@@ -99,7 +99,7 @@ register_model(
 
 
 # Additional models -------------------------------------------------------------------------------------------------- #
-register_model(name="knapsack_continuous", model_class=CVXPYDiffKnapsackModel, num_decisions=10, capacity=20, values_lb=3, values_ub=8, dimension=2, seed=5)
+register_model(name="knapsack_continuous", model_class=CVXPYDiffKnapsackModel, num_decisions=10, capacity=20, weights_lb=3, weights_ub=8, dimension=1, seed=5)
 
 
 register_model(
@@ -107,7 +107,7 @@ register_model(
 )
 
 register_model(
-    name="wsmc_recovery_5x25",
+    name="WSMC_Schutte2025",
     model_class=WeightedSetMultiCover,
     num_items=5,
     num_covers=25,

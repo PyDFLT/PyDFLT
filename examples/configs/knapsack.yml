@@ -1,0 +1,26 @@
+model:
+  name: knapsack_continuous
+  seed: 5
+
+data:
+  name: knapsack
+  num_data: 500
+  seed: 5
+
+runner:
+  num_epochs: 5
+  use_wandb: false
+  experiment_name: 'tuning'
+  experiments_folder: 'results/'
+  seed: 5
+
+problem:
+  train_ratio: 0.75
+  val_ratio: 0.15
+  seed: 5
+
+decision_maker:
+  name: 'differentiable'
+  learning_rate: 0.05
+  batch_size: 32
+  seed: 5
