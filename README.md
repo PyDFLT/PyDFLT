@@ -1,5 +1,4 @@
-![alt text](https://github.com/PyDFLT/PyDFLT/blob/update-readme/images/logo.png?raw=true)
-<img src="https://github.com/PyDFLT/PyDFLT/blob/update-readme/images/logo.png?raw=true" alt="description" width="400"/>
+<img src="https://github.com/PyDFLT/PyDFLT/blob/update-readme/images/logo.png?raw=true" alt="description" width="600"/>
 
 [![CI](https://github.com/PyDFLT/PyDFLT/actions/workflows/CI.yml/badge.svg)](https://github.com/PyDFLT/PyDFLT/actions/workflows/CI.yml)
 
