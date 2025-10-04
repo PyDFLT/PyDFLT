@@ -54,7 +54,7 @@ examples = [
 
 [tool.uv]
 required-version = "0.6.16"
-default-groups = ["dev"]
+default-groups = ["dev", "docs"]
 
 [tool.black]
 line-length = 160
