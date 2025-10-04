@@ -117,10 +117,26 @@ register_data(
     noise_width=0.5,
 )
 
+"""
+References
+Elmachtoub2022
+Adam N. Elmachtoub and Paul Grigas. Smart “predict, then optimize”’. Management Science, 68:9–26, 2022.
+doi:10.1287/mnsc.2020.3922.
 
-# References
-# Elmachtoub, A. N.; and Grigas, P. 2022. Smart “Predict, then Optimize”. Management Science, 68(1): 9–26.
-# Bo Tang and Elias B. Khalil. PyEPO: A PyTorch-based end-to-end predict-then-optimize library for linear and integer
-# programming
-# Schutte, N.; Postek, K.; and Yorke-Smith, N. 2024. Robust Losses for Decision-Focused Learning. In Proceedings of
-# the Thirty-Third International Joint Conference on Artificial Intelligence, IJCAI’24, 4868–4875.
+Schutte2024
+Noah Schutte, Krzysztof Postek, and Neil Yorke-Smith. Robust losses for decision-focused learning. In Proceedings of
+the Thirty-Third International Joint Conference on Artificial Intelligence, IJCAI’24, pages 4868–4875, 2024.
+doi:10.24963/ijcai.2024/538.
+
+Silvestri2024
+Mattia Silvestri, Senne Berden, Jayanta Mandi, Ali ˙Irfan Mahmuto˘gulları, Maxime Mulamba, Allegra De Filippo,
+Tias Guns, and Michele Lombardi. Score function gradient estimation to widen the applicability of decision-focused
+learning. CoRR, abs/2307.05213, 2023.
+doi:10.48550/arXiv.2307.05213.
+
+Tang2024
+Bo Tang and Elias B. Khalil. Pyepo: a pytorch-based end-to-end predict-then-optimize library for linear and integer
+programming. Mathematical Program-ming Computation, 16(3):297–335, 2024.
+doi:https://doi.org/10.1007/s12532-024-00255-x.
+
+"""

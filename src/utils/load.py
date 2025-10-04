@@ -18,9 +18,9 @@ def print_registry(registry: dict[str, Tuple[Any, dict[str, Any]]], filter_word=
     for key, val in registry.items():
         if filter_word not in key:
             continue
-        print("Name: ", key)
-        print("\nClass/function name: ", val[0])
-        print("\nParameters: ", val[1])
+        print(f"Name: {key}")
+        print(f"Class/function: {val[0]}")
+        print(f"Parameters: {val[1]}\n")
 
 
 def load_log(log_file_path: Path) -> dict[int, dict[str, float]]:

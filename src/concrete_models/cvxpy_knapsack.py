@@ -14,8 +14,8 @@ class CVXPYDiffKnapsackModel(CVXPYDiffModel):
     Attributes:
         num_decisions (int): Number of items (decision variables) in the knapsack.
         capacity (float): The capacity constraint of the knapsack.
-        values_lb (float): Lower bound for item values during random generation.
-        values_ub (float): Upper bound for item values during random generation.
+        weights_lb (float): Lower bound for item weights during random generation.
+        weights_ub (float): Upper bound for item weights during random generation.
         dimension (int): Dimension of the weights for the items.
         seed (int): Random seed for reproducible weight generation.
         num_scenarios (int): Number of scenarios for multi-scenario optimization.
@@ -27,8 +27,8 @@ class CVXPYDiffKnapsackModel(CVXPYDiffModel):
         self,
         num_decisions: int,
         capacity: float,
-        values_lb: float = 3.0,
-        values_ub: float = 8.0,
+        weights_lb: float = 3.0,
+        weights_ub: float = 8.0,
         dimension: int = 1,
         seed: int = 5,
         num_scenarios: int = 1,
@@ -39,8 +39,8 @@ class CVXPYDiffKnapsackModel(CVXPYDiffModel):
         Args:
             num_decisions (int): Number of items (decision variables) in the knapsack.
             capacity (float): The capacity constraint of the knapsack.
-            values_lb (float): Lower bound for item values used in random weight generation. Defaults to 3.0.
-            values_ub (float): Upper bound for item values used in random weight generation. Defaults to 8.0.
+            weights_lb (float): Lower bound for item weights used in random weight generation. Defaults to 3.0.
+            weights_ub (float): Upper bound for item weights used in random weight generation. Defaults to 8.0.
             dimension (int): Dimension of the weights for the items. Defaults to 1.
             seed (int): Random seed for reproducible weight generation. Defaults to 5.
             num_scenarios (int): Number of scenarios for multi-scenario optimization. Defaults to 1.
@@ -48,8 +48,8 @@ class CVXPYDiffKnapsackModel(CVXPYDiffModel):
         # Setting input parameters
         self.num_decisions = num_decisions
         self.capacity = capacity
-        self.values_lb = values_lb
-        self.values_lb = values_ub
+        self.weights_lb = weights_lb
+        self.weights_lb = weights_ub
         self.dimension = dimension
         self.seed = seed
         self.num_scenarios = num_scenarios
@@ -63,7 +63,7 @@ class CVXPYDiffKnapsackModel(CVXPYDiffModel):
 
         # Setting additional model parameters
         np.random.seed(seed)
-        self.weights = np.random.uniform(values_lb, values_ub, (dimension, num_decisions))
+        self.weights = np.random.uniform(weights_lb, weights_ub, (dimension, num_decisions))
         self.capacity_np = self.capacity * np.ones(dimension)
 
         super().__init__(

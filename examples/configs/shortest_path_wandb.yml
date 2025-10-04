@@ -1,0 +1,25 @@
+model:
+  name: shortest_path
+
+data:
+  name: shortest_path
+  num_data: 2500
+  seed: 5
+
+runner:
+  num_epochs: 50
+  use_wandb: true
+  save_best: true
+  project_name: shortest_path
+  experiments_folder: 'results/'
+  seed: 5
+
+problem:
+  train_ratio: 0.4
+  val_ratio: 0.2
+  seed: 5
+
+decision_maker:
+  name: 'SPO+ linear'
+  learning_rate: 0.005
+  seed: 5

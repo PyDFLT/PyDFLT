@@ -21,7 +21,7 @@ def gen_data_knapsack(
         noise_width=noise_width,
         seed=seed,
     )
-    print(f"Shape of weights: {weights.shape}, values: {values.shape}, features: {features.shape}.")
+    # print(f"Shape of values: {values.shape}, features: {features.shape}.")
 
     if torch_tensors:
         values = torch.tensor(values, dtype=torch.float32)
