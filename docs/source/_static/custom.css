@@ -20,8 +20,20 @@
 }
 
 .hero-logo {
-    display: block;
+    display: block !important;
     margin: 2rem auto;
     max-width: 240px;
     width: 40%;
+}
+
+[data-md-color-scheme="default"] .hero-logo-dark {
+    display: none !important;
+}
+
+[data-md-color-scheme="slate"] .hero-logo-light {
+    display: none !important;
+}
+
+[data-md-color-scheme="slate"] .hero-logo-dark {
+    display: block !important;
 }
