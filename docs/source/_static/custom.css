@@ -19,4 +19,9 @@
     --md-default-bg-color: #0c2340;
 }
 
-
+.hero-logo {
+    display: block;
+    margin: 2rem auto;
+    max-width: 240px;
+    width: 40%;
+}

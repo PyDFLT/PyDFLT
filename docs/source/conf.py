@@ -14,12 +14,19 @@ sys.path.insert(0, pathlib.Path(__file__).parents[2].resolve().as_posix())
 EXAMPLES_DIR = pathlib.Path(__file__).parents[2] / "examples"
 DOCS_EXAMPLES_DIR = pathlib.Path(__file__).parent / "examples"
 DOCS_EXAMPLES_DIR.mkdir(exist_ok=True)
+#STATIC_DIR = pathlib.Path(__file__).parent / "_static"
+#STATIC_DIR.mkdir(exist_ok=True)
 
 # keep notebooks in docs/examples in sync with top-level examples
 for notebook in DOCS_EXAMPLES_DIR.glob('*.ipynb'):
     notebook.unlink()
 for notebook in sorted(EXAMPLES_DIR.glob('*.ipynb')):
     shutil.copy2(notebook, DOCS_EXAMPLES_DIR / notebook.name)
+
+#LOGO_SOURCE = pathlib.Path(__file__).parents[2] / 'images' / 'logo.png'
+#if LOGO_SOURCE.exists():
+#    shutil.copy2(LOGO_SOURCE, STATIC_DIR / 'logo.png')
+
 if pypandoc is not None:
     pandoc_path = pathlib.Path(pypandoc.get_pandoc_path())
     os.environ.setdefault('PANDOC', str(pandoc_path))
@@ -86,6 +93,7 @@ nbsphinx_markdown_renderer = "myst"
 html_theme = "sphinx_immaterial"
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
+#html_logo = "_static/logo.png"
 
 
 html_theme_options = {
