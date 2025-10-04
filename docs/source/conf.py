@@ -59,9 +59,11 @@ nbsphinx_execute = "never" if skip_notebooks else "always"
 # -- Options for HTML output -------------------------------------------------
 html_theme = "sphinx_immaterial"
 html_static_path = ["_static"]
+html_css_files = ["custom.css"]
+
 
 html_theme_options = {
-    "repo_url": "https://github.com/NoahJSchutte/decision-focused-learning-codebase/",
+    "repo_url": "https://github.com/PyDFLT/PyDFLT/",
     "icon": {
         "repo": "fontawesome/brands/github",
         "edit": "material/file-edit-outline",
@@ -77,7 +79,7 @@ html_theme_options = {
             "accent": "green",
             "scheme": "default",
             "toggle": {
-                "icon": "material/lightbulb-outline",
+                "icon": "material/lightbulb",
                 "name": "Switch to dark mode",
             },
         },
@@ -87,7 +89,7 @@ html_theme_options = {
             "accent": "green",
             "scheme": "slate",
             "toggle": {
-                "icon": "material/lightbulb",
+                "icon": "material/lightbulb-outline",
                 "name": "Switch to light mode",
             },
         },
