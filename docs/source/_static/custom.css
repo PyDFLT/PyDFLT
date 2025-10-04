@@ -21,7 +21,7 @@
 
 .hero-logo {
     display: block !important;
-    margin: 2rem auto;
+    margin: 1rem auto;
     max-width: 240px;
     width: 40%;
 }
@@ -36,4 +36,11 @@
 
 [data-md-color-scheme="slate"] .hero-logo-dark {
     display: block !important;
+}
+
+.md-header__inner .md-header__button.md-logo {
+    margin-left: 1rem !important;
+}
+.md-header__inner .md-header__title {
+    margin-left: 0.2rem !important;
 }
