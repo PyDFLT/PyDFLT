@@ -3,7 +3,7 @@
 ![alt text](https://github.com/PyDFLT/PyDFLT/blob/update-readme/images/logo.png?raw=true)
 
 
-## A Python-based Decision-Focused Learning Toolbox 
+## A Python-based Decision-Focused Learning Toolbox
 **PyDFLT** is designed to help researchers apply and develop Decision Focused Learning (DFL) tools in Python.
 In the near future, we will publish PyDFLT on the Python Package Index, after which you can install it by running:
 

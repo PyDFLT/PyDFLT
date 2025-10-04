@@ -24,6 +24,3 @@ Contents
    :caption: API reference
 
    api/src
-
-
-

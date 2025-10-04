@@ -18,19 +18,19 @@ STATIC_DIR = pathlib.Path(__file__).parent / "_static"
 STATIC_DIR.mkdir(exist_ok=True)
 
 # keep notebooks in docs/examples in sync with top-level examples
-for notebook in DOCS_EXAMPLES_DIR.glob('*.ipynb'):
+for notebook in DOCS_EXAMPLES_DIR.glob("*.ipynb"):
     notebook.unlink()
-for notebook in sorted(EXAMPLES_DIR.glob('*.ipynb')):
+for notebook in sorted(EXAMPLES_DIR.glob("*.ipynb")):
     shutil.copy2(notebook, DOCS_EXAMPLES_DIR / notebook.name)
 
-LOGO_SOURCE = pathlib.Path(__file__).parents[2] / 'images' / 'logo_small.png'
+LOGO_SOURCE = pathlib.Path(__file__).parents[2] / "images" / "logo_small.png"
 if LOGO_SOURCE.exists():
-    shutil.copy2(LOGO_SOURCE, STATIC_DIR / 'logo_small.png')
+    shutil.copy2(LOGO_SOURCE, STATIC_DIR / "logo_small.png")
 
 if pypandoc is not None:
     pandoc_path = pathlib.Path(pypandoc.get_pandoc_path())
-    os.environ.setdefault('PANDOC', str(pandoc_path))
-    os.environ['PATH'] = str(pandoc_path.parent) + os.pathsep + os.environ.get('PATH', '')
+    os.environ.setdefault("PANDOC", str(pandoc_path))
+    os.environ["PATH"] = str(pandoc_path.parent) + os.pathsep + os.environ.get("PATH", "")
 
 # Project information
 now = datetime.date.today()
