@@ -8,7 +8,6 @@ PyDFLT
 .. automodule:: src.dataset
 
    .. autoclass:: DFLDataset
-      :members:
 
 .. automodule:: src.logger
 

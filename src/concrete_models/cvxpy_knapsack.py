@@ -49,7 +49,7 @@ class CVXPYDiffKnapsackModel(CVXPYDiffModel):
         self.num_decisions = num_decisions
         self.capacity = capacity
         self.weights_lb = weights_lb
-        self.weights_lb = weights_ub
+        self.weights_ub = weights_ub
         self.dimension = dimension
         self.seed = seed
         self.num_scenarios = num_scenarios

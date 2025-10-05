@@ -1,9 +1,36 @@
 import datetime
 import os
 import pathlib
+import shutil
 import sys
 
+try:
+    import pypandoc
+except ImportError:  # optional dependency for notebook conversion
+    pypandoc = None
+
 sys.path.insert(0, pathlib.Path(__file__).parents[2].resolve().as_posix())
+
+EXAMPLES_DIR = pathlib.Path(__file__).parents[2] / "examples"
+DOCS_EXAMPLES_DIR = pathlib.Path(__file__).parent / "examples"
+DOCS_EXAMPLES_DIR.mkdir(exist_ok=True)
+STATIC_DIR = pathlib.Path(__file__).parent / "_static"
+STATIC_DIR.mkdir(exist_ok=True)
+
+# keep notebooks in docs/examples in sync with top-level examples
+for notebook in DOCS_EXAMPLES_DIR.glob("*.ipynb"):
+    notebook.unlink()
+for notebook in sorted(EXAMPLES_DIR.glob("*.ipynb")):
+    shutil.copy2(notebook, DOCS_EXAMPLES_DIR / notebook.name)
+
+LOGO_SOURCE = pathlib.Path(__file__).parents[2] / "images" / "logo_small.png"
+if LOGO_SOURCE.exists():
+    shutil.copy2(LOGO_SOURCE, STATIC_DIR / "logo_small.png")
+
+if pypandoc is not None:
+    pandoc_path = pathlib.Path(pypandoc.get_pandoc_path())
+    os.environ.setdefault("PANDOC", str(pandoc_path))
+    os.environ["PATH"] = str(pandoc_path.parent) + os.pathsep + os.environ.get("PATH", "")
 
 # Project information
 now = datetime.date.today()
@@ -25,6 +52,8 @@ extensions = [
 ]
 
 templates_path = ["_templates"]
+
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**/.ipynb_checkpoints"]
 
 add_module_names = False
 python_use_unqualified_type_names = True
@@ -52,16 +81,22 @@ intersphinx_mapping = {
 intersphinx_disabled_domains = ["std"]
 
 # -- nbsphinx
-skip_notebooks = os.getenv("SKIP_NOTEBOOKS", False)
-nbsphinx_execute = "never" if skip_notebooks else "always"
+skip_notebooks_env = os.getenv("SKIP_NOTEBOOKS", "1")
+skip_notebooks = skip_notebooks_env not in {"0", "false", "False"}
+nbsphinx_execute = "never" if skip_notebooks else "auto"
+
+
+nbsphinx_markdown_renderer = "myst"
 
 
 # -- Options for HTML output -------------------------------------------------
 html_theme = "sphinx_immaterial"
 html_static_path = ["_static"]
+html_css_files = ["custom.css"]
+html_logo = "_static/logo_small.png"
 
 html_theme_options = {
-    "repo_url": "https://github.com/NoahJSchutte/decision-focused-learning-codebase/",
+    "repo_url": "https://github.com/PyDFLT/PyDFLT/",
     "icon": {
         "repo": "fontawesome/brands/github",
         "edit": "material/file-edit-outline",
@@ -77,7 +112,7 @@ html_theme_options = {
             "accent": "green",
             "scheme": "default",
             "toggle": {
-                "icon": "material/lightbulb-outline",
+                "icon": "material/lightbulb",
                 "name": "Switch to dark mode",
             },
         },
@@ -87,7 +122,7 @@ html_theme_options = {
             "accent": "green",
             "scheme": "slate",
             "toggle": {
-                "icon": "material/lightbulb",
+                "icon": "material/lightbulb-outline",
                 "name": "Switch to light mode",
             },
         },
