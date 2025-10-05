@@ -11,7 +11,7 @@ In the near future, we will publish PyDFLT on the Python Package Index, after wh
 
 ### Documentation
 
-Documentation can be found here.
+Documentation can be found https://pydflt.github.io/documentation.
 
 ### Contributing
 If you want to contribute, you can fork the repository and send a pull request. We make use of **uv** (https://github.com/astral-sh/uv) for the installation and testing. Install uv [here](https://docs.astral.sh/uv/getting-started/installation/). To create the virtual environment:

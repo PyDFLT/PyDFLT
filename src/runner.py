@@ -55,7 +55,7 @@ class Runner:
         val_metrics: list[str] = None,
         test_metrics: list[str] = None,
         store_min_and_max: bool = False,
-        use_wandb: bool = True,
+        use_wandb: bool = False,
         experiment_name: str = "-",
         project_name: str = "-",
         early_stop: bool = False,
