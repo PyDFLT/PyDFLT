@@ -1,6 +1,6 @@
 [![CI](https://github.com/PyDFLT/PyDFLT/actions/workflows/CI.yml/badge.svg)](https://github.com/PyDFLT/PyDFLT/actions/workflows/CI.yml)
 
-![alt text](https://github.com/PyDFLT/PyDFLT/blob/update-readme/images/logo.png?raw=true)
+![alt text](https://github.com/PyDFLT/PyDFLT/blob/main/images/logo.png?raw=true)
 
 
 ## A Python-based Decision-Focused Learning Toolbox
