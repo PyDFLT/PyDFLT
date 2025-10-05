@@ -18,6 +18,8 @@ If you want to contribute, you can fork the repository and send a pull request. 
 
 `uv sync --all-extras --all-groups`
 
+Notice that your IDE might automatically create the environment, but does only install the basic package dependencies. Make sure to run above command to install all dependencies.
+
 #### Before committing
 
 We make use of **pre-commit** (https://pre-commit.com/) and **pytest** to ensure code is consistent and functioning properly. Both are part of the dev dependencies and therefore installed in the virtual environment. Before committing make sure to run both:
