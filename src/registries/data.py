@@ -13,7 +13,7 @@ from typing import Any, Callable, Tuple
 
 from src.generate_data_functions import (
     gen_data_knapsack,
-    gen_data_shortestpath,
+    gen_data_shortest_path,
     gen_data_wsmc,
 )
 from src.utils.load import load_data_from_dict
@@ -70,7 +70,7 @@ register_data(
 
 register_data(  # as introduced in (Elmachtoub 2022)
     "shortest_path",
-    gen_data_shortestpath,
+    gen_data_shortest_path,
     seed=5,
     num_data=2000,
     num_features=5,

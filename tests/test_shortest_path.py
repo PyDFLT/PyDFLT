@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 
 from src.concrete_models.grbpy_shortest_path import ShortestPath
-from src.generate_data_functions.generate_data_shortestpath import gen_data_shortestpath
+from src.generate_data_functions.generate_data_shortest_path import gen_data_shortest_path
 
 
 class TestShortestPath(unittest.TestCase):
@@ -17,9 +17,9 @@ class TestShortestPath(unittest.TestCase):
         """
         Test if setting the seed results in the same data
         """
-        data_sp_one = gen_data_shortestpath(seed=1, num_data=2, grid=(2, 2), num_features=1)
+        data_sp_one = gen_data_shortest_path(seed=1, num_data=2, num_features=1, grid=(2, 2))
         print(data_sp_one)
-        data_sp_two = gen_data_shortestpath(seed=1, num_data=2, grid=(2, 2), num_features=1)
+        data_sp_two = gen_data_shortest_path(seed=1, num_data=2, num_features=1, grid=(2, 2))
 
         self.assertEqual(data_sp_one["features"][0], data_sp_two["features"][0])
         self.assertEqual(data_sp_one["arc_costs"][0][0], data_sp_two["arc_costs"][0][0])

@@ -36,7 +36,7 @@ class GRBPYTravelingSalesperson(GRBPYModel, tspDFJModel):
         num_edges = num_nodes * (num_nodes - 1) // 2
         model_sense = "MIN"
         var_shapes = {"select_edge": (num_edges,)}
-        param_to_predict_shapes = {"c": (num_edges,)}
+        param_to_predict_shapes = {"edge_costs": (num_edges,)}
 
         GRBPYModel.__init__(
             self,
@@ -67,14 +67,14 @@ class GRBPYTravelingSalesperson(GRBPYModel, tspDFJModel):
         The objective is to minimize the total cost of selected edges in the tour.
 
         Args:
-            data_batch (dict[str, torch.Tensor]): A dictionary containing input data, including 'c' (edge costs).
+            data_batch (dict[str, torch.Tensor]): A dictionary containing input data, including "edge_costs" .
             decisions_batch (dict[str, torch.Tensor]): A dictionary containing decision variables, including 'select_edge'.
             predictions_batch (dict[str, torch.Tensor], optional): Unused for this implementation. Defaults to None.
 
         Returns:
             torch.float: The total cost of selected edges for the batch.
         """
-        return (data_batch["c"] * decisions_batch["select_edge"]).sum(-1)
+        return (data_batch["edge_costs"] * decisions_batch["select_edge"]).sum(-1)
 
     def _create_model(self):
         """
