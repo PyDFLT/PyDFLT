@@ -93,7 +93,7 @@ class LancerDecisionMaker(DecisionMaker):
             use_dist_at_mode (str): When to use distributional predictions. Defaults to 'none'.
             standardize_predictions (bool): Whether to standardize predictions. Defaults to True.
             init_OLS (bool): Whether to initialize with OLS. Defaults to False.
-            seed (Union[int, None]): Random seed for reproducibility. Defaults to None.
+            seed (int | None): Random seed for reproducibility. Defaults to None.
             predictor_kwargs (dict): Additional arguments for predictor initialization. Defaults to None.
             decision_model_kwargs (dict): Additional arguments for decision model initialization. Defaults to None.
             regularizer (float): Regularization strength for the surrogate model. Defaults to 0.1.

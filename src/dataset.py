@@ -33,7 +33,7 @@ class DFLDataset(Dataset):
         Initializes the DFLDataset.
 
         Args:
-            data_dict (dict[str, Union[np.ndarray, torch.Tensor]]): A dictionary where keys are string identifiers
+            data_dict (dict[str, np.ndarray | torch.Tensor]): A dictionary where keys are string identifiers
                 for data components (e.g., 'features', 'costs') and values are NumPy arrays or tensors.
                 All NumPy arrays must have the same length for their first dimension (number of samples).
                 These arrays will be converted to torch.Tensors.
@@ -69,7 +69,7 @@ class DFLDataset(Dataset):
         or a boolean/long tensor.
 
         Args:
-            idx (Union[int, slice, list[int], torch.Tensor, np.ndarray]): The index or indices
+            idx (int | slice | list[int] | torch.Tensor | np.ndarray): The index or indices
                 to retrieve. If `idx` is an integer, a single sample is returned (each tensor
                 will have its first dimension removed or be a view). If `idx` is a slice,
                 list, or tensor, a batch of samples is returned.
@@ -84,7 +84,7 @@ class DFLDataset(Dataset):
         sample = {key: self.data_dict[key][idx] for key in self.keys}
         return sample
 
-    def add_data(self, key: str, data: Union[torch.tensor, dict[str, torch.Tensor]]) -> None:
+    def add_data(self, key: str, data: torch.Tensor | dict[str, torch.Tensor]) -> None:
         """
         Adds new data component(s) to the dataset.
 
@@ -95,7 +95,7 @@ class DFLDataset(Dataset):
         Args:
             key (str): The primary key name if `data_to_add` is a single tensor,
                               or the suffix to append to keys if `data_to_add` is a dictionary.
-            data  (Union[torch.Tensor, dict[str, torch.Tensor]]): The data to add.
+            data (torch.Tensor | dict[str, torch.Tensor]): The data to add.
                 Can be a single torch.Tensor or a dictionary of torch.Tensors.
                 The first dimension of any tensor must match `self.num_samples`.
         """

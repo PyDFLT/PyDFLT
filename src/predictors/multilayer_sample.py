@@ -8,7 +8,7 @@ from torch.distributions import Distribution
 
 from src.predictors.multilayer_perceptron import MLPPredictor
 
-Activation = Union[str, nn.Module]
+Activation = str | nn.Module
 
 
 class SampleDistribution(Distribution):

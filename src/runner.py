@@ -1,5 +1,5 @@
 import copy
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import optuna
@@ -19,15 +19,15 @@ class Runner:
     Attributes:
         decision_maker (DecisionMaker): The decision maker instance to be trained and evaluated.
         num_epochs (int): The total number of epochs for training.
-        config (Optional[dict[str, Any]]): A dictionary containing experiment configurations to be logged.
+        config (dict[str, Any] | None): A dictionary containing experiment configurations to be logged.
         experiments_folder (str): The root directory where experiment results will be saved.
         use_wandb (bool): Flag indicating if Weights & Biases logging is enabled.
         experiment_name (str): Name of the current experiment.
         project_name (str): Name of the project for logging purposes.
         early_stop (bool): Flag indicating if early stopping is enabled.
-        min_delta_early_stop (Optional[float]): Minimum change in the main metric to be considered an improvement
-                                                for early stopping.
-        patience_early_stop (Optional[float]): Number of epochs to wait for an improvement before stopping early.
+        min_delta_early_stop (float | None): Minimum change in the main metric to be considered an improvement
+                                              for early stopping.
+        patience_early_stop (float | None): Number of epochs to wait for an improvement before stopping early.
         save_best (bool): Flag indicating if the best performing model should be saved.
         main_metric (str): The primary metric used for model selection and early stopping.
         store_min_and_max (bool): Whether to store min and max values of metrics in the logger.
@@ -52,19 +52,19 @@ class Runner:
         num_epochs: int = 3,
         experiments_folder: str = "results/",
         main_metric: str = "abs_regret",
-        val_metrics: list[str] = None,
-        test_metrics: list[str] = None,
+        val_metrics: list[str] | None = None,
+        test_metrics: list[str] | None = None,
         store_min_and_max: bool = False,
         use_wandb: bool = False,
         experiment_name: str = "-",
         project_name: str = "-",
         early_stop: bool = False,
-        min_delta_early_stop: float = None,
-        patience_early_stop: float = None,
+        min_delta_early_stop: float | None = None,
+        patience_early_stop: float | None = None,
         save_best: bool = True,
-        seed: Optional[int] = None,
+        seed: int | None = None,
         full_reproducibility_GPUs: bool = False,
-        config: Optional[dict[str, Any]] = None,
+        config: dict[str, Any] | None = None,
         verbose: bool = True,
         # use_logging: bool = True,
     ):
@@ -81,13 +81,13 @@ class Runner:
             experiment_name (str): Name of the current experiment (used for Weights & Biases).
             project_name (str): Name of the project (used for Weights & Biases).
             early_stop (bool): Flag to enable/disable early stopping.
-            min_delta_early_stop (Optional[float]): The minimum change in the main metric to qualify as an improvement.
-                                                    A smaller value means more sensitivity.
-            patience_early_stop (Optional[float]): Number of epochs with no improvement after which training is stopped.
+            min_delta_early_stop (float | None): The minimum change in the main metric to qualify as an improvement.
+                                                 A smaller value means more sensitivity.
+            patience_early_stop (float | None): Number of epochs with no improvement after which training is stopped.
             save_best (bool): Flag to save the best performing model based on the main_metric on the validation set.
-            seed (Optional[int]): Seed for random number generators to ensure reproducibility.
+            seed (int | None): Seed for random number generators to ensure reproducibility.
             full_reproducibility_GPUs (bool): Flag to enable/disable GPU reproducibility.
-            config (Optional[dict[str, Any]]): A dictionary containing experiment configurations to be logged.
+            config (dict[str, Any] | None): A dictionary containing experiment configurations to be logged.
             verbose (bool): If True, print status messages to the console.
         """
 
@@ -161,15 +161,15 @@ class Runner:
             store_min_and_max=self.store_min_and_max,
         )
 
-    def run(self, optuna_trial: Optional[Trial] = None) -> float:
+    def run(self, optuna_trial: Trial | None = None) -> float:
         """
         Runs the experiment. This method iterates through epochs, performs training and validation,
         logs results, handles Optuna trial reporting and pruning, implements early stopping, and saves the best model.
         Finally, it evaluates the best model on the test set.
 
         Args:
-            optuna_trial (Optional[Trial]): An Optuna trial object. If provided, the method will report validation
-                                            metrics to Optuna and check for pruning.
+            optuna_trial (Trial | None): An Optuna trial object. If provided, the method will report validation
+                                          metrics to Optuna and check for pruning.
         """
         # Note: All *_epoch_results are lists of dictionaries. The length of the list is the number of batches
         # executed during the epoch. For each batch, a dictionary stores one FLOAT (not arrays/tensors) per key

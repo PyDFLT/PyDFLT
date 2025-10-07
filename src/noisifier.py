@@ -123,7 +123,7 @@ class Noisifier(nn.Module):
                                    if `sigma_setting` is "dependent". Defaults to True.
             sigma_setting (str, optional): Setting on how sigma is handled during training, options:
                                            "fixed", "dependent", "independent", "cooling".
-            sigma_init (Union[float, np.ndarray], optional): Initial value for sigma.
+            sigma_init (float | np.ndarray, optional): Initial value for sigma.
                                                              Can be a scalar or an array matching num_outputs.
                                                              Defaults to 1.0.
             sigma_final (float, optional): Final sigma value for "cooling" mode. Defaults to 0.1.
@@ -161,7 +161,7 @@ class Noisifier(nn.Module):
         Initializes the sigma parameter(s) based on the sigma_setting.
 
         Args:
-            sigma_init (Union[float, np.ndarray]): The initial value for sigma.
+            sigma_init (float | np.ndarray): The initial value for sigma.
             sigma_final (float): The final value for sigma (used in cooling).
             bias (bool): Whether to use bias in the linear layer for "dependent" sigma.
         """
@@ -245,8 +245,7 @@ class Noisifier(nn.Module):
         Calculates and returns the current sigma based on the setting.
 
         Args:
-            x (torch.Tensor, optional): Input tensor, required if sigma_setting is "dependent".
-                                        Defaults to None.
+            x (torch.Tensor): Input tensor, required if sigma_setting is "dependent".
 
         Returns:
             torch.Tensor: The standard deviation tensor.
@@ -276,10 +275,13 @@ class Noisifier(nn.Module):
 
         return sigma
 
-    def to(self, device: torch.device):
+    def to(self, device: torch.device) -> "Noisifier":
         """
         Moves and/or casts the parameters and buffers. This override ensures that if sigma is a tensor
         (not a parameter or part of a submodule), it's also moved to the correct device.
+
+        Returns:
+            Noisifier: The noisifier instance on the specified device.
         """
         if self.sigma_setting in ["fixed", "cooling", "independent"]:
             self.sigma = self.sigma.to(device)

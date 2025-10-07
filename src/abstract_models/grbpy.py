@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from types import MethodType
-from typing import Any, Optional
+from typing import Any
 
 import cvxpy as cp
 import gurobipy as gp
@@ -24,7 +24,7 @@ class GRBPYModel(OptimizationModel):
         vars_dict (dict[str, gp.MVar]): Dictionary mapping decision variable names to their Gurobipy MVar objects.
         feasibility_tol (float): The feasibility tolerance for the Gurobi solver.
         rounding_decimal (int): The number of decimal places to round the decisions to.
-        lazy_constraints_method (Optional[Any]): A method for handling lazy constraints, if applicable.
+        lazy_constraints_method (Any | None): A method for handling lazy constraints, if applicable.
     """
 
     gp_model: gp.Model
@@ -37,7 +37,7 @@ class GRBPYModel(OptimizationModel):
         model_sense: str,
         feasibility_tol: float = 1e-6,
         rounding_decimal: int = 4,
-        extra_param_shapes: Optional[dict[str, tuple[int, ...]]] = None,
+        extra_param_shapes: dict[str, tuple[int, ...]] | None = None,
     ) -> None:
         """
         Initializes the GRBPYModel.
@@ -51,9 +51,9 @@ class GRBPYModel(OptimizationModel):
             model_sense (str): Specifies whether the model minimizes ('MIN') or maximizes ('MAX').
             feasibility_tol (float): The feasibility tolerance for the Gurobi solver. Defaults to 1e-6.
             rounding_decimal (int): The number of decimal places to round the decisions to. Defaults to 4.
-            extra_param_shapes (Optional[dict[str, tuple[int, ...]]]): An optional dictionary specifying additional
-                                                                       parameters that change from sample to sample
-                                                                       but are known.
+            extra_param_shapes (dict[str, tuple[int, ...]] | None): An optional dictionary specifying additional
+                                                                    parameters that change from sample to sample
+                                                                    but are known.
         """
         super().__init__(var_shapes, param_to_predict_shapes, model_sense, extra_param_shapes)
         self.gp_model, self.vars_dict = self._create_model()
@@ -89,7 +89,7 @@ class GRBPYModel(OptimizationModel):
         self,
         data_batch: dict[str, torch.Tensor],
         decisions_batch: dict[str, torch.Tensor],
-        predictions_batch: Optional[dict[str, torch.Tensor]] = None,
+        predictions_batch: dict[str, torch.Tensor] | None = None,
     ) -> torch.Tensor:
         """
         Abstract method to compute the objective function value achieved by `decisions_batch`
@@ -249,20 +249,20 @@ class GRBPYModel(OptimizationModel):
             raise NotImplementedError("CP quadratic proxy for a Gurobipy model is not yet implemented")
 
     @staticmethod
-    def get_var_domains() -> Optional[dict[str, dict[str, Any]]]:
+    def get_var_domains() -> dict[str, dict[str, Any]] | None:
         """
         Returns a dictionary specifying the domains (e.g., bounds, types) for decision variables
         if they are to be used in a CVXPYDiffModel quadratic variant.
 
         Returns:
-            Optional[dict[str, dict[str, Any]]]: A dictionary where keys are variable names and values are
-                                                 dictionaries of CVXPY variable attributes, or None if no specific
-                                                 domains are defined.
+            dict[str, dict[str, Any]] | None: A dictionary where keys are variable names and values are
+                                              dictionaries of CVXPY variable attributes, or None if no specific
+                                              domains are defined.
         """
         raise NotImplementedError
 
     @staticmethod
-    def get_constraints(vars_dict: dict[str, Any]) -> Optional[list[Any]]:
+    def get_constraints(vars_dict: dict[str, Any]) -> list[Any] | None:
         """
         Returns a list of constraints for the optimization problem.
         This method is used when creating a quadratic variant, particularly for CVXPY.
@@ -272,7 +272,7 @@ class GRBPYModel(OptimizationModel):
                                        CVXPY Variable or Gurobipy MVar objects.
 
         Returns:
-            Optional[list[Any]]: A list of constraint objects (e.g., `cp.Constraint` or Gurobipy constraints),
+            list[Any] | None: A list of constraint objects (e.g., `cp.Constraint` or Gurobipy constraints),
                                  or None if no constraints are defined.
         """
         raise NotImplementedError("To create a quadratic variant, get_constraints must be implemented.")

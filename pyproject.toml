@@ -1,5 +1,5 @@
 [project]
-name = "PyDFLT"
+name = "pydflt"
 version = "0.1.0"
 description = "PyDFLT"
 authors = [

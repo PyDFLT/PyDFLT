@@ -1,6 +1,6 @@
 import copy
 from abc import abstractmethod
-from typing import Any, Optional, Union
+from typing import Any
 
 import numpy as np
 import torch
@@ -51,11 +51,11 @@ class DecisionMaker:
         decision_model_kwargs (dict[str, Any]): Keyword arguments for decision model initialization.
         decision_model (OptimizationModel): The instantiated optimization model used for making decisions.
         predictor (Predictor): The instantiated predictive model.
-        best_predictor (Optional[Predictor]): A copy of the predictor with the best validation performance.
-        noisifier (Optional[Noisifier]): The instantiated noisifier, if `use_noisifier` is True.
+        best_predictor (Predictor | None): A copy of the predictor with the best validation performance.
+        noisifier (Noisifier | None): The instantiated noisifier, if `use_noisifier` is True.
         trainable_predictive_model (nn.Module): The PyTorch module that is trained (either
             the predictor or the noisifier if used).
-        num_scenarios (Optional[int]): Number of scenarios used if `to_decision_pars` involves sampling
+        num_scenarios (int | None): Number of scenarios used if `to_decision_pars` involves sampling
             or quantiles, derived from `decision_model_kwargs`.
         _solver_calls (int): Counter for the number of times the decision model's solver is called.
         _epoch_counts (int): Counter for the number of epochs run (though not explicitly updated in this snippet).
@@ -75,8 +75,8 @@ class DecisionMaker:
 
     decision_model: OptimizationModel
     predictor: Predictor
-    best_predictor: Optional[Predictor] = None
-    noisifier: Optional[Noisifier]
+    best_predictor: Predictor | None = None
+    noisifier: Noisifier | None
     trainable_predictive_model: nn.Module
 
     def __init__(
@@ -92,10 +92,10 @@ class DecisionMaker:
         use_noisifier: bool = False,
         standardize_predictions: bool = True,
         init_OLS: bool = False,
-        seed: Union[int, None] = None,
-        predictor_kwargs: dict = None,
-        noisifier_kwargs: dict = None,
-        decision_model_kwargs: dict = None,
+        seed: int | None = None,
+        predictor_kwargs: dict | None = None,
+        noisifier_kwargs: dict | None = None,
+        decision_model_kwargs: dict | None = None,
     ):
         """
         Initializes a DecisionMaker instance.
@@ -133,13 +133,13 @@ class DecisionMaker:
             init_OLS (bool, optional): If True and the predictive model is linear, its parameters are initialized
                 using ordinary least squares through sklearn. When the predictor has multiple outputs it uses
                 sklearn's quantile regressor to initialize.
-            seed (Optional[int], optional): Seed for random number generators (NumPy, Python's random, PyTorch)
+            seed (int | None, optional): Seed for random number generators (NumPy, Python's random, PyTorch)
                 to ensure reproducibility. Defaults to None.
-            predictor_kwargs (Optional[dict[str, Any]], optional): Keyword arguments to pass to the
+            predictor_kwargs (dict[str, Any] | None, optional): Keyword arguments to pass to the
                 predictor's constructor. Defaults to None (empty dict).
-            noisifier_kwargs (Optional[dict[str, Any]], optional): Keyword arguments to pass to the
+            noisifier_kwargs (dict[str, Any] | None, optional): Keyword arguments to pass to the
                 Noisifier's constructor. Defaults to None (empty dict).
-            decision_model_kwargs (Optional[dict[str, Any]], optional): Keyword arguments for
+            decision_model_kwargs (dict[str, Any] | None, optional): Keyword arguments for
                 creating variants of the decision model (e.g., for 'quadratic' or 'scenario_based').
                 Defaults to None (empty dict).
         """
@@ -203,7 +203,7 @@ class DecisionMaker:
 
     # --- Abstract methods that for subclass implementation ---
     @abstractmethod
-    def run_epoch(self, mode: str, epoch_num: int, metrics: Optional[list[str]] = None) -> list[dict[str, float]]:
+    def run_epoch(self, mode: str, epoch_num: int, metrics: list[str] | None = None) -> list[dict[str, float]]:
         """
         Runs one full epoch of operations (training, validation, or testing).
         This method must be implemented by subclasses.
@@ -214,7 +214,7 @@ class DecisionMaker:
         Args:
             mode (str): The current mode of operation ('train', 'validation', or 'test').
             epoch_num (int): The current epoch number.
-            metrics (Optional[list[str]]): The metrics that we want to record.
+            metrics (list[str] | None): The metrics that we want to record.
 
         Returns:
             list[dict[str, float]]: A list of dictionaries, where each dictionary contains
@@ -237,7 +237,7 @@ class DecisionMaker:
         raise NotImplementedError
 
     # --- Core logic of the DecisionMaker ---
-    def predict(self, data_batch: dict[str, torch.Tensor], output_device: Optional[str] = None) -> dict[str, torch.Tensor]:
+    def predict(self, data_batch: dict[str, torch.Tensor], output_device: str | None = None) -> dict[str, torch.Tensor]:
         """
         Generates predictions for a given data batch. If a noisifier is used and the current problem mode matches
         `self.use_dist_at_mode`, it generates scenarios from the noisifier's output distribution.
@@ -248,7 +248,7 @@ class DecisionMaker:
 
         Args:
             data_batch (dict[str, torch.Tensor]): Input data batch, must contain 'features'.
-            output_device (Optional[str]): Device for the output
+            output_device (str | None): Device for the output
                 prediction dictionary. Defaults to `self.device`.
 
         Returns:
@@ -314,14 +314,14 @@ class DecisionMaker:
         self.best_predictor = copy.deepcopy(self.predictor)
 
     # --- Helper methods ---
-    def _get_batch_results(self, data_batch: dict[str, torch.Tensor], metrics: Optional[list[str]] = None) -> dict[str, Any]:
+    def _get_batch_results(self, data_batch: dict[str, torch.Tensor], metrics: list[str] | None = None) -> dict[str, Any]:
         """
         Processes a single batch of data to get predictions, decisions, and evaluation metrics.
         This is a helper method typically called within `run_epoch`.
 
         Args:
             data_batch (dict[str, torch.Tensor]): A batch of input data.
-            metrics (Optional[list[str]]): The metrics that we want to record.
+            metrics (list[str] | None): The metrics that we want to record.
 
         Returns:
             dict[str, Any]: A dictionary containing various results for the batch:
@@ -397,7 +397,7 @@ class DecisionMaker:
         return scenarios
 
     # --- Conversion methods ---
-    def predictions_to_dict(self, predictions: torch.Tensor, output_device: Optional[str] = None) -> dict[str, torch.Tensor]:
+    def predictions_to_dict(self, predictions: torch.Tensor, output_device: str | None = None) -> dict[str, torch.Tensor]:
         """
         Converts a flat tensor of predictions into a dictionary.
         The dictionary maps parameter names (as defined in `self.decision_model.param_to_predict_shapes`)
@@ -410,7 +410,7 @@ class DecisionMaker:
             predictions (torch.Tensor): A 2D tensor of predictions, typically of shape
                 (batch_size, num_total_predicted_values). If scenarios are used, this might
                 have an additional dimension for scenarios.
-            output_device (Optional[str]): The device to move the output
+            output_device (str | None): The device to move the output
                 tensors to. Defaults to `self.device`.
 
         Returns:
@@ -485,7 +485,7 @@ class DecisionMaker:
     def dict_to_tensor(
         self,
         predictions_dict: dict[str, torch.Tensor],
-        output_device: Optional[Union[str, torch.device]] = None,
+        output_device: str | torch.device | None = None,
     ) -> torch.Tensor:
         """
         Converts a dictionary of tensors to a single tensor by concatenating them.
@@ -496,7 +496,7 @@ class DecisionMaker:
         Args:
             predictions_dict (dict[str, torch.Tensor]): Dictionary of parameter names to tensors.
                 The keys should align with `self.problem.params_to_predict_shapes`.
-            output_device (Optional[Union[str, torch.device]], optional): Device to move the final tensor to.
+            output_device (str | torch.device | None, optional): Device to move the final tensor to.
                 Defaults to `self.device`.
 
         Returns:

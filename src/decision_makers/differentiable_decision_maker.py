@@ -1,5 +1,3 @@
-from typing import Union
-
 import numpy as np
 import torch
 from pyepo.func import (
@@ -85,9 +83,9 @@ class DifferentiableDecisionMaker(DecisionMaker):
         use_dist_at_mode: str = "none",
         standardize_predictions: bool = True,
         init_OLS: bool = False,
-        seed: Union[int, None] = None,
-        predictor_kwargs: dict = None,
-        decision_model_kwargs: dict = None,
+        seed: int | None = None,
+        predictor_kwargs: dict | None = None,
+        decision_model_kwargs: dict | None = None,
         residual_SAA: bool = False,
         residual_SAA_scenarios: int = 1,
     ):
@@ -106,9 +104,9 @@ class DifferentiableDecisionMaker(DecisionMaker):
             use_dist_at_mode (str): When to use distributional predictions. Defaults to 'none'.
             standardize_predictions (bool): Whether to standardize predictions. Defaults to True.
             init_OLS (bool): Whether to initialize with OLS. Defaults to False.
-            seed (Union[int, None]): Random seed for reproducibility. Defaults to None.
-            predictor_kwargs (dict): Additional arguments for predictor initialization. Defaults to None.
-            decision_model_kwargs (dict): Additional arguments for decision model initialization. Defaults to None.
+            seed (int | None): Random seed for reproducibility. Defaults to None.
+            predictor_kwargs (dict | None): Additional arguments for predictor initialization. Defaults to None.
+            decision_model_kwargs (dict | None): Additional arguments for decision model initialization. Defaults to None.
             residual_SAA (bool): Whether to use residual Sample Average Approximation. Defaults to False.
             residual_SAA_scenarios (int): Number of scenarios for residual SAA. Defaults to 1.
         """

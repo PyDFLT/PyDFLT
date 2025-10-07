@@ -22,7 +22,7 @@ def gen_data_two_stage_knapsack(
     than values for two-stage optimization scenarios.
 
     Args:
-        seed (Optional[int]): Random seed for reproducible data generation.
+        seed (int | None): Random seed for reproducible data generation.
         num_data (int): Number of data samples to generate.
         num_features (int): Dimensionality of feature vectors.
         num_items (int): Number of items in the knapsack problem.

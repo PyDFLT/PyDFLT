@@ -1,7 +1,7 @@
 import os
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import numpy as np
 import wandb
@@ -16,12 +16,12 @@ class Logger:
     Attributes:
         experiment_name (str): The name of the current experiment.
         project_name (str): The name of the project.
-        config (Optional[dict[str, Any]]): Configuration dictionary for WandB.
+        config (dict[str, Any] | None): Configuration dictionary for WandB.
         path_to_log (Path): The Path object pointing to the directory where logs are stored.
         log_file_path (Path): The Path object pointing to the text log file.
         store_min_and_max (bool): Flag indicating whether to store min and max for metrics.
         use_wandb (bool): Flag indicating whether Weights & Biases is being used.
-        epoch_metrics_list (List[dict[str, float]]): A list storing dictionaries of aggregated
+        epoch_metrics_list (list[dict[str, float]]): A list storing dictionaries of aggregated
                                                       metrics for each epoch.
         logging_keys (set[str]): A set of all metric keys encountered across epochs.
         main_metric (str): The name of the main metric used for returning values from `log_epoch_results`.
@@ -43,8 +43,8 @@ class Logger:
         Args:
             experiment_name (str): The name of the current experiment.
             project_name (str): The name of the project, used for grouping experiments in WandB.
-            config (Optional[dict[str, Any]]): A dictionary of configuration parameters for the experiment.
-                                                This will be logged to Weights & Biases. Defaults to None.
+            config (dict[str, Any] | None): A dictionary of configuration parameters for the experiment.
+                                        This will be logged to Weights & Biases. Defaults to None.
             use_wandb (bool): If True, initializes and uses Weights & Biases for logging. Defaults to True.
             experiments_folder (str): The base folder where experiment results and logs will be stored.
                                       Defaults to 'results/'.
@@ -77,7 +77,7 @@ class Logger:
         """
         wandb.init(project=self.project_name, name=self.experiment_name, config=self.config)
 
-    def log_epoch_results(self, per_batch_results: List[dict[str, float]], epoch_num: int) -> Optional[float]:
+    def log_epoch_results(self, per_batch_results: list[dict[str, float]], epoch_num: int) -> float | None:
         """
         Receives a list of dictionaries with per-batch results, aggregates them, and logs.
         Keys in the per-batch results are typically formatted as 'mode/name', where 'mode'
@@ -85,14 +85,14 @@ class Logger:
         Results are aggregated (mean, min, max) and logged to a local file and optionally to WandB.
 
         Args:
-            per_batch_results (List[dict[str, float]]): A list of dictionaries, where each dictionary
+            per_batch_results (list[dict[str, float]]): A list of dictionaries, where each dictionary
                                                          contains metric names and their corresponding
                                                          values for a single batch.
             epoch_num (int): The current epoch number.
 
         Returns:
-            Optional[float]: The aggregated mean value of the `main_metric` for the current epoch,
-                             if found; otherwise, None.
+            float | None: The aggregated mean value of the `main_metric` for the current epoch,
+                          if found; otherwise, None.
         """
         # Aggregate results
         epoch_metrics = defaultdict(list)

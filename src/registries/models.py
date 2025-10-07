@@ -9,7 +9,7 @@ The core functionality includes:
 """
 
 import copy
-from typing import Any, Tuple, Type
+from typing import Any, Type
 
 from src.concrete_models import (
     CVXPYDiffKnapsackModel,
@@ -36,7 +36,7 @@ def register_model(name: str, model_class: Type, **params: Any) -> None:
     model_registry[name] = (model_class, params)
 
 
-def make_model(name: str, **override_params: Any) -> Tuple[Any, dict[str, Any]]:
+def make_model(name: str, **override_params: Any) -> tuple[Any, dict[str, Any]]:
     """
     Initialize an optimization model by its registered name with default or overridden parameters.
 

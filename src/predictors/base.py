@@ -1,5 +1,4 @@
 from abc import abstractmethod
-from typing import Union
 
 import numpy as np
 import torch
@@ -76,7 +75,7 @@ class Predictor(torch.nn.Module):
         raise NotImplementedError
 
     @staticmethod
-    def _set_bias(layer: nn.Module, init_bias: Union[float, np.ndarray]) -> None:
+    def _set_bias(layer: nn.Module, init_bias: float | np.ndarray) -> None:
         """
         Sets the bias of a given neural network layer. This method is static and can be called directly on the class.
         It handles both scalar and array-like initial bias values.
@@ -84,7 +83,7 @@ class Predictor(torch.nn.Module):
         Args:
             layer (nn.Module): The neural network layer whose bias is to be set.
                                This layer must have a 'bias' attribute.
-            init_bias (Union[float, np.ndarray]): The bias value(s). Can be a float or a numpy array.
+            init_bias (float | np.ndarray): The bias value(s). Can be a float or a numpy array.
         """
         np_init_bias = np.array(init_bias)
         if len(np_init_bias.shape) == 0:  # Scalar bias
@@ -106,13 +105,13 @@ class ScaleShift(nn.Module):
         shift (torch.Tensor): A 1D tensor representing the shifting factor(s). It does not require gradients.
     """
 
-    def __init__(self, scale: Union[float, np.ndarray] = 0.1, shift: Union[float, np.ndarray] = 0):
+    def __init__(self, scale: float | np.ndarray = 0.1, shift: float | np.ndarray = 0):
         """
         Initializes the ScaleShift layer.
 
         Args:
-            scale (Union[float, np.ndarray]): The scale factor(s). Can be a float or a numpy array.
-            shift (Union[float, np.ndarray]): The shift factor(s). Can be a float or a numpy array.
+            scale (float | np.ndarray): The scale factor(s). Can be a float or a numpy array.
+            shift (float | np.ndarray): The shift factor(s). Can be a float or a numpy array.
         """
         super().__init__()
         # Ensure scale and shift are tensors and reshape them to be 1D.

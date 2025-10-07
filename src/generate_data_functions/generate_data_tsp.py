@@ -23,7 +23,7 @@ def gen_data_traveling_salesperson(
     using PyEPO's TSP data generation utilities.
 
     Args:
-        seed (Optional[int]): Random seed for reproducible data generation. Defaults to None.
+        seed (int | None): Random seed for reproducible data generation. Defaults to None.
         num_data (int): Number of data samples to generate. Defaults to 500.
         num_features (int): Dimensionality of feature vectors. Defaults to 5.
         num_nodes (int): Number of nodes in the TSP instance. Defaults to 10.
@@ -32,7 +32,7 @@ def gen_data_traveling_salesperson(
         torch_tensors (bool): Whether to return PyTorch tensors instead of NumPy arrays. Defaults to False.
 
     Returns:
-        dict[str, Union[np.ndarray, torch.Tensor]]: A dictionary containing:
+        dict[str, np.ndarray | torch.Tensor]: A dictionary containing:
             - 'edge_costs': Array of shape (num_data, num_edges) with edge costs for each sample, where num_edges = num_nodes * (num_nodes - 1) / 2
             - 'features': Array of shape (num_data, num_features) with feature vectors for each sample
     """

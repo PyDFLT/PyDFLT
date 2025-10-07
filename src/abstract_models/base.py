@@ -1,7 +1,7 @@
 import copy
 import inspect
 from abc import ABC, abstractmethod
-from typing import Literal, Optional
+from typing import Literal
 
 import numpy as np
 import torch
@@ -37,7 +37,7 @@ class OptimizationModel(ABC):
         var_shapes: dict[str, tuple[int, ...]],
         param_to_predict_shapes: dict[str, tuple[int, ...]],
         model_sense: Literal["MIN", "MAX"],
-        extra_param_shapes: Optional[dict[str, tuple[int, ...]]] = None,
+        extra_param_shapes: dict[str, tuple[int, ...]] | None = None,
         num_scenarios: int = 1,
     ) -> None:
         """
@@ -51,9 +51,9 @@ class OptimizationModel(ABC):
                                                                  running optimization.
             model_sense (str): Specifies whether the model minimizes ('MIN') or maximizes ('MAX').
                                Must be either 'MIN' or 'MAX'.
-            extra_param_shapes (Optional[dict[str, tuple[int, ...]]]): An optional dictionary specifying additional
-                                                                       parameters that change from sample to sample
-                                                                       but are known.
+            extra_param_shapes (dict[str, tuple[int, ...]] | None): An optional dictionary specifying additional
+                                                                    parameters that change from sample to sample
+                                                                    but are known.
             num_scenarios (int): The number of scenarios for multi-scenario models. Defaults to 1.
         """
 
@@ -121,7 +121,7 @@ class OptimizationModel(ABC):
         self,
         data_batch: dict[str, torch.Tensor],
         decisions_batch: dict[str, torch.Tensor],
-        predictions_batch: Optional[dict[str, torch.Tensor]] = None,
+        predictions_batch: dict[str, torch.Tensor] | None = None,
     ) -> torch.Tensor:
         """
         Computes the objective function value achieved by `decisions_batch` for the given `data_batch`.
@@ -129,9 +129,9 @@ class OptimizationModel(ABC):
         Args:
             data_batch (dict[str, torch.Tensor]): A dictionary containing input data for the optimization.
             decisions_batch (dict[str, torch.Tensor]): A dictionary containing the decision variables.
-            predictions_batch (Optional[dict[str, torch.Tensor]]): An optional dictionary containing the
-                                                                  predictions for relevant parameters, if applicable.
-                                                                  Defaults to None.
+            predictions_batch (dict[str, torch.Tensor] | None): An optional dictionary containing the
+                                                                predictions for relevant parameters, if applicable.
+                                                                Defaults to None.
 
         Returns:
             torch.Tensor: A tensor representing the objective function value(s) for the batch.
@@ -185,9 +185,9 @@ class OptimizationModel(ABC):
         self,
         data_batch: dict[str, torch.Tensor],
         decisions_batch: dict[str, torch.Tensor],
-        predictions_batch: Optional[dict[str, torch.Tensor]] = None,
+        predictions_batch: dict[str, torch.Tensor] | None = None,
         epsilon: float = 1e-5,
-        metrics: Optional[list[str]] = None,
+        metrics: list[str] | None = None,
     ) -> dict[str, np.ndarray]:
         """
         Evaluates a batch of decisions by computing various metrics such as objective value,
@@ -197,11 +197,11 @@ class OptimizationModel(ABC):
             data_batch (dict[str, torch.Tensor]): A dictionary containing input data for the evaluation.
                                                   Expected to include 'objective_optimal' if regret is to be computed.
             decisions_batch (dict[str, torch.Tensor]): A dictionary containing the computed decision variables.
-            predictions_batch (Optional[dict[str, torch.Tensor]]): An optional dictionary containing the
-                                                                  predictions for relevant parameters. Defaults to None.
+            predictions_batch (dict[str, torch.Tensor] | None): An optional dictionary containing the
+                                                                predictions for relevant parameters. Defaults to None.
             epsilon (float): A small value added to the denominator in relative regret calculations to prevent
                              division by zero. Defaults to 1e-5.
-            metrics (Optional[list[str]]): List of metrics on which to evaluate.
+            metrics (list[str] | None): List of metrics on which to evaluate.
 
         Returns:
             dict[str, np.ndarray]: A dictionary containing evaluation metrics, including:

@@ -1,6 +1,6 @@
 import copy
 import random
-from typing import Optional, Union
+from typing import Union
 
 import numpy as np
 import torch
@@ -45,7 +45,7 @@ class Problem:
             computation for the training set, using this value as the number of neighbours 'k'.
             This involves finding k-nearest neighbors to perturb parameters for robust
             decision-making. Defaults to 0 (disabled).
-        mode_to_indices (Dict[str, np.ndarray]): A dictionary mapping mode strings
+        mode_to_indices (dict[str, np.ndarray]): A dictionary mapping mode strings
             ('train', 'validation', 'test') to their corresponding data indices.
         total_num_samples (int): Total number of samples in the dataset.
         all_indices (np.ndarray): An array of all indices from 0 to num_samples-1.
@@ -54,10 +54,10 @@ class Problem:
         test_size (int): Number of samples in the test set.
     """
 
-    mode: Optional[str] = None
-    train_indices: Optional[np.ndarray] = None
-    validation_indices: Optional[np.ndarray] = None
-    test_indices: Optional[np.ndarray] = None
+    mode: str | None = None
+    train_indices: np.ndarray | None = None
+    validation_indices: np.ndarray | None = None
+    test_indices: np.ndarray | None = None
 
     def __init__(
         self,
@@ -71,14 +71,14 @@ class Problem:
         time_respecting_split: bool = False,
         knn_robust_loss: int = 0,
         knn_robust_loss_weight: float = 0.0,
-        seed: Optional[int] = None,
+        seed: int | None = None,
         verbose: bool = True,
     ):
         """
         Initializes the Problem instance.
 
         Args:
-            data_dict (Dict[str, np.ndarray]): A dictionary where keys are string identifiers
+            data_dict (dict[str, np.ndarray]): A dictionary where keys are string identifiers
                 (e.g., 'features', 'costs') and values are NumPy arrays. It *must* include a 'features' key.
             opt_model (OptimizationModel): An instance of an optimization model that defines
                 the problem structure, parameters to predict, and solving logic.
@@ -102,7 +102,7 @@ class Problem:
                 an instance's original parameters with its neighbors' parameters for k-NN
                 robust loss. `perturbed_param = weight * original_param + (1 - weight) * neighbor_param`.
                 Defaults to 0.0.
-            seed (Optional[int], optional): Seed for random number generators (NumPy and Python's random)
+            seed (int | None, optional): Seed for random number generators (NumPy and Python's random)
                 to ensure reproducibility in data splitting and other stochastic processes.
                 Defaults to None (no explicit seed set).
             verbose (bool): If True, print status messages to the console.
@@ -291,7 +291,7 @@ class Problem:
 
         self._print_message("k-NN robust decisions (train) and 'normal' optimal decisions (val/test) added to dataset.")
 
-    def split_dataset(self, seed: Optional[int] = None) -> None:
+    def split_dataset(self, seed: int | None = None) -> None:
         """
         Splits the dataset indices into training, validation, and test sets.
 
@@ -301,7 +301,7 @@ class Problem:
         and populates `self.mode_to_indices`.
 
         Args:
-            seed (Optional[int], optional): A seed for NumPy's random number generator
+            seed (int | None, optional): A seed for NumPy's random number generator
                 to ensure reproducible shuffling and splitting. If None, the global
                 random state is used. Defaults to None.
         """
@@ -394,11 +394,11 @@ class Problem:
         `DFLDataset`'s `__getitem__` method.
 
         Args:
-            idx (Union[int, slice, List[int], np.ndarray]): The index, slice, or list/array of indices for which to
+            idx (int | slice | list[int] | np.ndarray): The index, slice, or list/array of indices for which to
             retrieve data.
 
         Returns:
-            Dict[str, torch.Tensor]: A dictionary where keys are data field names (e.g., 'features', 'costs') and
+            dict[str, torch.Tensor]: A dictionary where keys are data field names (e.g., 'features', 'costs') and
                 values are the corresponding torch.Tensor data for the requested indices.
         """
         return self.dataset[idx]
@@ -409,12 +409,12 @@ class Problem:
         to the `solve_batch` method of the `self.opt_model` (OptimizationModel).
 
         Args:
-            data_batch (Dict[str, torch.Tensor]): A dictionary containing the data required
+            data_batch (dict[str, torch.Tensor]): A dictionary containing the data required
                 by the optimization model to define the problem instances for the batch.
                 Keys are parameter names (e.g., 'costs') and values are torch.Tensors.
 
         Returns:
-            Dict[str, torch.Tensor]: A dictionary where keys are decision variable names
+            dict[str, torch.Tensor]: A dictionary where keys are decision variable names
                 and values are torch.Tensors representing the optimal decisions for the batch.
         """
         decisions_dict = self.opt_model.solve_batch(data_batch)
@@ -424,7 +424,7 @@ class Problem:
         self,
         data_batch: dict[str, torch.Tensor],
         decisions_batch: dict[str, torch.Tensor],
-        predictions_batch: Optional[dict[str, torch.Tensor]] = None,
+        predictions_batch: dict[str, torch.Tensor] | None = None,
     ) -> torch.Tensor:
         """
         Calculates the objective value for a batch, given the true data, decisions,
@@ -434,7 +434,7 @@ class Problem:
             data_batch (dict[str, torch.Tensor]): The ground truth parameters for the batch.
             decisions_batch (dict[str, torch.Tensor]): The decisions for which to calculate
                 the objective values.
-            predictions_batch (Optional[dict[str, torch.Tensor]], optional): If provided,
+            predictions_batch (dict[str, torch.Tensor] | None, optional): If provided,
                 these are the (predicted) parameters that might have been used to *obtain*
                 `decisions_batch`. The objective, however, is always evaluated using the
                 true parameters from `data_batch`. Defaults to None.
@@ -454,8 +454,8 @@ class Problem:
         self,
         data_batch: dict[str, torch.Tensor],
         decisions_batch: dict[str, torch.Tensor],
-        predictions_batch: dict[str, torch.Tensor] = None,
-        metrics: Optional[list[str]] = None,
+        predictions_batch: dict[str, torch.Tensor] | None = None,
+        metrics: list[str] | None = None,
     ) -> dict[str, np.ndarray]:
         """
         Evaluates various performance metrics for a batch, given true data, decisions, and optionally,
@@ -464,9 +464,9 @@ class Problem:
         Args:
             data_batch (dict[str, torch.Tensor]): The ground truth parameters for the batch.
             decisions_batch (dict[str, torch.Tensor]): The decisions to be evaluated.
-            predictions_batch (Optional[Dict[str, torch.Tensor]], optional): Predicted parameters
+            predictions_batch (dict[str, torch.Tensor] | None, optional): Predicted parameters
                 that might have been used to obtain `decisions_batch`. Defaults to None.
-            metrics (Optional[list[str]]): List of metrics on which to evaluate.
+            metrics (list[str] | None): List of metrics on which to evaluate.
 
         Returns:
             dict[str, torch.Tensor]: A dictionary where keys are metric names and values are torch.Tensors

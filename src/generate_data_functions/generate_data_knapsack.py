@@ -1,12 +1,10 @@
-from typing import Optional, Union
-
 import numpy as np
 import pyepo
 import torch
 
 
 def gen_data_knapsack(
-    seed: Optional[int] = None,
+    seed: int | None = None,
     num_data: int = 500,
     num_features: int = 5,
     num_items: int = 10,
@@ -14,7 +12,7 @@ def gen_data_knapsack(
     polynomial_degree: int = 6,
     noise_width: float = 0.5,
     torch_tensors: bool = False,
-) -> dict[str, Union[np.ndarray, torch.Tensor]]:
+) -> dict[str, np.ndarray | torch.Tensor]:
     """
     Generate synthetic data for knapsack problems.
 
@@ -23,7 +21,7 @@ def gen_data_knapsack(
     data generation utilities.
 
     Args:
-        seed (Optional[int]): Random seed for reproducible data generation. Defaults to None.
+        seed (int | None): Random seed for reproducible data generation. Defaults to None.
         num_data (int): Number of data samples to generate. Defaults to 500.
         num_features (int): Dimensionality of feature vectors. Defaults to 5.
         num_items (int): Number of items in the knapsack problem. Defaults to 10.

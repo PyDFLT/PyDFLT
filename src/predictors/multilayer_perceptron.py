@@ -1,6 +1,6 @@
 # Partially based on: https://github.com/facebookresearch/LANCER
 
-from typing import Iterator, Union
+from typing import Iterator
 
 import numpy as np
 import torch
@@ -9,7 +9,7 @@ from torch.nn import Parameter
 
 from src.predictors.base import Predictor, ScaleShift
 
-Activation = Union[str, nn.Module]
+Activation = str | nn.Module
 
 
 _str_to_activation = {
@@ -45,8 +45,8 @@ class MLPPredictor(Predictor, nn.Module):
         size: int = 252,
         activation: Activation = "leaky_relu",
         output_activation: Activation = "identity",
-        scale: Union[float, np.array] = 1.0,
-        shift: Union[float, np.array] = 0.0,
+        scale: float | np.ndarray = 1.0,
+        shift: float | np.ndarray = 0.0,
         *args,
         **kwargs,
     ):
@@ -64,8 +64,8 @@ class MLPPredictor(Predictor, nn.Module):
                                      Defaults to 'leaky_relu'.
             output_activation (Activation): The activation function to use for the output layer.
                                             Can be a string or an nn.Module. Defaults to 'identity'.
-            scale (Union[float, np.ndarray]): The scale factor for the output scale-shift layer. Defaults to 1.0.
-            shift (Union[float, np.ndarray]): The shift factor for the output scale-shift layer. Defaults to 0.0.
+            scale (float | np.ndarray): The scale factor for the output scale-shift layer. Defaults to 1.0.
+            shift (float | np.ndarray): The shift factor for the output scale-shift layer. Defaults to 0.0.
             *args: Variable length argument list to be passed to nn.Module.__init__.
             **kwargs: Arbitrary keyword arguments to be passed to nn.Module.__init__.
         """

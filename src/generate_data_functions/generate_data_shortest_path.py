@@ -20,7 +20,7 @@ def gen_data_shortest_path(
     shortest path data generation utilities.
 
     Args:
-        seed (Optional[int]): Random seed for reproducible data generation. Defaults to None.
+        seed (int | None): Random seed for reproducible data generation. Defaults to None.
         num_data (int): Number of data samples to generate. Defaults to 500.
         num_features (int): Dimensionality of feature vectors. Defaults to 5.
         grid (tuple[int, int]): Grid dimensions (rows, columns) for the shortest path network. Defaults to (10, 10).

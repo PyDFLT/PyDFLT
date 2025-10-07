@@ -8,7 +8,7 @@ from torch.nn import Parameter
 
 from src.predictors.base import Predictor, ScaleShift
 
-Activation = Union[str, nn.Module]
+Activation = str | nn.Module
 
 
 _str_to_activation = {
