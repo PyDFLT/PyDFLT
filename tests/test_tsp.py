@@ -2,14 +2,14 @@ import unittest
 
 import numpy as np
 
-from src.concrete_models.grbpy_tsp import GRBPYTravelingSalesperson
+from src.concrete_models.grbpy_tsp import TravelingSalesperson
 
 
 class TestTSP(unittest.TestCase):
     def test_construction_tsp_model(self):
         """Test that TSP model is constructed correctly."""
         num_nodes = 4
-        tsp = GRBPYTravelingSalesperson(num_nodes)
+        tsp = TravelingSalesperson(num_nodes)
 
         # For 4 nodes, we should have 6 edges (triangle number: 4*3/2)
         expected_num_edges = num_nodes * (num_nodes - 1) // 2
@@ -31,10 +31,10 @@ class TestTSP(unittest.TestCase):
         All other edges ((0,2), (1,3)) have cost 10 (diagonals)
         """
         num_nodes = 4
-        tsp = GRBPYTravelingSalesperson(num_nodes)
+        tsp = TravelingSalesperson(num_nodes)
 
         # Set all costs to high value initially
-        edge_costs = np.full(tsp.param_to_predict_shapes["c"], 10.0)
+        edge_costs = np.full(tsp.param_to_predict_shapes["edge_costs"], 10.0)
 
         # Set costs for square perimeter edges to 1 (optimal path)
         # The edges in tsp.edges are ordered as: (0,1), (0,2), (0,3), (1,2), (1,3), (2,3)

@@ -5,7 +5,7 @@ from pyepo.model.grb.tsp import tspDFJModel
 from src.abstract_models.grbpy import GRBPYModel
 
 
-class GRBPYTravelingSalesperson(GRBPYModel, tspDFJModel):
+class TravelingSalesperson(GRBPYModel, tspDFJModel):
     """
     A Gurobi-based Traveling Salesperson Problem (TSP) optimization model.
     This model solves the TSP using the Dantzig-Fulkerson-Johnson (DFJ) formulation
@@ -18,7 +18,7 @@ class GRBPYTravelingSalesperson(GRBPYModel, tspDFJModel):
 
     def __init__(self, num_nodes: int, num_scenarios: int = 1):
         """
-        Initializes the GRBPYTravelingSalesperson model.
+        Initializes the TravelingSalesperson model.
 
         Args:
             num_nodes (int): Number of nodes in the TSP instance.

@@ -14,6 +14,7 @@ from typing import Any, Callable, Tuple
 from src.generate_data_functions import (
     gen_data_knapsack,
     gen_data_shortest_path,
+    gen_data_traveling_salesperson,
     gen_data_wsmc,
 )
 from src.utils.load import load_data_from_dict
@@ -68,27 +69,6 @@ register_data(
     path=None,
 )
 
-register_data(  # as introduced in (Elmachtoub 2022)
-    "shortest_path",
-    gen_data_shortest_path,
-    seed=5,
-    num_data=2000,
-    num_features=5,
-    grid=(5, 5),
-    polynomial_degree=6,
-    noise_width=0.5,
-)
-
-# Parameters for "shortest_path" in different works:
-# Elmachtoub 2022: num_data \in [100+25+10000, 1000+250+10000, 5000+1250+10000] (train+validation+test),
-# num_features = 5, grid = (5, 5), polynomial_degree \in [1, 2, 4, 6, 8], noise_width \in [0, 0.5]
-
-# Tang 2022: num_data \in [100+1000, 1000+1000, 5000+1000] (train+test), num_features = 5, grid = (5, 5),
-# polynomial_degree \in [1, 2, 4, 6], noise_width \in [0, 0.5]
-
-# Schutte 2024: num_data \in [100+100+1000, 1000+100+1000] (train+validation+test), num_features = 5, grid = (10, 10),
-# polynomial_degree = 6, noise_width \in [0, 0.5, 1.0]
-
 register_data(
     "knapsack",
     gen_data_knapsack,
@@ -101,9 +81,47 @@ register_data(
     noise_width=0.5,
 )
 
-# Parameters for "knapsack" in different works:
-# Tang 2022: num_data \in [100+1000, 1000+1000, 5000+1000] (train+test), num_features = 5, num_items = 10,
-# polynomial_degree \in [1, 2, 4, 6], noise_width \in [0, 0.5]
+r"""
+Parameters for "knapsack" in different works:
+Tang2024: num_data \in [100+1000, 1000+1000, 5000+1000] (train+test), num_features = 5, num_items = 10,
+polynomial_degree \in [1, 2, 4, 6], noise_width \in [0, 0.5]
+"""
+
+
+register_data(  # as introduced in (Elmachtoub 2022)
+    "shortest_path",
+    gen_data_shortest_path,
+    seed=5,
+    num_data=2000,
+    num_features=5,
+    grid=(5, 5),
+    polynomial_degree=6,
+    noise_width=0.5,
+)
+
+r"""
+Parameters for "shortest_path" in different works:
+Elmachtoub2022: num_data \in [100+25+10000, 1000+250+10000, 5000+1250+10000] (train+validation+test),
+num_features = 5, grid = (5, 5), polynomial_degree \in [1, 2, 4, 6, 8], noise_width \in [0, 0.5]
+
+Tang2024: num_data \in [100+1000, 1000+1000, 5000+1000] (train+test), num_features = 5, grid = (5, 5),
+polynomial_degree \in [1, 2, 4, 6], noise_width \in [0, 0.5]
+
+Schutte2024: num_data \in [100+100+1000, 1000+100+1000] (train+validation+test), num_features = 5, grid = (10, 10),
+polynomial_degree = 6, noise_width \in [0, 0.5, 1.0]
+"""
+
+
+register_data("tsp", gen_data_traveling_salesperson, seed=5, num_data=2000, num_features=5, num_nodes=20, polynomial_degree=6, noise_width=0.5)
+
+r"""
+Parameters for "tsp" in different works:
+Tang2024: num_data \in [100+1000, 1000+1000, 5000+1000] (train+test), num_features = 5, num_nodes = 20,
+polynomial_degree \in [1, 2, 4, 6], noise_width \in [0, 0.5]
+
+Schutte2024: num_data \in [100+100+1000, 1000+100+1000] (train+validation+test), num_features = 5, num_nodes = 20,
+polynomial_degree = 6, noise_width \in [0, 0.5, 1.0]
+"""
 
 
 register_data(
