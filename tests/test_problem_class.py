@@ -7,7 +7,7 @@ from src.concrete_models.grbpy_two_stage_weighted_set_multi_cover import (
     WeightedSetMultiCover,
 )
 from src.decision_makers import DifferentiableDecisionMaker
-from src.generate_data_functions.generate_data_shortestpath import gen_data_shortestpath
+from src.generate_data_functions.generate_data_shortest_path import gen_data_shortest_path
 from src.generate_data_functions.generate_data_wsmc import gen_data_wsmc
 from src.problem import Problem
 from src.runner import Runner
@@ -84,7 +84,7 @@ class TestProblemClass(unittest.TestCase):
 
         # Create a dummy model
         opt_model = ShortestPath(grid=(5, 5))
-        data_dict = gen_data_shortestpath(num_data=20, grid=(5, 5), num_features=1)
+        data_dict = gen_data_shortest_path(num_data=20, num_features=1, grid=(5, 5))
         problem = Problem(
             data_dict=data_dict,
             opt_model=opt_model,

@@ -162,7 +162,13 @@ class GRBPYModel(OptimizationModel):
         else:
             self.gp_model.optimize(self.lazy_constraints_method)
 
-        decision_dict_i = {key: np.round(self.vars_dict[key].x, self.rounding_decimal) for key in self.var_names}
+        if isinstance(next(iter(self.vars_dict.values())), list):
+            # we determine the decisions differently dependent on using MVar in Gurobi or a list of variables
+            decision_dict_i = {}
+            for key in self.var_names:
+                decision_dict_i[key] = np.array([np.round(self.vars_dict[key][i].x, self.rounding_decimal) for i in range(len(self.vars_dict[key]))])
+        else:
+            decision_dict_i = {key: np.round(self.vars_dict[key].x, self.rounding_decimal) for key in self.var_names}
 
         return decision_dict_i
 

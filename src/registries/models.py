@@ -15,6 +15,7 @@ from src.concrete_models import (
     CVXPYDiffKnapsackModel,
     GRBPYKnapsackModel,
     ShortestPath,
+    TravelingSalesperson,
     TwoStageKnapsack,
     WeightedSetMultiCover,
 )
@@ -64,7 +65,6 @@ def make_model(name: str, **override_params: Any) -> Tuple[Any, dict[str, Any]]:
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # REGISTER MODELS # # # # # # # # # # # # # # # # # # # # # # # #
-# Models from literature --------------------------------------------------------------------------------------------- #
 register_model(
     name="knapsack_2D_Tang2022",
     model_class=GRBPYKnapsackModel,
@@ -78,27 +78,33 @@ register_model(
 
 register_model(name="shortest_path", model_class=ShortestPath, grid=(5, 5))
 
-# Parameters for "shortest_path" in different works:
-# Elmachtoub 2022: grid = (5, 5)
-# Tang 2022: grid = (5, 5)
-# Schutte 2024: gird = (10, 10)
+"""
+Parameters for "shortest_path" in different works:
+Elmachtoub2022: grid = (5, 5)
+Tang2022: grid = (5, 5)
+Schutte2024: grid = (10, 10)
+"""
+
+register_model(name="tsp", model_class=TravelingSalesperson, num_nodes=20)
+
+"""
+Parameters for "shortest_path" in different works:
+Tang2022: num_nodes = 20
+Schutte2024: num_nodes = 20
+"""
 
 register_model(
     name="WSMC_Silvestri2024",
     model_class=WeightedSetMultiCover,
-    num_items=5,
-    num_covers=25,
-    penalty=5,
+    num_items=5,  # \in [5, 10]
+    num_covers=25,  # \in [25, 50]
+    penalty=5,  # \in [1, 5, 10]
     cover_costs_lb=1,
     cover_costs_ub=100,
     Silvestri2024=True,
     seed=5,
 )
 
-# Silvestri 2024: num_items, num_covers \in [(5, 25), (10, 50)], penalty \in [1, 5, 10]
-
-
-# Additional models -------------------------------------------------------------------------------------------------- #
 register_model(name="knapsack_continuous", model_class=CVXPYDiffKnapsackModel, num_decisions=10, capacity=20, weights_lb=3, weights_ub=8, dimension=1, seed=5)
 
 
@@ -117,3 +123,28 @@ register_model(
     recovery_ratio=0.8,
     seed=5,
 )
+
+
+"""
+References
+Elmachtoub2022
+Adam N. Elmachtoub and Paul Grigas. Smart “predict, then optimize”’. Management Science, 68:9–26, 2022.
+doi:10.1287/mnsc.2020.3922.
+
+Schutte2024
+Noah Schutte, Krzysztof Postek, and Neil Yorke-Smith. Robust losses for decision-focused learning. In Proceedings of
+the Thirty-Third International Joint Conference on Artificial Intelligence, IJCAI’24, pages 4868–4875, 2024.
+doi:10.24963/ijcai.2024/538.
+
+Silvestri2024
+Mattia Silvestri, Senne Berden, Jayanta Mandi, Ali ˙Irfan Mahmuto˘gulları, Maxime Mulamba, Allegra De Filippo,
+Tias Guns, and Michele Lombardi. Score function gradient estimation to widen the applicability of decision-focused
+learning. CoRR, abs/2307.05213, 2023.
+doi:10.48550/arXiv.2307.05213.
+
+Tang2024
+Bo Tang and Elias B. Khalil. Pyepo: a pytorch-based end-to-end predict-then-optimize library for linear and integer
+programming. Mathematical Program-ming Computation, 16(3):297–335, 2024.
+doi:https://doi.org/10.1007/s12532-024-00255-x.
+
+"""
