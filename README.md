@@ -5,7 +5,7 @@
 
 ## A Python-based Decision-Focused Learning Toolbox
 **PyDFLT** is designed to help researchers apply and develop Decision Focused Learning (DFL) tools in Python. It uses **CVXPYLayers** [1] for differentiable models, **PyEPO** [2] for models with a linear objective and has an implementation of **SFGE** [3] and **Lancer** [4]. To help with research, it supports Weights & Biases (https://wandb.ai/) and Optuna (https://optuna.org).
-In the near future, we will publish PyDFLT on the Python Package Index, after which you can install it by running:
+PyDFLT v0.1.0 is now available:
 
 `pip install pydflt`
 
@@ -30,12 +30,11 @@ We make use of **pre-commit** (https://pre-commit.com/) and **pytest** to ensure
 
 #### Documentation
 
-We use **Sphinx** (https://www.sphinx-doc.org/en/master/) for the documentation.  The Makefile in this directory can be used to build the documentation.
+We use **Sphinx** (https://www.sphinx-doc.org/en/master/) for the documentation.  All files to build the documentation are in the docs directory. To create the docs, run:
 
-You can run `uv run make html --directory=docs` rom the project root as well, which will build the documentation in the exact same way as it will be displayed on the website.
+`uv run make html --directory=docs`
 
-Then, go to docs/build/html/api/src.html and drag the file into a browser.
-
+Then, open docs/build/html/api/src.html in a browser to view the created docs.
 
 ### Using Weights & Biases
 If you want to use Weights & Biases, either set an environment variable named `WANDB_KEY` with your key,
