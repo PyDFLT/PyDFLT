@@ -86,26 +86,24 @@ def save_progress(study, search_space: SearchSpaceConfig, output_dir):
 def run_trial(trial, search_space: SearchSpaceConfig, base_config, seeds: list):
     assert len(seeds) > 0, "Provide at least one seed!"
 
-    # Parse Optuna Trial to get a config of the values
     trial_config = search_space.get_trial_config(trial)
+    per_seed_results: list[float] = []
 
-    # For more robust evaluation, we run each hyperparameter configuration for multiple seeds (same across different configurations)
-    # Make sure to use different seeds for the experiments after
-    per_seeds_results = []
-    for seed in seeds:
-        # Update config based on trial
+    for seed_idx, seed in enumerate(seeds, start=1):
         config = update_config(base_config=base_config, updates_config=trial_config)
 
-        # Initialize all objects with the seed
         config["seed"] = seed
         for key in config:
             if isinstance(config[key], dict) and "seed" in config[key]:
                 config[key]["seed"] = seed
 
-        results = run(config, optuna_trial=trial)
-        per_seeds_results.append(results)
+        result = run(config, optuna_trial=None)
+        per_seed_results.append(float(result))
 
-    try:
-        return np.mean(per_seeds_results)
-    except optuna.TrialPruned:
-        raise
+        if trial is not None:
+            intermediate = float(np.mean(per_seed_results))
+            trial.report(intermediate, seed_idx)
+            if trial.should_prune():
+                raise optuna.TrialPruned()
+
+    return float(np.mean(per_seed_results))
