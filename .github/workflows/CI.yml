@@ -10,6 +10,8 @@ jobs:
   build:
     name: Test PyDFLT using Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: ${{ github.workspace }}/src
     strategy:
       fail-fast: true
       matrix:
