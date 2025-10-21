@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from src.concrete_models.grbpy_two_stage_weighted_set_multi_cover import (
+from pydflt.concrete_models.grbpy_two_stage_weighted_set_multi_cover import (
     WeightedSetMultiCover,
 )
 

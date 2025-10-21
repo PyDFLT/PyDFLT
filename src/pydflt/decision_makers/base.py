@@ -8,12 +8,12 @@ from sklearn.linear_model import LinearRegression, QuantileRegressor
 from sklearn.metrics import mean_squared_error
 from torch import nn
 
-from src.abstract_models.base import OptimizationModel
-from src.noisifier import Noisifier
-from src.predictors import IMPLEMENTED_PREDICTORS
-from src.predictors.base import Predictor
-from src.problem import Problem
-from src.utils.reproducability import set_seeds
+from pydflt.abstract_models.base import OptimizationModel
+from pydflt.noisifier import Noisifier
+from pydflt.predictors import IMPLEMENTED_PREDICTORS
+from pydflt.predictors.base import Predictor
+from pydflt.problem import Problem
+from pydflt.utils.reproducability import set_seeds
 
 
 class DecisionMaker:

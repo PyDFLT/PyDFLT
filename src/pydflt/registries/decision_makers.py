@@ -11,7 +11,7 @@ The core functionality includes:
 import copy
 from typing import Any, Tuple
 
-from src.decision_makers import (
+from pydflt.decision_makers import (
     DifferentiableDecisionMaker,
     LancerDecisionMaker,
     SFGEDecisionMaker,

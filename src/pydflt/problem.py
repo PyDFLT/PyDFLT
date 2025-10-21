@@ -6,8 +6,8 @@ import numpy as np
 import torch
 from scipy.spatial import distance
 
-from src.abstract_models.base import OptimizationModel
-from src.dataset import DFLDataset
+from pydflt.abstract_models.base import OptimizationModel
+from pydflt.dataset import DFLDataset
 
 
 class Problem:

@@ -2,7 +2,7 @@ import cvxpy as cp
 import numpy as np
 import torch
 
-from src.abstract_models.cvxpy_diff import CVXPYDiffModel
+from pydflt.abstract_models.cvxpy_diff import CVXPYDiffModel
 
 
 class CVXPYDiffKnapsackModel(CVXPYDiffModel):

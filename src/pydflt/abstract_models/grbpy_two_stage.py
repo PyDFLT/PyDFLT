@@ -3,7 +3,7 @@ from typing import Any, Optional
 import numpy as np
 import torch
 
-from src.abstract_models.grbpy import GRBPYModel
+from pydflt.abstract_models.grbpy import GRBPYModel
 
 
 class GRBPYTwoStageModel(GRBPYModel):

@@ -5,9 +5,9 @@ import torch
 import torch.nn as nn
 from torch.distributions import Distribution, LogNormal, Normal
 
-from src.predictors import MLPNormalPredictor
-from src.predictors.base import Predictor
-from src.predictors.truncated_normal import TruncatedNormal
+from pydflt.predictors import MLPNormalPredictor
+from pydflt.predictors.base import Predictor
+from pydflt.predictors.truncated_normal import TruncatedNormal
 
 
 class Noisifier(nn.Module):

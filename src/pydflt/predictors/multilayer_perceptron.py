@@ -7,7 +7,7 @@ import torch
 from torch import nn
 from torch.nn import Parameter
 
-from src.predictors.base import Predictor, ScaleShift
+from pydflt.predictors.base import Predictor, ScaleShift
 
 Activation = str | nn.Module
 

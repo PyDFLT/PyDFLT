@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from src.concrete_models.grbpy_knapsack import GRBPYKnapsackModel
+from pydflt.concrete_models import GRBPYKnapsackModel
 
 
 class TestQuadratic(unittest.TestCase):

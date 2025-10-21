@@ -2,8 +2,8 @@ import unittest
 
 import numpy as np
 
-from src.concrete_models.grbpy_shortest_path import ShortestPath
-from src.generate_data_functions.generate_data_shortest_path import gen_data_shortest_path
+from pydflt.concrete_models.grbpy_shortest_path import ShortestPath
+from pydflt.generate_data_functions import gen_data_shortest_path
 
 
 class TestShortestPath(unittest.TestCase):

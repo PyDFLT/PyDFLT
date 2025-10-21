@@ -1,12 +1,12 @@
 import unittest
 
-from src.concrete_models.grbpy_two_stage_weighted_set_multi_cover import (
+from pydflt.concrete_models.grbpy_two_stage_weighted_set_multi_cover import (
     WeightedSetMultiCover,
 )
-from src.decision_makers.sfge_decision_maker import SFGEDecisionMaker
-from src.generate_data_functions.generate_data_wsmc import gen_data_wsmc
-from src.problem import Problem
-from src.runner import Runner
+from pydflt.decision_makers.sfge_decision_maker import SFGEDecisionMaker
+from pydflt.generate_data_functions import gen_data_wsmc
+from pydflt.problem import Problem
+from pydflt.runner import Runner
 
 # Set-up model and data and problem for testing
 model = WeightedSetMultiCover(

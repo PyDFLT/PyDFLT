@@ -5,9 +5,9 @@ import numpy as np
 import optuna
 from optuna.trial import Trial
 
-from src.decision_makers import DecisionMaker
-from src.logger import Logger
-from src.utils.reproducability import set_seeds
+from pydflt.decision_makers import DecisionMaker
+from pydflt.logger import Logger
+from pydflt.utils.reproducability import set_seeds
 
 
 class Runner:

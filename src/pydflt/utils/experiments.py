@@ -3,12 +3,12 @@ from typing import Any, Optional
 
 from optuna.trial import Trial
 
-from src.problem import Problem
-from src.registries.data import get_data
-from src.registries.decision_makers import make_decision_maker
-from src.registries.models import make_model
-from src.runner import Runner
-from src.utils.reproducability import set_seeds
+from pydflt.problem import Problem
+from pydflt.registries.data import get_data
+from pydflt.registries.decision_makers import make_decision_maker
+from pydflt.registries.models import make_model
+from pydflt.runner import Runner
+from pydflt.utils.reproducability import set_seeds
 
 
 def run(config: dict[str, Any], optuna_trial: Optional[Trial] = None) -> float:

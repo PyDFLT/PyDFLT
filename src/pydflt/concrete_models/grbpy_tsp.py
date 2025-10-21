@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from pyepo.model.grb.tsp import tspDFJModel
 
-from src.abstract_models.grbpy import GRBPYModel
+from pydflt.abstract_models.grbpy import GRBPYModel
 
 
 class TravelingSalesperson(GRBPYModel, tspDFJModel):

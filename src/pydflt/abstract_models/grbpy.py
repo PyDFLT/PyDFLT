@@ -8,8 +8,8 @@ import numpy as np
 import torch
 from pyepo.model.opt import optModel
 
-from src.abstract_models.base import MIN, OptimizationModel
-from src.abstract_models.cvxpy_diff import CVXPYDiffModel
+from pydflt.abstract_models.base import MIN, OptimizationModel
+from pydflt.abstract_models.cvxpy_diff import CVXPYDiffModel
 
 
 class GRBPYModel(OptimizationModel):

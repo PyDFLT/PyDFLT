@@ -3,7 +3,7 @@ import gurobipy as gp
 import numpy as np
 from gurobipy import GRB
 
-from src.abstract_models.grbpy_two_stage import GRBPYTwoStageModel
+from pydflt.abstract_models.grbpy_two_stage import GRBPYTwoStageModel
 
 
 class TwoStageKnapsack(GRBPYTwoStageModel):

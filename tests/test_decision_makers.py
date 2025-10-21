@@ -2,19 +2,19 @@ import unittest
 
 import torch
 
-from src.concrete_models.cvxpy_knapsack import CVXPYDiffKnapsackModel
-from src.concrete_models.grbpy_two_stage_weighted_set_multi_cover import (
+from pydflt.concrete_models import CVXPYDiffKnapsackModel
+from pydflt.concrete_models.grbpy_two_stage_weighted_set_multi_cover import (
     WeightedSetMultiCover,
 )
-from src.decision_makers.differentiable_decision_maker import (
+from pydflt.decision_makers.differentiable_decision_maker import (
     DifferentiableDecisionMaker,
 )
-from src.decision_makers.lancer_decision_maker import LancerDecisionMaker
-from src.decision_makers.sfge_decision_maker import SFGEDecisionMaker
-from src.generate_data_functions.generate_data_knapsack import gen_data_knapsack
-from src.generate_data_functions.generate_data_wsmc import gen_data_wsmc
-from src.problem import Problem
-from src.runner import Runner
+from pydflt.decision_makers.lancer_decision_maker import LancerDecisionMaker
+from pydflt.decision_makers.sfge_decision_maker import SFGEDecisionMaker
+from pydflt.generate_data_functions import gen_data_knapsack
+from pydflt.generate_data_functions import gen_data_wsmc
+from pydflt.problem import Problem
+from pydflt.runner import Runner
 
 # Set-up model and data and problem
 model = WeightedSetMultiCover(

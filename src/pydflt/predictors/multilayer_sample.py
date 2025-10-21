@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 from torch.distributions import Distribution
 
-from src.predictors.multilayer_perceptron import MLPPredictor
+from pydflt.predictors.multilayer_perceptron import MLPPredictor
 
 Activation = str | nn.Module
 

@@ -2,7 +2,7 @@ import copy
 import unittest
 
 # Import the registries and their corresponding make/get functions
-from src import (
+from pydflt import (
     data_registry,
     decision_maker_registry,
     get_data,

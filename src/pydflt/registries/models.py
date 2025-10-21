@@ -11,7 +11,7 @@ The core functionality includes:
 import copy
 from typing import Any, Type
 
-from src.concrete_models import (
+from pydflt.concrete_models import (
     CVXPYDiffKnapsackModel,
     GRBPYKnapsackModel,
     ShortestPath,

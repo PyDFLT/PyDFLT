@@ -6,7 +6,7 @@ import numpy as np
 import optuna
 import yaml
 
-from src.utils.experiments import run, update_config
+from pydflt.utils.experiments import run, update_config
 
 
 class SearchSpaceConfig:

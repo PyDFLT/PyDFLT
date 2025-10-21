@@ -5,7 +5,7 @@ import torch
 from gurobipy import GRB
 from pyepo.model.grb.grbmodel import optGrbModel
 
-from src.abstract_models.grbpy import GRBPYModel
+from pydflt.abstract_models.grbpy import GRBPYModel
 
 
 class ShortestPath(GRBPYModel, optGrbModel):

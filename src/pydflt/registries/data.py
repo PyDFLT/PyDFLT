@@ -11,13 +11,13 @@ The core functionality includes:
 import copy
 from typing import Any, Callable, Tuple
 
-from src.generate_data_functions import (
+from pydflt.generate_data_functions import (
     gen_data_knapsack,
     gen_data_shortest_path,
     gen_data_traveling_salesperson,
     gen_data_wsmc,
 )
-from src.utils.load import load_data_from_dict
+from pydflt.utils.load import load_data_from_dict
 
 data_registry: dict[str, Tuple[Callable, dict[str, Any]]] = {}
 

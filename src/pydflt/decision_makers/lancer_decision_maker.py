@@ -3,9 +3,9 @@ from typing import Union
 import numpy as np
 import torch
 
-from src.decision_makers.base import DecisionMaker
-from src.predictors import IMPLEMENTED_PREDICTORS
-from src.problem import Problem
+from pydflt.decision_makers.base import DecisionMaker
+from pydflt.predictors import IMPLEMENTED_PREDICTORS
+from pydflt.problem import Problem
 
 # from src.logger import get_logger
 # logger = get_logger(__name__)

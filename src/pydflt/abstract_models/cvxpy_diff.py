@@ -5,7 +5,7 @@ import cvxpy as cp
 import torch
 from cvxpylayers.torch import CvxpyLayer
 
-from src.abstract_models.base import OptimizationModel
+from pydflt.abstract_models.base import OptimizationModel
 
 
 class CVXPYDiffModel(OptimizationModel):
