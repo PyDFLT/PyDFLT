@@ -2,13 +2,9 @@ import copy
 import unittest
 
 # Import the registries and their corresponding make/get functions
-from src import (
-    data_registry,
-    decision_maker_registry,
-    get_data,
-    make_model,
-    model_registry,
-)
+from pydflt.registries.data import data_registry, get_data
+from pydflt.registries.decision_makers import decision_maker_registry
+from pydflt.registries.models import make_model, model_registry
 
 
 class TestRegistries(unittest.TestCase):

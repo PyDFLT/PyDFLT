@@ -1,34 +1,34 @@
-.. module:: src
-   :synopsis: src
+.. module:: pydflt
+   :synopsis: PyDFLT source package
 
 
 PyDFLT
 =========
 
-.. automodule:: src.dataset
+.. automodule:: pydflt.dataset
 
    .. autoclass:: DFLDataset
 
-.. automodule:: src.logger
+.. automodule:: pydflt.logger
 
-    .. autoclass:: Logger
+   .. autoclass:: Logger
 
-.. automodule:: src.noisifier
+.. automodule:: pydflt.noisifier
 
-    .. autoclass:: Noisifier
+   .. autoclass:: Noisifier
 
-.. automodule:: src.problem
+.. automodule:: pydflt.problem
 
-    .. autoclass:: Problem
+   .. autoclass:: Problem
 
-.. automodule:: src.runner
+.. automodule:: pydflt.runner
 
-    .. autoclass:: Runner
+   .. autoclass:: Runner
 
-.. automodule:: src.decision_makers.base
+.. automodule:: pydflt.decision_makers.base
 
-    .. autoclass:: DecisionMaker
+   .. autoclass:: DecisionMaker
 
-.. automodule:: src.predictors.base
+.. automodule:: pydflt.predictors.base
 
-    .. autoclass:: Predictor
+   .. autoclass:: Predictor

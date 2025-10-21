@@ -13,6 +13,10 @@ PyDFLT v0.1.0 is now available:
 
 Documentation can be found https://pydflt.github.io/documentation.
 
+### Using Weights & Biases and Optuna
+Weights & Biases is a helpful tool to analyze experiments, while Optuna is an effective tool for hyperparameter tuning. To use either of these tools, make sure to check out the notebooks in the example folder.
+
+
 ### Contributing
 If you want to contribute, you can fork the repository and send a pull request. We make use of **uv** (https://github.com/astral-sh/uv) for the installation and testing. Install uv [here](https://docs.astral.sh/uv/getting-started/installation/). To create the virtual environment:
 
@@ -35,10 +39,6 @@ We use **Sphinx** (https://www.sphinx-doc.org/en/master/) for the documentation.
 `uv run make html --directory=docs`
 
 Then, open docs/build/html/api/src.html in a browser to view the created docs.
-
-### Using Weights & Biases
-If you want to use Weights & Biases, either set an environment variable named `WANDB_KEY` with your key,
-or create a `.env` file with `WANDB_KEY = 'your-key-here'`.
 
 
 ### References

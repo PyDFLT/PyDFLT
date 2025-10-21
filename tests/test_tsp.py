@@ -1,8 +1,7 @@
 import unittest
 
 import numpy as np
-
-from src.concrete_models.grbpy_tsp import TravelingSalesperson
+from pydflt.concrete_models.grbpy_tsp import TravelingSalesperson
 
 
 class TestTSP(unittest.TestCase):

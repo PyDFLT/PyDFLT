@@ -44,3 +44,20 @@
 .md-header__inner .md-header__title {
     margin-left: 0.2rem !important;
 }
+
+
+/* Limit notebook cell output height and allow scrolling */
+div.output_area {
+    max-height: 360px;
+    overflow: auto;
+    /* Optional: adds a border so the scrollable area is visually distinct */
+    border: 1px solid #e1e4e8;
+    padding: 1em;
+    /* Optional: allows the user to resize the output area vertically */
+    resize: vertical;
+}
+
+/* For wide outputs like pandas DataFrames, ensure they can scroll horizontally */
+div.output_area .rendered_html {
+    max-width: none;
+}

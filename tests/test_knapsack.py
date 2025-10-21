@@ -1,9 +1,8 @@
 import unittest
 
 import numpy as np
-
-from src.concrete_models.grbpy_knapsack import GRBPYKnapsackModel
-from src.generate_data_functions.generate_data_knapsack import gen_data_knapsack
+from pydflt.concrete_models import GRBPYKnapsackModel
+from pydflt.generate_data_functions import gen_data_knapsack
 
 
 class TestKnapsack(unittest.TestCase):

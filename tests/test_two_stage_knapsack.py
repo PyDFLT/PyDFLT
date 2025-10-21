@@ -1,8 +1,7 @@
 import unittest
 
 import numpy as np
-
-from src.concrete_models.grbpy_two_stage_knapsack import TwoStageKnapsack
+from pydflt.concrete_models import TwoStageKnapsack
 
 
 class TestKnapsack(unittest.TestCase):

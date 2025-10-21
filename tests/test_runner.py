@@ -3,8 +3,7 @@ from types import SimpleNamespace
 
 import numpy as np
 import pytest
-
-from src.runner import Runner
+from pydflt.runner import Runner
 
 
 class DummyDecisionMaker:
