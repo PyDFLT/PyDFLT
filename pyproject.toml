@@ -88,8 +88,6 @@ testpaths = [
     "tests",
     "examples",
 ]
-pythonpath = ["src"]
-
 
 [tool.setuptools]
 package-dir = {"" = "src"}
