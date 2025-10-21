@@ -52,6 +52,7 @@ docs = [
 
 examples = [
     "jupyter>=1.0.0",
+    "pydflt>=0.1.0"
 ]
 
 [tool.uv]
