@@ -33,6 +33,20 @@ jobs:
       - name: Install PyDFLT in editable mode
         run: uv pip install -e .
 
+      - name: Debug environment for pydflt
+        run: |
+          uv run python - <<'PY'
+          import pkgutil
+          import sys
+
+          print("sys.path:")
+          for path in sys.path:
+              print("  ", path)
+
+          names = sorted({m.name for m in pkgutil.iter_modules() if m.name.startswith("pydflt")})
+          print("pydflt modules found:", names)
+          PY
+
       - name: Cache pre-commit
         uses: actions/cache@v3
         id: cache-pre-commit
