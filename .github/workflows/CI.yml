@@ -42,8 +42,8 @@ jobs:
       - name: Run pre-commit
         run: uv run pre-commit run --all-files
 
-      - name: Install pydflt
-        run: uv pip install pydflt
+      - name: Import pydflt
+        run: uv run python -c "import pydflt"
 
       - name: Run tests
         run: uv run pytest
