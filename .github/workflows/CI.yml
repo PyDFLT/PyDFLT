@@ -44,7 +44,7 @@ jobs:
 
       - name: Run tests
         env:
-          PYTHONPATH: src
+          PYTHONPATH: ${{ github.workspace }}/src
         run: uv run pytest
 
       - name: Upload coverage reports to Codecov
