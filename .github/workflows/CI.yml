@@ -48,7 +48,7 @@ jobs:
         run: uv pip install pydflt
 
       - name: Import pydflt
-        run: uv run python -c "import pydflt"
+        run: PYTHONPATH=${{ github.workspace }}/src uv run python -c "import pydflt"
 
       - name: Run tests
         run: uv run pytest
