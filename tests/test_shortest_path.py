@@ -1,7 +1,6 @@
 import unittest
 
 import numpy as np
-
 from pydflt.concrete_models.grbpy_shortest_path import ShortestPath
 from pydflt.generate_data_functions import gen_data_shortest_path
 

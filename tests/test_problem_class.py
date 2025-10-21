@@ -1,14 +1,12 @@
 import unittest
 
 import torch
-
 from pydflt.concrete_models.grbpy_shortest_path import ShortestPath
 from pydflt.concrete_models.grbpy_two_stage_weighted_set_multi_cover import (
     WeightedSetMultiCover,
 )
 from pydflt.decision_makers import DifferentiableDecisionMaker
-from pydflt.generate_data_functions import gen_data_shortest_path
-from pydflt.generate_data_functions import gen_data_wsmc
+from pydflt.generate_data_functions import gen_data_shortest_path, gen_data_wsmc
 from pydflt.problem import Problem
 from pydflt.runner import Runner
 

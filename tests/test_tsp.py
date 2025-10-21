@@ -1,7 +1,6 @@
 import unittest
 
 import numpy as np
-
 from pydflt.concrete_models.grbpy_tsp import TravelingSalesperson
 
 
