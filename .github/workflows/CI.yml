@@ -42,9 +42,10 @@ jobs:
       - name: Run pre-commit
         run: uv run pre-commit run --all-files
 
+      - name: Install pydflt
+        run: uv pip install pydflt
+
       - name: Run tests
-        env:
-          PYTHONPATH: ${{ github.workspace }}/src
         run: uv run pytest
 
       - name: Upload coverage reports to Codecov
