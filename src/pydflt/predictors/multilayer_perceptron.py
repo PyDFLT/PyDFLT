@@ -42,7 +42,7 @@ class MLPPredictor(Predictor, nn.Module):
         num_outputs: int,
         num_scenarios: int = 1,
         num_hidden_layers: int = 2,  # 0 for a linear predictor
-        size: int = 252,
+        size: int = 256,
         activation: Activation = "leaky_relu",
         output_activation: Activation = "identity",
         scale: float | np.ndarray = 1.0,
