@@ -3,6 +3,7 @@ from typing import Any, Optional
 
 from optuna.trial import Trial
 
+from pydflt.decision_makers import DifferentiableDecisionMaker
 from pydflt.problem import Problem
 from pydflt.registries.data import get_data
 from pydflt.registries.decision_makers import make_decision_maker
@@ -32,6 +33,18 @@ def run(config: dict[str, Any], optuna_trial: Optional[Trial] = None) -> float:
     data_dict, config["data"] = get_data(**config["data"])
     problem = Problem(data_dict=data_dict, opt_model=model, **config["problem"])
     decision_maker, config["decision_maker"] = make_decision_maker(problem=problem, **config["decision_maker"])
+
+    if config.get("pretraining", None) is not None:
+        assert "decision_maker" in config["pretraining"], "Pretraining requires a decision maker to be specified."
+        assert "runner" in config["pretraining"], "Pretraining requires a runner to be specified."
+        decision_maker_seed = config["decision_maker"].get("seed", None)
+        pretrainer = DifferentiableDecisionMaker(problem, seed=decision_maker_seed, **config["pretraining"]["decision_maker"])
+        runner_seed = config["runner"].get("seed", None)
+        prerunner = Runner(decision_maker=pretrainer, config=config, seed=runner_seed, **config["pretraining"]["runner"])
+        prerunner.run()
+        state_dict = pretrainer.best_predictor.state_dict()
+        decision_maker.predictor.load_state_dict(state_dict)
+
     runner = Runner(decision_maker=decision_maker, config=config, **config["runner"])
     best_validation_results = runner.run(optuna_trial=optuna_trial)
 
