@@ -47,7 +47,7 @@ docs = [
     "numpydoc>=1.8.0",
     "sphinx-immaterial>=0.12.2",
     "myst-parser>=2.0.0",
-    "pypandoc-binary>=1.12",
+    "pypandoc-binary==1.13",
 ]
 
 examples = [
