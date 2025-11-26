@@ -177,7 +177,7 @@ class SFGEDecisionMaker(DecisionMaker):
             else:
                 batch_results = self._get_batch_results(data_batch, metrics=metrics)
             mode_batch_results = {"%s/%s" % (mode, key): val for key, val in batch_results.items()}
-            mode_batch_results["batch_size"] = self.batch_size
+            mode_batch_results["batch_size"] = len(idx)
             epoch_results.append(mode_batch_results)
 
         return epoch_results
