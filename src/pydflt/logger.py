@@ -94,20 +94,30 @@ class Logger:
             float | None: The aggregated mean value of the `main_metric` for the current epoch,
                           if found; otherwise, None.
         """
-        # Aggregate results
+        # Aggregate results (weighted by batch_size when provided)
         epoch_metrics = defaultdict(list)
+        weights = defaultdict(list)
         for batch in per_batch_results:
+            batch_size = batch.get("batch_size", None)
             for key, value in batch.items():
+                if key == "batch_size":
+                    continue
+                # Use batch_size as weight when available to avoid over-weighting tiny batches
+                weight = batch_size if batch_size is not None else 1.0
                 epoch_metrics[key].append(np.mean(value))
+                weights[key].append(weight)
 
         # Calculate aggregation for each metric
         aggregate_epoch_metrics = {}
         for key, value in epoch_metrics.items():
-            value = np.array(value)
-            aggregate_epoch_metrics[f"{key}_mean"] = value.mean()
+            values = np.array(value, dtype=float)
+            ws = np.array(weights[key], dtype=float)
+            weighted_mean = (values * ws).sum() / ws.sum()
+            aggregate_epoch_metrics[f"{key}_mean"] = weighted_mean
             if self.store_min_and_max:
-                aggregate_epoch_metrics[f"{key}_max"] = value.max()
-                aggregate_epoch_metrics[f"{key}_min"] = value.min()
+                # Keep extrema unweighted to preserve interpretability
+                aggregate_epoch_metrics[f"{key}_max"] = values.max()
+                aggregate_epoch_metrics[f"{key}_min"] = values.min()
             # aggregate_epoch_metrics[f'{key}_std'] = value.std()
         self.epoch_metrics_list.append(aggregate_epoch_metrics)
 

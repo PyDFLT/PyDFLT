@@ -344,6 +344,7 @@ class LancerDecisionMaker(DecisionMaker):
                 "train/surrogate_loss": torch.mean(surrogate_loss).detach().numpy(),
                 "train/predictor_loss": torch.mean(predictor_loss).detach().numpy(),
                 "train/eval": absolute_regret,
+                "batch_size": len(data["features"]),
             }
             epoch_results.append(results)
 
