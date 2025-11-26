@@ -344,6 +344,7 @@ class LancerDecisionMaker(DecisionMaker):
                 "train/surrogate_loss": torch.mean(surrogate_loss).detach().numpy(),
                 "train/predictor_loss": torch.mean(predictor_loss).detach().numpy(),
                 "train/eval": absolute_regret,
+                "batch_size": len(data["features"]),
             }
             epoch_results.append(results)
 
@@ -353,6 +354,7 @@ class LancerDecisionMaker(DecisionMaker):
                 data_batch = self.problem.read_data(idx)
                 batch_results = self._get_batch_results(data_batch, metrics)
                 mode_batch_results = {"%s/%s" % (mode, key): val for key, val in batch_results.items()}
+                mode_batch_results["batch_size"] = len(idx)
                 epoch_results.append(mode_batch_results)
 
         return epoch_results
