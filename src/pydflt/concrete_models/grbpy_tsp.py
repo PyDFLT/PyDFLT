@@ -1,6 +1,10 @@
+from itertools import combinations
+
+import gurobipy as gp
 import numpy as np
 import torch
-from pyepo.model.grb.tsp import tspDFJModel
+from gurobipy import GRB
+from pyepo.model.grb.tsp import tspDFJModel, unionFind
 
 from pydflt.abstract_models.grbpy import GRBPYModel
 
@@ -16,7 +20,7 @@ class TravelingSalesperson(GRBPYModel, tspDFJModel):
         num_scenarios (int): Number of scenarios for multi-scenario optimization.
     """
 
-    def __init__(self, num_nodes: int, num_scenarios: int = 1):
+    def __init__(self, num_nodes: int, num_scenarios: int = 1, time_limit: float | None = None):
         """
         Initializes the TravelingSalesperson model.
 
@@ -26,6 +30,7 @@ class TravelingSalesperson(GRBPYModel, tspDFJModel):
         """
         self.num_nodes = num_nodes
         self.num_scenarios = num_scenarios
+        self.time_limit = time_limit
 
         # Setting basic model parameters
 
@@ -43,11 +48,15 @@ class TravelingSalesperson(GRBPYModel, tspDFJModel):
             var_shapes,
             param_to_predict_shapes,
             model_sense,
+            time_limit=time_limit,
         )
+        self.supports_binding_constraints = True
+        self.supports_adjacent_vertices = True
 
         assert num_edges == self.num_cost, (
             "The number of edges should equal the number of costs in the pyepo model\n" + f"But they where not: {num_edges} != {self.num_cost}"
         )
+        self.lazy_constraints_method = self._subtourelim
 
     def _set_params(self, params_i: np.ndarray):
         """
@@ -58,6 +67,21 @@ class TravelingSalesperson(GRBPYModel, tspDFJModel):
             params_i (np.ndarray): Edge costs for the current instance.
         """
         self.setObj(params_i)
+
+    def _subtourelim(self, model, where):
+        # based on: https://github.com/khalil-research/CaVE
+        if where == GRB.Callback.MIPSOL:
+            xvals = model.cbGetSolution(model._x)
+            selected = gp.tuplelist((i, j) for i, j in model._x.keys() if xvals[i, j] > 1e-2)
+            uf = unionFind(model._n)
+            for i, j in selected:
+                if not uf.union(i, j):
+                    cycle = [k for k in range(model._n) if uf.find(k) == uf.find(i)]
+                    if len(cycle) < model._n:
+                        constr = gp.quicksum(model._x[i, j] for i, j in combinations(cycle, 2)) <= len(cycle) - 1
+                        model.cbLazy(constr)
+                        self.lazy_constraints_exprs.append(constr)
+                    break
 
     def get_objective(
         self, data_batch: dict[str, torch.Tensor], decisions_batch: dict[str, torch.Tensor], predictions_batch: dict[str, torch.Tensor] = None

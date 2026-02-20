@@ -81,7 +81,19 @@ class GRBPYModel(OptimizationModel):
         if self.mip_gap is not None:
             self.gp_model.Params.MIPGap = self.mip_gap
         self.lazy_constraints_method = None
+        self._lazy_constraints_grb: list[gp.Constr] = []
+        self.lazy_constraints_exprs: list = []
+        self.supports_binding_constraints = False
+        self.supports_adjacent_vertices = False
+        self.gp_model.update()
         self._stored_feasible_decision: dict[str, np.ndarray] | None = None
+
+    def relax_in_place(self) -> None:
+        self.gp_model.update()
+        for var in self.gp_model.getVars():
+            if var.VType != gp.GRB.CONTINUOUS:
+                var.VType = gp.GRB.CONTINUOUS
+        self.gp_model.update()
 
     @abstractmethod
     def _create_model(self) -> tuple[gp.Model, dict[str, gp.MVar | gp.Var]]:
@@ -161,6 +173,84 @@ class GRBPYModel(OptimizationModel):
 
         return tensor_decisions_batch
 
+    def solve_batch_with_binding_constraints(
+        self, data_batch: dict[str, torch.Tensor]
+    ) -> tuple[dict[str, np.ndarray], list[np.ndarray]]:
+        """
+        Solves a batch and also returns binding constraints per instance.
+        Based on: https://github.com/khalil-research/CaVE
+        """
+        assert all(key in data_batch.keys() for key in self.all_param_names), "data_batch must contain param_names!"
+        list_decisions_batch = {}
+        binding_constraints = []
+        batch_size = len(data_batch[self.all_param_names[0]])
+        iterator = tqdm(range(batch_size), desc="Solving", leave=False) if self.verbose else range(batch_size)
+        for i in iterator:
+            params_i = [data_batch[key][i].detach().cpu().numpy() for key in self.all_param_names]
+            decisions_i, bctr_i = self._solve_sample_with_binding_constraints(*params_i)
+            binding_constraints.append(bctr_i)
+            for key, val in decisions_i.items():
+                if key not in list_decisions_batch:
+                    list_decisions_batch[key] = []
+                list_decisions_batch[key].append(val)
+        decisions_batch = {key: np.stack(vals, axis=0) for key, vals in list_decisions_batch.items()}
+        return decisions_batch, binding_constraints
+
+    def solve_batch_with_adjacent_vertices(
+        self,
+        data_batch: dict[str, torch.Tensor],
+        max_iterations_degenerate: int = 250,
+        max_adjacent_vertices: int = 10000,
+    ) -> tuple[dict[str, np.ndarray], list[np.ndarray]]:
+        # based on: https://github.com/ML-KULeuven/Solver-Free-DFL/
+        assert all(key in data_batch.keys() for key in self.all_param_names), "data_batch must contain param_names!"
+        from pydflt.utils.adjacent_vertices import (
+            convert_to_slack_form,
+            get_constraints_matrix_form_slack_model,
+            get_adjacent_vertices,
+        )
+
+        list_decisions_batch = {}
+        adjacent_vertices = []
+        batch_size = len(data_batch[self.all_param_names[0]])
+
+        base_model = self.gp_model.relax() if self.gp_model.IsMIP else self.gp_model
+        if getattr(base_model, "NumQConstrs", 0) > 0 or getattr(base_model, "NumQObj", 0) > 0:
+            raise ValueError("Adjacent vertices require a linear model.")
+        slack_model = convert_to_slack_form(base_model)
+        slack_model_A, _ = get_constraints_matrix_form_slack_model(slack_model)
+        slack_vars = slack_model.getVars()
+        num_vars = len(base_model.getVars())
+
+        iterator = tqdm(range(batch_size), desc="Solving", leave=False) if self.verbose else range(batch_size)
+        for i in iterator:
+            params_i = [data_batch[key][i].detach().cpu().numpy() for key in self.all_param_names]
+            decisions_i = self._solve_sample(*params_i)
+            for key, val in decisions_i.items():
+                if key not in list_decisions_batch:
+                    list_decisions_batch[key] = []
+                list_decisions_batch[key].append(val)
+
+            obj = gp.quicksum(params_i[0][k] * slack_vars[k] for k in range(num_vars))
+            slack_model.setObjective(obj, base_model.ModelSense)
+            slack_model.optimize()
+
+            adj_vertices = get_adjacent_vertices(
+                slack_model,
+                slack_model_A,
+                max_iterations_degenerate=max_iterations_degenerate,
+                max_adjacent_vertices=max_adjacent_vertices,
+            )
+            adj_vertices = [np.array(av)[:num_vars] for av in adj_vertices]
+            adj_vertices = list({tuple(arr.tolist()): arr for arr in adj_vertices}.values())
+            if len(adj_vertices) > 1:
+                sol_array = np.array(list_decisions_batch[self.var_names[0]][-1])
+                adj_vertices = [v for v in adj_vertices if not np.array_equal(v, sol_array)]
+            adjacent_vertices.append(np.array(adj_vertices))
+
+        decisions_batch = {key: np.stack(vals, axis=0) for key, vals in list_decisions_batch.items()}
+        return decisions_batch, adjacent_vertices
+
     def _solve_sample(self, *params_i_np: np.ndarray, quiet: bool = True) -> dict[str, np.ndarray]:
         """
         Solves one instance (not batched) of the optimization problem using Gurobipy.
@@ -202,6 +292,92 @@ class GRBPYModel(OptimizationModel):
             self._stored_feasible_decision = {key: np.array(val, copy=True) for key, val in decision_dict_i.items()}
 
         return decision_dict_i
+
+    def _solve_sample_with_binding_constraints(
+        self, *params_i_np: np.ndarray, quiet: bool = True
+    ) -> tuple[dict[str, np.ndarray], np.ndarray]:
+        # based on: https://github.com/khalil-research/CaVE
+        if quiet:
+            self.gp_model.Params.OutputFlag = 0
+        self._set_params(*params_i_np)
+        existing_constrs = None
+        if self.lazy_constraints_method is not None:
+            self.lazy_constraints_exprs = []
+            existing_constrs = self.gp_model.getConstrs()
+            self.gp_model.optimize(self.lazy_constraints_method)
+        else:
+            self.gp_model.optimize()
+        if self.time_limit is not None and self.gp_model.Status == gp.GRB.TIME_LIMIT:
+            if self.gp_model.SolCount <= 0:
+                raise RuntimeError("Time limit reached without a feasible solution.")
+
+        if existing_constrs is not None:
+            self._capture_lazy_constraints_grb(existing_constrs)
+
+        bctr = self._get_binding_constraints()
+
+        if isinstance(next(iter(self.vars_dict.values())), list):
+            decision_dict_i = {}
+            for key in self.var_names:
+                decision_dict_i[key] = np.array(
+                    [np.round(self.vars_dict[key][i].x, self.rounding_decimal) for i in range(len(self.vars_dict[key]))]
+                )
+        else:
+            decision_dict_i = {key: np.round(self.vars_dict[key].x, self.rounding_decimal) for key in self.var_names}
+
+        if existing_constrs is not None:
+            self._clear_lazy_constraints_grb()
+
+        return decision_dict_i, bctr
+
+    def _get_binding_constraints(self, slack_tol: float = 1e-5) -> np.ndarray:
+        # based on: https://github.com/khalil-research/CaVE
+        vars_list = self.gp_model.getVars()
+        num_vars = len(vars_list)
+        constrs = []
+        added_constrs = []
+        if getattr(self, "lazy_constraints_exprs", None):
+            for constr in self.lazy_constraints_exprs:
+                added_constrs.append(self.gp_model.addConstr(constr))
+            for var in vars_list:
+                var.start = int(round(var.x))
+            self.gp_model.update()
+            self.gp_model.optimize()
+        for constr in self.gp_model.getConstrs():
+            if abs(constr.Slack) < slack_tol:
+                coeffs = [self.gp_model.getCoeff(constr, var) for var in vars_list]
+                if constr.Sense == gp.GRB.LESS_EQUAL:
+                    constrs.append(coeffs)
+                elif constr.Sense == gp.GRB.GREATER_EQUAL:
+                    constrs.append([-coef for coef in coeffs])
+                elif constr.Sense == gp.GRB.EQUAL:
+                    constrs.append(coeffs)
+                    constrs.append([-coef for coef in coeffs])
+                else:
+                    raise ValueError("Invalid constraint sense.")
+        for i, var in enumerate(vars_list):
+            row = [0.0] * num_vars
+            if var.X <= 1e-5:
+                row[i] = -1.0
+                constrs.append(row)
+            elif var.X >= 1 - 1e-5:
+                row[i] = 1.0
+                constrs.append(row)
+        if added_constrs:
+            self.gp_model.remove(added_constrs)
+        return np.array(constrs, dtype=np.float32)
+
+    def _clear_lazy_constraints_grb(self) -> None:
+        if not self._lazy_constraints_grb:
+            return
+        self.gp_model.remove(self._lazy_constraints_grb)
+        self.gp_model.update()
+        self._lazy_constraints_grb = []
+
+    def _capture_lazy_constraints_grb(self, existing_constrs: list[gp.Constr]) -> None:
+        existing_set = set(existing_constrs)
+        current = self.gp_model.getConstrs()
+        self._lazy_constraints_grb = [constr for constr in current if constr not in existing_set]
 
     def create_quadratic_variant(self, cvxpy_model: bool = False) -> "OptimizationModel":
         """
