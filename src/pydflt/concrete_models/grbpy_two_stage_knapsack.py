@@ -123,6 +123,7 @@ class TwoStageKnapsack(GRBPYTwoStageModel):
         gp_model.setObjective(obj)
 
         self.second_stage_vars_dict = second_stage_vars_dict
+        self._capacity_constrs = None
 
         return gp_model, vars_dict
 
@@ -145,14 +146,16 @@ class TwoStageKnapsack(GRBPYTwoStageModel):
         max_array = max_weight * np.ones(weights.shape)
         weights = np.minimum(weights, max_array)
 
-        # Remove existing constraints
-        self.gp_model.remove(self.gp_model.getConstrs())
+        # Remove existing capacity constraints (keep linking constraints)
+        if self._capacity_constrs is not None:
+            self.gp_model.remove(list(self._capacity_constrs.values()))
+            self._capacity_constrs = None
 
         # Set new constraints
         x = self.vars_dict["select_item"]
         y_add = self.second_stage_vars_dict["y_add"]
         y_remove = self.second_stage_vars_dict["y_remove"]
-        self.gp_model.addConstrs(
+        self._capacity_constrs = self.gp_model.addConstrs(
             gp.quicksum(weights[i, j] * (x[i] + y_add[i, j] - y_remove[i, j]) for i in range(self.num_decisions)) <= self.capacity_np
             for j in range(self.num_scenarios)
         )
