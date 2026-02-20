@@ -82,7 +82,7 @@ class GRBPYModel(OptimizationModel):
             self.gp_model.Params.MIPGap = self.mip_gap
         self.lazy_constraints_method = None
         self._lazy_constraints_grb: list[gp.Constr] = []
-        self.lazy_constraints_exprs: list = []
+        self.lazy_constraints: list = []
         self.supports_binding_constraints = False
         self.supports_adjacent_vertices = False
         self.gp_model.update()
@@ -302,7 +302,7 @@ class GRBPYModel(OptimizationModel):
         self._set_params(*params_i_np)
         existing_constrs = None
         if self.lazy_constraints_method is not None:
-            self.lazy_constraints_exprs = []
+            self.lazy_constraints = []
             existing_constrs = self.gp_model.getConstrs()
             self.gp_model.optimize(self.lazy_constraints_method)
         else:
@@ -312,7 +312,7 @@ class GRBPYModel(OptimizationModel):
                 raise RuntimeError("Time limit reached without a feasible solution.")
 
         if existing_constrs is not None:
-            self._capture_lazy_constraints_grb(existing_constrs)
+            self._capture_lazy_constraints(existing_constrs)
 
         bctr = self._get_binding_constraints()
 
@@ -326,7 +326,7 @@ class GRBPYModel(OptimizationModel):
             decision_dict_i = {key: np.round(self.vars_dict[key].x, self.rounding_decimal) for key in self.var_names}
 
         if existing_constrs is not None:
-            self._clear_lazy_constraints_grb()
+            self._clear_lazy_constraints()
 
         return decision_dict_i, bctr
 
@@ -336,8 +336,8 @@ class GRBPYModel(OptimizationModel):
         num_vars = len(vars_list)
         constrs = []
         added_constrs = []
-        if getattr(self, "lazy_constraints_exprs", None):
-            for constr in self.lazy_constraints_exprs:
+        if getattr(self, "lazy_constraints", None):
+            for constr in self.lazy_constraints:
                 added_constrs.append(self.gp_model.addConstr(constr))
             for var in vars_list:
                 var.start = int(round(var.x))
@@ -367,14 +367,14 @@ class GRBPYModel(OptimizationModel):
             self.gp_model.remove(added_constrs)
         return np.array(constrs, dtype=np.float32)
 
-    def _clear_lazy_constraints_grb(self) -> None:
+    def _clear_lazy_constraints(self) -> None:
         if not self._lazy_constraints_grb:
             return
         self.gp_model.remove(self._lazy_constraints_grb)
         self.gp_model.update()
         self._lazy_constraints_grb = []
 
-    def _capture_lazy_constraints_grb(self, existing_constrs: list[gp.Constr]) -> None:
+    def _capture_lazy_constraints(self, existing_constrs: list[gp.Constr]) -> None:
         existing_set = set(existing_constrs)
         current = self.gp_model.getConstrs()
         self._lazy_constraints_grb = [constr for constr in current if constr not in existing_set]
