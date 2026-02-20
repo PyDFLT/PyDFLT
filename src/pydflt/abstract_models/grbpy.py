@@ -7,6 +7,7 @@ import gurobipy as gp
 import numpy as np
 import torch
 from pyepo.model.opt import optModel
+from tqdm import tqdm
 
 from pydflt.abstract_models.base import MIN, OptimizationModel
 from pydflt.abstract_models.cvxpy_diff import CVXPYDiffModel
@@ -38,6 +39,7 @@ class GRBPYModel(OptimizationModel):
         feasibility_tol: float = 1e-6,
         rounding_decimal: int = 4,
         extra_param_shapes: dict[str, tuple[int, ...]] | None = None,
+        verbose: bool = False,
     ) -> None:
         """
         Initializes the GRBPYModel.
@@ -54,6 +56,7 @@ class GRBPYModel(OptimizationModel):
             extra_param_shapes (dict[str, tuple[int, ...]] | None): An optional dictionary specifying additional
                                                                     parameters that change from sample to sample
                                                                     but are known.
+            verbose (bool): If True, show a progress bar while solving batches. Defaults to True.
         """
         super().__init__(var_shapes, param_to_predict_shapes, model_sense, extra_param_shapes)
         self.gp_model, self.vars_dict = self._create_model()
@@ -61,6 +64,7 @@ class GRBPYModel(OptimizationModel):
             self._set_optmodel_attributes()
         self.feasibility_tol = feasibility_tol
         self.rounding_decimal = rounding_decimal
+        self.verbose = verbose
         self.gp_model.setParam("FeasibilityTol", self.feasibility_tol)
         self.lazy_constraints_method = None
 
@@ -127,7 +131,8 @@ class GRBPYModel(OptimizationModel):
         batch_size = len(data_batch[self.all_param_names[0]])  # Read batch size from the data
         device_data = data_batch[self.all_param_names[0]].device  # Read device on which data is stored
         # Iterate over samples
-        for i in range(batch_size):
+        iterator = tqdm(range(batch_size), desc="Solving", leave=False) if self.verbose else range(batch_size)
+        for i in iterator:
             # We use params_list to read param values from data
             params_i = [data_batch[key][i].detach().cpu().numpy() for key in self.all_param_names]
             decisions_i = self._solve_sample(*params_i)
