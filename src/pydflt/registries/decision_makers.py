@@ -110,3 +110,7 @@ register_decision_maker(
     device_str="cpu",
     predictor_str="MLP",
 )
+
+register_decision_maker(name="Cave", model_class=DifferentiableDecisionMaker, loss_function_str="cave")
+
+register_decision_maker(name="LAVA", model_class=DifferentiableDecisionMaker, loss_function_str="lava")

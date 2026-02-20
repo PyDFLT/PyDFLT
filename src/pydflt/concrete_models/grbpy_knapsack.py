@@ -34,7 +34,10 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
         weights_ub: float = 8.0,
         dimension: int = 1,
         seed: int = 5,
+        rounding_decimals: int = 1,
+        capacity_percentage: float | None = None,
         num_scenarios: int = 1,
+        time_limit: float | None = None,
     ):
         """
         Initializes the GRBPYKnapsackModel.
@@ -55,7 +58,10 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
         self.weights_ub = weights_ub
         self.dimension = dimension
         self.seed = seed
+        self.rounding_decimals = rounding_decimals
+        self.capacity_percentage = capacity_percentage
         self.num_scenarios = num_scenarios
+        self.time_limit = time_limit
 
         # Setting basic model parameters
         model_sense = "MAX"
@@ -69,8 +75,11 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
 
         # Initialize fixed parameters
         unrounded_weights = np.random.uniform(weights_lb, weights_ub, (dimension, num_decisions))
-        self.weights = np.round(unrounded_weights, 1)
-        self.capacity_np = self.capacity * np.ones(dimension)
+        self.weights = np.round(unrounded_weights, rounding_decimals)
+        if capacity_percentage is not None:
+            self.capacity_np = self.weights.sum(axis=1) * capacity_percentage
+        else:
+            self.capacity_np = self.capacity * np.ones(dimension)
 
         GRBPYModel.__init__(
             self,
@@ -78,7 +87,10 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
             param_to_predict_shapes,
             model_sense,
             extra_param_shapes=extra_param_shapes,
+            time_limit=time_limit,
         )
+        self.supports_binding_constraints = True
+        self.supports_adjacent_vertices = True
 
     def _create_model(self):
         """

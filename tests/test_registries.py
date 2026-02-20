@@ -44,7 +44,7 @@ class TestRegistries(unittest.TestCase):
         Verify that calling make_model with override_params does not modify
         the original parameters stored in the model_registry.
         """
-        model_name = "knapsack_2D_Tang2022"
+        model_name = "knapsack_2D_Tang2024"
         original_params = copy.deepcopy(model_registry[model_name][1])  # Get original registered params
 
         # Call make_model with some overriding parameters

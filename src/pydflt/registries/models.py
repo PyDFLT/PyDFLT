@@ -17,6 +17,7 @@ from pydflt.concrete_models import (
     ShortestPath,
     TravelingSalesperson,
     TwoStageKnapsack,
+    VehicleRouting,
     WeightedSetMultiCover,
 )
 
@@ -66,7 +67,7 @@ def make_model(name: str, **override_params: Any) -> tuple[Any, dict[str, Any]]:
 
 # # # # # # # # # # # # # # # # # # # # # # # # REGISTER MODELS # # # # # # # # # # # # # # # # # # # # # # # #
 register_model(
-    name="knapsack_2D_Tang2022",
+    name="knapsack_2D_Tang2024",
     model_class=GRBPYKnapsackModel,
     num_decisions=32,
     capacity=20,
@@ -88,8 +89,8 @@ Schutte2024: grid = (10, 10)
 register_model(name="tsp", model_class=TravelingSalesperson, num_nodes=20)
 
 """
-Parameters for "shortest_path" in different works:
-Tang2022: num_nodes = 20
+Parameters for "tsp" in different works:
+Tang2024: num_nodes = 20
 Schutte2024: num_nodes = 20
 """
 
@@ -124,6 +125,16 @@ register_model(
     seed=5,
 )
 
+register_model(
+    name="VRP_Tang2024Cave",
+    model_class=VehicleRouting,
+    num_nodes=20,  # \in [20, 30]
+    capacity=30,
+    num_vehicles=5,
+    demands_lb=0.0,
+    demands_ub=10.0,
+    seed=5,
+)
 
 """
 References
@@ -147,4 +158,8 @@ Bo Tang and Elias B. Khalil. Pyepo: a pytorch-based end-to-end predict-then-opti
 programming. Mathematical Program-ming Computation, 16(3):297–335, 2024.
 doi:https://doi.org/10.1007/s12532-024-00255-x.
 
+Tang2024Cave
+Tang, B., Khalil, E.B. (2024). CaVE: A Cone-Aligned Approach for Fast Predict-then-optimize with Binary Linear Programs.
+In: Dilkina, B. (eds) Integration of Constraint Programming, Artificial Intelligence, and Operations Research.
+CPAIOR 2024. Lecture Notes in Computer Science, vol 14743. Springer, Cham. https://doi.org/10.1007/978-3-031-60599-4_12
 """

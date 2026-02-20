@@ -135,6 +135,11 @@ register_data(
     noise_width=0.5,
 )
 
+register_data(
+    "VRP_Tang2024Cave",
+    gen_data_traveling_salesperson,
+)
+
 """
 References
 Elmachtoub2022
@@ -157,4 +162,8 @@ Bo Tang and Elias B. Khalil. Pyepo: a pytorch-based end-to-end predict-then-opti
 programming. Mathematical Program-ming Computation, 16(3):297–335, 2024.
 doi:https://doi.org/10.1007/s12532-024-00255-x.
 
+Tang2024Cave
+Tang, B., Khalil, E.B. (2024). CaVE: A Cone-Aligned Approach for Fast Predict-then-optimize with Binary Linear Programs.
+In: Dilkina, B. (eds) Integration of Constraint Programming, Artificial Intelligence, and Operations Research.
+CPAIOR 2024. Lecture Notes in Computer Science, vol 14743. Springer, Cham. https://doi.org/10.1007/978-3-031-60599-4_12
 """
