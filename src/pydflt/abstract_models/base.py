@@ -1,4 +1,3 @@
-import copy
 import inspect
 from abc import ABC, abstractmethod
 from typing import Literal
@@ -255,9 +254,7 @@ class OptimizationModel(ABC):
 
     def create_copy(self) -> "OptimizationModel":
         """
-        Creates a shallow copy of the current model instance.
-
-        Returns:
-            OptimizationModel: A new instance of the same model with the same attributes.
+        Creates a new instance of the same model class using the original init arguments.
+        This yields a fresh Gurobi model and variable objects.
         """
-        return copy.copy(self)
+        return self.__class__(**self.init_arguments)

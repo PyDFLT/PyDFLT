@@ -7,6 +7,7 @@ import gurobipy as gp
 import numpy as np
 import torch
 from pyepo.model.opt import optModel
+from tqdm import tqdm
 
 from pydflt.abstract_models.base import MIN, OptimizationModel
 from pydflt.abstract_models.cvxpy_diff import CVXPYDiffModel
@@ -38,6 +39,9 @@ class GRBPYModel(OptimizationModel):
         feasibility_tol: float = 1e-6,
         rounding_decimal: int = 4,
         extra_param_shapes: dict[str, tuple[int, ...]] | None = None,
+        verbose: bool = False,
+        time_limit: float | None = None,
+        mip_gap: float | None = None,
     ) -> None:
         """
         Initializes the GRBPYModel.
@@ -54,6 +58,12 @@ class GRBPYModel(OptimizationModel):
             extra_param_shapes (dict[str, tuple[int, ...]] | None): An optional dictionary specifying additional
                                                                     parameters that change from sample to sample
                                                                     but are known.
+            verbose (bool): If True, show a progress bar while solving batches. Defaults to True.
+            time_limit (float | None): Optional Gurobi time limit in seconds. Defaults to None.
+                                       When given, the currently best found decision is returned instead of the optimal.
+                                       When no feasible decision has been found, an earlier found feasible decision
+                                       is used.
+            mip_gap (float | None): Optional Gurobi relative MIP gap. Defaults to None.
         """
         super().__init__(var_shapes, param_to_predict_shapes, model_sense, extra_param_shapes)
         self.gp_model, self.vars_dict = self._create_model()
@@ -61,8 +71,17 @@ class GRBPYModel(OptimizationModel):
             self._set_optmodel_attributes()
         self.feasibility_tol = feasibility_tol
         self.rounding_decimal = rounding_decimal
+        self.verbose = verbose
+        self.time_limit = time_limit
+        self.mip_gap = mip_gap
+        self.gp_model.Params.OutputFlag = 0
         self.gp_model.setParam("FeasibilityTol", self.feasibility_tol)
+        if self.time_limit is not None:
+            self.gp_model.Params.TimeLimit = self.time_limit
+        if self.mip_gap is not None:
+            self.gp_model.Params.MIPGap = self.mip_gap
         self.lazy_constraints_method = None
+        self._stored_feasible_decision: dict[str, np.ndarray] | None = None
 
     @abstractmethod
     def _create_model(self) -> tuple[gp.Model, dict[str, gp.MVar | gp.Var]]:
@@ -127,7 +146,8 @@ class GRBPYModel(OptimizationModel):
         batch_size = len(data_batch[self.all_param_names[0]])  # Read batch size from the data
         device_data = data_batch[self.all_param_names[0]].device  # Read device on which data is stored
         # Iterate over samples
-        for i in range(batch_size):
+        iterator = tqdm(range(batch_size), desc="Solving", leave=False) if self.verbose else range(batch_size)
+        for i in iterator:
             # We use params_list to read param values from data
             params_i = [data_batch[key][i].detach().cpu().numpy() for key in self.all_param_names]
             decisions_i = self._solve_sample(*params_i)
@@ -161,6 +181,14 @@ class GRBPYModel(OptimizationModel):
             self.gp_model.optimize()
         else:
             self.gp_model.optimize(self.lazy_constraints_method)
+        if self.time_limit is not None and self.gp_model.Status == gp.GRB.TIME_LIMIT:
+            if self.gp_model.SolCount <= 0:
+                if self._stored_feasible_decision is not None:
+                    print("Time limit reached without a feasible decision, stored feasible decision was used.")
+                    return {key: np.array(val, copy=True) for key, val in self._stored_feasible_decision.items()}
+                raise RuntimeError("Time limit reached without a feasible decision, and no stored feasible decision present.")
+            else:
+                print("Time limit reached, but a feasible decision was found.")
 
         if isinstance(next(iter(self.vars_dict.values())), list):
             # we determine the decisions differently dependent on using MVar in Gurobi or a list of variables
@@ -169,6 +197,9 @@ class GRBPYModel(OptimizationModel):
                 decision_dict_i[key] = np.array([np.round(self.vars_dict[key][i].x, self.rounding_decimal) for i in range(len(self.vars_dict[key]))])
         else:
             decision_dict_i = {key: np.round(self.vars_dict[key].x, self.rounding_decimal) for key in self.var_names}
+
+        if self.time_limit is not None and self.gp_model.Status == gp.GRB.OPTIMAL and self._stored_feasible_decision is None:
+            self._stored_feasible_decision = {key: np.array(val, copy=True) for key, val in decision_dict_i.items()}
 
         return decision_dict_i
 
