@@ -9,7 +9,6 @@ from pydflt.runner import Runner
 
 class TestLavaLoss(unittest.TestCase):
     def test_lava_knapsack_runs(self):
-
         opt_model = GRBPYKnapsackModel(
             num_decisions=6,
             capacity=15,

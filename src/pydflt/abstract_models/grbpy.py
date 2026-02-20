@@ -173,9 +173,7 @@ class GRBPYModel(OptimizationModel):
 
         return tensor_decisions_batch
 
-    def solve_batch_with_binding_constraints(
-        self, data_batch: dict[str, torch.Tensor]
-    ) -> tuple[dict[str, np.ndarray], list[np.ndarray]]:
+    def solve_batch_with_binding_constraints(self, data_batch: dict[str, torch.Tensor]) -> tuple[dict[str, np.ndarray], list[np.ndarray]]:
         """
         Solves a batch and also returns binding constraints per instance.
         Based on: https://github.com/khalil-research/CaVE
@@ -206,8 +204,8 @@ class GRBPYModel(OptimizationModel):
         assert all(key in data_batch.keys() for key in self.all_param_names), "data_batch must contain param_names!"
         from pydflt.utils.adjacent_vertices import (
             convert_to_slack_form,
-            get_constraints_matrix_form_slack_model,
             get_adjacent_vertices,
+            get_constraints_matrix_form_slack_model,
         )
 
         list_decisions_batch = {}
@@ -293,9 +291,7 @@ class GRBPYModel(OptimizationModel):
 
         return decision_dict_i
 
-    def _solve_sample_with_binding_constraints(
-        self, *params_i_np: np.ndarray, quiet: bool = True
-    ) -> tuple[dict[str, np.ndarray], np.ndarray]:
+    def _solve_sample_with_binding_constraints(self, *params_i_np: np.ndarray, quiet: bool = True) -> tuple[dict[str, np.ndarray], np.ndarray]:
         # based on: https://github.com/khalil-research/CaVE
         if quiet:
             self.gp_model.Params.OutputFlag = 0
@@ -319,9 +315,7 @@ class GRBPYModel(OptimizationModel):
         if isinstance(next(iter(self.vars_dict.values())), list):
             decision_dict_i = {}
             for key in self.var_names:
-                decision_dict_i[key] = np.array(
-                    [np.round(self.vars_dict[key][i].x, self.rounding_decimal) for i in range(len(self.vars_dict[key]))]
-                )
+                decision_dict_i[key] = np.array([np.round(self.vars_dict[key][i].x, self.rounding_decimal) for i in range(len(self.vars_dict[key]))])
         else:
             decision_dict_i = {key: np.round(self.vars_dict[key].x, self.rounding_decimal) for key in self.var_names}
 

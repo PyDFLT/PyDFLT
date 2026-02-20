@@ -1,8 +1,8 @@
 import numpy as np
 import torch
-from pydflt.utils.vrp import vrpModel
 
 from pydflt.abstract_models.grbpy import GRBPYModel
+from pydflt.utils.vrp import vrpModel
 
 
 class VehicleRouting(GRBPYModel, vrpModel):
@@ -46,8 +46,8 @@ class VehicleRouting(GRBPYModel, vrpModel):
         self.time_limit = time_limit
 
         # Setting additional model parameters
-        np.random.seed(seed),
-        self.demands = np.round(self.demands_lb + np.random.rand(self.num_nodes-1)* (self.demands_ub -self.demands_lb))
+        (np.random.seed(seed),)
+        self.demands = np.round(self.demands_lb + np.random.rand(self.num_nodes - 1) * (self.demands_ub - self.demands_lb))
         if scale_demand > 0:
             total_demand = sum(self.demands)
             total_goal_demand = capacity * num_vehicles * scale_demand
@@ -74,8 +74,7 @@ class VehicleRouting(GRBPYModel, vrpModel):
         self.supports_adjacent_vertices = True
 
         assert num_edges == self.num_cost, (
-            "The number of edges should equal the number of costs in the pyepo model\n"
-            + f"But they were not: {num_edges} != {self.num_cost}"
+            "The number of edges should equal the number of costs in the pyepo model\n" + f"But they were not: {num_edges} != {self.num_cost}"
         )
 
         # Use the VRP lazy constraint callback

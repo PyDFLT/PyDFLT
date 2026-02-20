@@ -173,7 +173,7 @@ class DFLDataset(Dataset):
                     raise ValueError("Number of data points must match the number of indices.")
                 existing = self.data_dict.get(key)
                 full_list = existing if isinstance(existing, list) else [None] * self.num_samples
-                for idx_i, value in zip(indices_list, data):
+                for idx_i, value in zip(indices_list, data, strict=False):
                     full_list[int(idx_i)] = value
                 self.data_dict[f"{key}"] = full_list
         else:

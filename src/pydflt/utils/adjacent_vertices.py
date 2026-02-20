@@ -1,11 +1,11 @@
-#source: https://github.com/ML-KULeuven/Solver-Free-DFL/
+# source: https://github.com/ML-KULeuven/Solver-Free-DFL/
 
 import time
 from collections import deque
 
+import gurobipy as gp
 import numpy as np
 import scipy.linalg
-import gurobipy as gp
 from gurobipy import GRB
 
 
@@ -64,8 +64,7 @@ def get_constraints_matrix_form_slack_model(model: gp.Model) -> tuple[np.ndarray
     return np.array(A), np.array(b)
 
 
-def get_adjacent_vertices(slack_model: gp.Model, A: np.ndarray, max_iterations_degenerate: int = 250,
-    max_adjacent_vertices: int = 1000) -> list[np.ndarray]:
+def get_adjacent_vertices(slack_model: gp.Model, A: np.ndarray, max_iterations_degenerate: int = 250, max_adjacent_vertices: int = 1000) -> list[np.ndarray]:
     if A.ndim < 2 or A.size == 0:
         return []
     all_vars = slack_model.getVars()
@@ -77,21 +76,17 @@ def get_adjacent_vertices(slack_model: gp.Model, A: np.ndarray, max_iterations_d
 
     sigma = np.sum(sol[basic_indices] < 1e-10)
     if sigma == 0:
-        return get_adjacent_vertices_non_degenerate_case(A, basic_indices, non_basic_indices, sol,
-                                                         max_adjacent_vertices=max_adjacent_vertices)
+        return get_adjacent_vertices_non_degenerate_case(A, basic_indices, non_basic_indices, sol, max_adjacent_vertices=max_adjacent_vertices)
     use_tnp_rule = True
     return list(
-        get_adjacent_vertices_degenerate_case(A, basic_indices, non_basic_indices, sol, use_tnp_rule,
-                                              max_iterations=max_iterations_degenerate, max_adjacent_vertices=max_adjacent_vertices)
+        get_adjacent_vertices_degenerate_case(
+            A, basic_indices, non_basic_indices, sol, use_tnp_rule, max_iterations=max_iterations_degenerate, max_adjacent_vertices=max_adjacent_vertices
+        )
     )
 
 
 def get_adjacent_vertices_non_degenerate_case(
-    A: np.ndarray,
-    basic_indices: np.ndarray,
-    non_basic_indices: np.ndarray,
-    sol: np.ndarray,
-    max_adjacent_vertices: int = 1000
+    A: np.ndarray, basic_indices: np.ndarray, non_basic_indices: np.ndarray, sol: np.ndarray, max_adjacent_vertices: int = 1000
 ) -> list[np.ndarray]:
     A_basic = A[:, basic_indices]
     dirs = scipy.linalg.solve(-A_basic, A[:, non_basic_indices])
@@ -124,7 +119,7 @@ def get_adjacent_vertices_degenerate_case(
     sol: np.ndarray,
     use_tnp_rule: bool,
     max_iterations: int = 250,
-    max_adjacent_vertices: int = 1000
+    max_adjacent_vertices: int = 1000,
 ) -> set[tuple[float, ...]]:
     basic_indices = np.array(sorted(basic_indices))
     non_basic_indices = np.array(sorted(non_basic_indices))
@@ -187,7 +182,7 @@ def get_adjacent_vertices_degenerate_case(
             all_adjacent_vertices.add(tuple(adjacent_vertex))
 
         if len(queue) < max_iterations:
-            for new_basic_indices, new_non_basic_indices in zip(new_basic_indices_list, new_non_basic_indices_list):
+            for new_basic_indices, new_non_basic_indices in zip(new_basic_indices_list, new_non_basic_indices_list, strict=False):
                 new_basic_indices_tuple = tuple(sorted(new_basic_indices))
                 if new_basic_indices_tuple not in visited_bases:
                     visited_bases.add(new_basic_indices_tuple)

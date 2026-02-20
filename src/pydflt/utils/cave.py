@@ -4,23 +4,25 @@
 An autograd module for cone-aligned loss
 """
 
+import multiprocessing as mp
 from abc import ABC, abstractmethod
 
 import cvxpy as cvx
 import numpy as np
-from pathos.multiprocessing import ProcessingPool
-from scipy.optimize import nnls
 import torch
+from pathos.multiprocessing import ProcessingPool
+from pyepo import EPO
+from pyepo.model.opt import optModel
+from scipy.optimize import nnls
 from torch import nn
 from torch.nn import functional as F
 
-from pyepo import EPO
-from pyepo.model.opt import optModel
 
 class abstractConeAlignedCosine(nn.Module, ABC):
     """
     An abstract base class for CaVE loss.
     """
+
     def __init__(self, optmodel, reduction="mean", processes=1):
         """
         Initialize the abstract class with an optimization model.
@@ -42,7 +44,7 @@ class abstractConeAlignedCosine(nn.Module, ABC):
         # method for aggregating the loss
         self.reduction = reduction
         if self.reduction not in ["mean", "sum", "none"]:
-            message = ValueError("No reduction '{}'.".format(self.reduction))
+            raise ValueError("No reduction '{}'.".format(self.reduction))
         # number of processes
         self.processes = mp.cpu_count() if not processes else processes
         # multi-core
@@ -74,7 +76,7 @@ class abstractConeAlignedCosine(nn.Module, ABC):
         # get projection
         proj = self._getProjection(pred_cost, tight_ctrs)
         # calculate cosine similarity between predicted costs and their projections
-        loss = - F.cosine_similarity(pred_cost, proj, dim=1)
+        loss = -F.cosine_similarity(pred_cost, proj, dim=1)
         return loss
 
     @abstractmethod
@@ -89,6 +91,7 @@ class exactConeAlignedCosine(abstractConeAlignedCosine):
     """
     An autograd module for CaVE Exact
     """
+
     def __init__(self, optmodel, solver="clarabel", reduction="mean", processes=1):
         """
         Args:
@@ -124,7 +127,7 @@ class exactConeAlignedCosine(abstractConeAlignedCosine):
             # init empty tensor
             proj = torch.empty(pred_cost.shape).to(device)
             # calculate projections per instance
-            for i, (cp, ctr) in enumerate(zip(pred_cost, tight_ctrs)):
+            for i, (cp, ctr) in enumerate(zip(pred_cost, tight_ctrs, strict=False)):
                 # solve QP
                 proj[i], _ = self._solveQP(cp, ctr)
         # multi-core
@@ -132,7 +135,7 @@ class exactConeAlignedCosine(abstractConeAlignedCosine):
             # calculate projections with pool
             res = self.pool.amap(self._solveQP, pred_cost, tight_ctrs).get()
             # the projection
-            proj, _ = zip(*res)
+            proj, _ = zip(*res, strict=False)
             proj = torch.stack(proj, dim=0).to(device)
         # normalize
         # QUESTION: Do we need to normalize it?
@@ -186,8 +189,8 @@ class innerConeAlignedCosine(exactConeAlignedCosine):
     """
     An autograd module for CaVE+ and CaVE Hybrid.
     """
-    def __init__(self, optmodel, solver="clarabel", max_iter=3, solve_ratio=1,
-                 inner_ratio=0.2, reduction="mean", processes=1):
+
+    def __init__(self, optmodel, solver="clarabel", max_iter=3, solve_ratio=1, inner_ratio=0.2, reduction="mean", processes=1):
         """
         Args:
             optmodel (optModel): an PyEPO optimization model
@@ -205,14 +208,12 @@ class innerConeAlignedCosine(exactConeAlignedCosine):
         self.solve_ratio = solve_ratio
         # check if value is valid [0,1]
         if (self.solve_ratio < 0) or (self.solve_ratio > 1):
-            raise ValueError("Invalid solving ratio {}. It should be between 0 and 1.".
-                format(self.solve_ratio))
+            raise ValueError("Invalid solving ratio {}. It should be between 0 and 1.".format(self.solve_ratio))
         # inner ratio
         self.inner_ratio = inner_ratio
         # check if value is valid [0,1]
         if (self.inner_ratio < 0) or (self.inner_ratio > 1):
-            raise ValueError("Invalid inner ratio {}. It should be between 0 and 1.".
-                format(self.inner_ratio))
+            raise ValueError("Invalid inner ratio {}. It should be between 0 and 1.".format(self.inner_ratio))
 
     def _getProjection(self, pred_cost, tight_ctrs):
         """
@@ -227,21 +228,20 @@ class innerConeAlignedCosine(exactConeAlignedCosine):
             # to numpy
             pred_cost = pred_cost.detach().cpu().numpy()
             tight_ctrs = tight_ctrs.detach().cpu().numpy()
-             # single-core
+            # single-core
             if self.processes == 1:
                 # init empty tensor
                 proj = torch.empty(pred_cost.shape).to(device)
                 rnorm = torch.empty(pred_cost.shape[0]).to(device)
                 # calculate projections per instance
-                for i, (cp, ctr) in enumerate(zip(pred_cost, tight_ctrs)):
+                for i, (cp, ctr) in enumerate(zip(pred_cost, tight_ctrs, strict=False)):
                     # solve QP
                     proj[i], rnorm[i] = self._solveQP(cp, ctr, self.max_iter)
             # multi-core
             else:
                 # calculate projections with pool
-                res = self.pool.amap(self._solveQP, pred_cost, tight_ctrs,
-                                     [self.max_iter]*len(pred_cost)).get()
-                proj, rnorm = zip(*res)
+                res = self.pool.amap(self._solveQP, pred_cost, tight_ctrs, [self.max_iter] * len(pred_cost)).get()
+                proj, rnorm = zip(*res, strict=False)
                 # the projection
                 proj = torch.stack(proj, dim=0).to(device)
                 # the residuals

@@ -1,5 +1,6 @@
-from torch import nn
 import torch
+from torch import nn
+
 
 class LAVA(nn.Module):
     def __init__(self, optmodel, threshold: float):

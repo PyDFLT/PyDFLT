@@ -342,7 +342,7 @@ class DifferentiableDecisionMaker(DecisionMaker):
         idx = self._get_train_and_val_idx()
         idx.sort()
         for start in range(0, len(idx), self.batch_size):
-            batch_idx = idx[start:start + self.batch_size]
+            batch_idx = idx[start : start + self.batch_size]
             data = self.problem.read_data(batch_idx)
             _, bctr_list = self.problem.opt_model.solve_batch_with_binding_constraints(data)
             self.problem.dataset.add_data("bctr", bctr_list, indices=batch_idx)
@@ -361,7 +361,7 @@ class DifferentiableDecisionMaker(DecisionMaker):
                 relaxed_model.relax_in_place()
 
         for start in range(0, len(idx), self.batch_size):
-            batch_idx = idx[start:start + self.batch_size]
+            batch_idx = idx[start : start + self.batch_size]
             data = self.problem.read_data(batch_idx)
             _, adjver_list = self.problem.opt_model.solve_batch_with_adjacent_vertices(data)
             self.problem.dataset.add_data("adjver", adjver_list, indices=batch_idx)
