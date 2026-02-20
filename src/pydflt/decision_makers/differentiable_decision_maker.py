@@ -11,6 +11,8 @@ from pyepo.func import (
 
 from pydflt.decision_makers.base import DecisionMaker
 from pydflt.problem import Problem
+from pydflt.utils.cave import innerConeAlignedCosine
+from pydflt.utils.lava import LAVA
 
 PYEPO_LOSS_FUNCTIONS = {
     "SPOPlus": SPOPlus,
@@ -50,6 +52,8 @@ class DifferentiableDecisionMaker(DecisionMaker):
         "mse",
         "objective",
         "regret",
+        "cave",
+        "lava",
         "SPOPlus",
         "perturbedOpt",
         "perturbedFenchelYoung",
@@ -141,7 +145,7 @@ class DifferentiableDecisionMaker(DecisionMaker):
         """
         self.optimizer = torch.optim.Adam(self.trainable_predictive_model.parameters(), lr=self.learning_rate)
 
-    def _set_loss_function(self):
+    def _set_loss_function(self, **kwargs):
         """
         Sets the loss function based on the specified loss_function_str.
         Supports various loss types including traditional losses and PyEPO differentiable losses.
@@ -153,6 +157,13 @@ class DifferentiableDecisionMaker(DecisionMaker):
             self.loss_function = self.get_regret
         elif self.loss_function_str == "mse":
             self.loss_function = torch.nn.MSELoss()
+        elif self.loss_function_str == "cave":
+            self.add_binding_constraints_to_data()
+            self.loss_function = innerConeAlignedCosine(self.problem.opt_model)
+        elif self.loss_function_str == "lava":
+            threshold = kwargs.get("threshold", -0.1)
+            self.add_adjacent_vertices_to_data(**kwargs)
+            self.loss_function = LAVA(self.problem.opt_model, threshold=threshold)
         elif self.loss_function_str == "smooth":
 
             def smooth_loss(data_batch, decisions_batch, predictions_batch):
@@ -272,6 +283,26 @@ class DifferentiableDecisionMaker(DecisionMaker):
             return self.loss_function(data_batch, decisions_batch, predictions_batch)
         if self.loss_function_str == "smooth":
             return self.loss_function(data_batch, decisions_batch, predictions_batch)
+        if self.loss_function_str == "cave":
+            predictions = self.dict_to_predictions(predictions_batch)
+            bctr = data_batch.get("bctr", None)
+            if bctr is None:
+                raise ValueError("CAVE loss requires 'bctr' in data_batch.")
+            return self.loss_function(predictions, bctr)
+        if self.loss_function_str == "lava":
+            predictions = self.dict_to_predictions(predictions_batch)
+            adjver = data_batch.get("adjver", None)
+            if adjver is None:
+                raise ValueError("LAVA loss requires 'adjver' in data_batch.")
+            w_rel_list = []
+            for key, shape in self.decision_model.var_shapes.items():
+                relaxed_key = key + "_optimal_relaxed"
+                if relaxed_key not in data_batch:
+                    raise ValueError("LAVA loss requires optimal relaxed decisions in data_batch.")
+                w_rel_list.append(data_batch[relaxed_key].reshape(-1, int(np.prod(shape))))
+            w_rel = torch.cat(w_rel_list, dim=1)
+            mm = -1 * self.problem.opt_model.model_sense_int
+            return self.loss_function(predictions, adjver, w_rel, mm)
         if self.loss_function_str == "mse":
             total_loss = 0
             for key in predictions_batch:
@@ -302,6 +333,41 @@ class DifferentiableDecisionMaker(DecisionMaker):
             return self.loss_function(predictions, true_parameters, optimal_decisions, optimal_objectives)
 
         return NotImplementedError
+
+    def add_binding_constraints_to_data(self) -> None:
+        if "bctr" in self.problem.dataset.data_dict:
+            self.problem.dataset.remove_data("bctr")
+        if not getattr(self.problem.opt_model, "supports_binding_constraints", False):
+            raise ValueError("CAVE loss requires an optimization model that supports binding constraints.")
+        idx = self._get_train_and_val_idx()
+        idx.sort()
+        for start in range(0, len(idx), self.batch_size):
+            batch_idx = idx[start:start + self.batch_size]
+            data = self.problem.read_data(batch_idx)
+            _, bctr_list = self.problem.opt_model.solve_batch_with_binding_constraints(data)
+            self.problem.dataset.add_data("bctr", bctr_list, indices=batch_idx)
+
+    def add_adjacent_vertices_to_data(self) -> None:
+        if "adjver" in self.problem.dataset.data_dict and "optimal_relaxed" in self.problem.dataset.data_dict:
+            return
+        if not getattr(self.problem.opt_model, "supports_adjacent_vertices", False):
+            raise ValueError("LAVA loss requires an optimization model that supports adjacent vertices.")
+        idx = self._get_train_and_val_idx()
+        idx.sort()
+        relaxed_model = None
+        if "optimal_relaxed" not in self.problem.dataset.data_dict:
+            relaxed_model = self.problem.opt_model.create_copy()
+            if hasattr(relaxed_model, "relax_in_place"):
+                relaxed_model.relax_in_place()
+
+        for start in range(0, len(idx), self.batch_size):
+            batch_idx = idx[start:start + self.batch_size]
+            data = self.problem.read_data(batch_idx)
+            _, adjver_list = self.problem.opt_model.solve_batch_with_adjacent_vertices(data)
+            self.problem.dataset.add_data("adjver", adjver_list, indices=batch_idx)
+            if relaxed_model is not None:
+                optimal_relaxed = relaxed_model.solve_batch(data)
+                self.problem.dataset.add_data("optimal_relaxed", optimal_relaxed, indices=batch_idx)
 
     def run_epoch(self, mode: str, epoch_num: int, metrics: list[str] = None) -> list[dict[str, float]]:
         """

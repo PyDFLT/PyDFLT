@@ -401,7 +401,46 @@ class Problem:
             dict[str, torch.Tensor]: A dictionary where keys are data field names (e.g., 'features', 'costs') and
                 values are the corresponding torch.Tensor data for the requested indices.
         """
-        return self.dataset[idx]
+        data = self.dataset[idx]
+
+        def _pad_ragged(name: str) -> None:
+            if name not in data or not isinstance(data[name], list):
+                return
+            items = data[name]
+            if isinstance(idx, (int, np.integer)):
+                if items is None:
+                    data[name] = torch.zeros((0, self.opt_model.num_vars), dtype=torch.float32)
+                    return
+                if items:
+                    item_array = np.asarray(items, dtype=np.float32)
+                    if item_array.ndim < 2:
+                        data[name] = torch.zeros((0, self.opt_model.num_vars), dtype=torch.float32)
+                    else:
+                        data[name] = torch.from_numpy(item_array).to(torch.float32)
+                else:
+                    data[name] = torch.zeros((0, self.opt_model.num_vars), dtype=torch.float32)
+                return
+
+            batch_size = len(items)
+            max_rows = max(
+                (np.asarray(item).shape[0] for item in items if item is not None and np.asarray(item).ndim > 0),
+                default=0,
+            )
+            num_vars = self.opt_model.num_vars
+            padded = torch.zeros((batch_size, max_rows, num_vars), dtype=torch.float32)
+            for i, item in enumerate(items):
+                if item is None:
+                    continue
+                item_array = np.asarray(item, dtype=np.float32)
+                if item_array.ndim < 2:
+                    continue
+                padded[i, : item_array.shape[0], : item_array.shape[1]] = torch.from_numpy(item_array).to(torch.float32)
+            data[name] = padded
+
+        _pad_ragged("bctr")
+        _pad_ragged("adjver")
+
+        return data
 
     def solve(self, data_batch: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
         """
@@ -494,3 +533,13 @@ class Problem:
             eval_dict["mse"] = np.array(losses_list)
 
         return eval_dict
+
+    def get_train_and_val_idx(self):
+        self.set_mode("train")
+        idx_train = self.generate_batch_indices(batch_size=self.train_size)[0]
+        if self.validation_size == 0:
+            return idx_train
+        self.set_mode("validation")
+        idx_val = self.generate_batch_indices(batch_size=self.validation_size)[0]
+
+        return np.append(idx_train, idx_val)

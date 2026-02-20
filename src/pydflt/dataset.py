@@ -81,10 +81,30 @@ class DFLDataset(Dataset):
         if isinstance(idx, list):
             idx = torch.tensor(np.array(idx))
 
-        sample = {key: self.data_dict[key][idx] for key in self.keys}
+        sample = {}
+        for key in self.keys:
+            value = self.data_dict[key]
+            if isinstance(value, list):
+                if isinstance(idx, torch.Tensor):
+                    idx_list = idx.detach().cpu().numpy().tolist()
+                elif isinstance(idx, np.ndarray):
+                    idx_list = idx.tolist()
+                else:
+                    idx_list = idx
+                if isinstance(idx_list, list):
+                    sample[key] = [value[i] for i in idx_list]
+                else:
+                    sample[key] = value[idx_list]
+            else:
+                sample[key] = value[idx]
         return sample
 
-    def add_data(self, key: str, data: torch.Tensor | dict[str, torch.Tensor]) -> None:
+    def add_data(
+        self,
+        key: str,
+        data: torch.Tensor | dict[str, torch.Tensor] | list,
+        indices: list[int] | np.ndarray | torch.Tensor | None = None,
+    ) -> None:
         """
         Adds new data component(s) to the dataset.
 
@@ -95,17 +115,67 @@ class DFLDataset(Dataset):
         Args:
             key (str): The primary key name if `data_to_add` is a single tensor,
                               or the suffix to append to keys if `data_to_add` is a dictionary.
-            data (torch.Tensor | dict[str, torch.Tensor]): The data to add.
-                Can be a single torch.Tensor or a dictionary of torch.Tensors.
+            data (torch.Tensor | dict[str, torch.Tensor] | list): The data to add.
+                Can be a single torch.Tensor, a dictionary of torch.Tensors, or a list.
                 The first dimension of any tensor must match `self.num_samples`.
+            indices (list[int] | np.ndarray | torch.Tensor | None): Optional indices at which to insert data.
+                If provided, data must have a first dimension matching the number of indices.
         """
+        if indices is not None:
+            if isinstance(indices, torch.Tensor):
+                indices_list = indices.detach().cpu().tolist()
+            elif isinstance(indices, np.ndarray):
+                indices_list = indices.tolist()
+            else:
+                indices_list = list(indices)
+        else:
+            indices_list = None
+
         if isinstance(data, dict):
             for data_key in data.keys():
-                assert data[data_key].shape[0] == self.num_samples, "Trying to add data with wrong number of samples."
-                self.data_dict[f"{data_key}_{key}"] = torch.atleast_2d(data[data_key])
+                tensor = data[data_key]
+                if indices_list is None:
+                    assert tensor.shape[0] == self.num_samples, "Trying to add data with wrong number of samples."
+                    self.data_dict[f"{data_key}_{key}"] = torch.atleast_2d(tensor)
+                else:
+                    if tensor.shape[0] != len(indices_list):
+                        raise ValueError("Number of data points must match the number of indices.")
+                    existing = self.data_dict.get(f"{data_key}_{key}")
+                    if isinstance(existing, torch.Tensor):
+                        full_tensor = existing
+                    else:
+                        full_shape = (self.num_samples,) + tuple(tensor.shape[1:])
+                        full_tensor = tensor.new_zeros(full_shape)
+                    full_tensor[indices_list] = tensor
+                    self.data_dict[f"{data_key}_{key}"] = full_tensor
         elif isinstance(data, torch.Tensor):
-            assert data.shape[0] == self.num_samples, "Trying to add data with different number of samples."
-            self.data_dict[f"{key}"] = data
+            if indices_list is None:
+                assert data.shape[0] == self.num_samples, "Trying to add data with different number of samples."
+                self.data_dict[f"{key}"] = data
+            else:
+                if data.shape[0] != len(indices_list):
+                    raise ValueError("Number of data points must match the number of indices.")
+                existing = self.data_dict.get(key)
+                if isinstance(existing, torch.Tensor):
+                    full_tensor = existing
+                else:
+                    full_shape = (self.num_samples,) + tuple(data.shape[1:])
+                    full_tensor = data.new_zeros(full_shape)
+                full_tensor[indices_list] = data
+                self.data_dict[f"{key}"] = full_tensor
+        elif isinstance(data, list):
+            if indices_list is None:
+                if len(data) != self.num_samples:
+                    raise ValueError("Trying to add data with different number of samples.")
+                self.data_dict[f"{key}"] = data
+            else:
+                if len(data) != len(indices_list):
+                    raise ValueError("Number of data points must match the number of indices.")
+                existing = self.data_dict.get(key)
+                full_list = existing if isinstance(existing, list) else [None] * self.num_samples
+                for idx_i, value in zip(indices_list, data):
+                    full_list[int(idx_i)] = value
+                self.data_dict[f"{key}"] = full_list
         else:
             raise TypeError(f"Unsupported data type: {type(data)}")
         self.keys = list(self.data_dict.keys())

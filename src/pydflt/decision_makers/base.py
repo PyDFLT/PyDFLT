@@ -791,3 +791,6 @@ class DecisionMaker:
         quantiles = np.concatenate(quantile_list)
 
         return quantiles
+
+    def _get_train_and_val_idx(self):
+        return self.problem.get_train_and_val_idx()
