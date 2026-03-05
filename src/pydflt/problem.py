@@ -4,6 +4,7 @@ from typing import Union
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 from scipy.spatial import distance
 
 from pydflt.abstract_models.base import OptimizationModel
@@ -127,6 +128,7 @@ class Problem:
         self.val_ratio = val_ratio
         self.time_respecting_split = time_respecting_split
         self.compute_optimal_decisions = compute_optimal_decisions
+        self.compute_optimal_objectives = compute_optimal_objectives
         self.knn_robust_loss = knn_robust_loss
         self.verbose = verbose
 
@@ -511,7 +513,7 @@ class Problem:
             dict[str, torch.Tensor]: A dictionary where keys are metric names and values are torch.Tensors
                 representing the metric values for the batch.
         """
-        device = list(decisions_batch.values())[0].device
+        device = list(predictions_batch.values())[0].device
         eval_dict = self.opt_model.evaluate(
             {key: val.to(device) for key, val in data_batch.items()},
             decisions_batch,
@@ -531,6 +533,48 @@ class Problem:
                     sum_losses += losses
                 losses_list.append(sum_losses.cpu().detach().numpy().astype(np.float32))
             eval_dict["mse"] = np.array(losses_list)
+        if metrics is not None and "mae" in metrics:
+            mae_loss_func = F.l1_loss
+            batch_size = data_batch["features"].shape[0]
+            losses_list = []
+            for i in range(batch_size):
+                sum_losses = 0
+                for key in predictions_batch:
+                    true_values = data_batch[key].to(torch.float).to(device)[i]
+                    losses = mae_loss_func(predictions_batch[key][i], true_values)
+                    sum_losses += losses
+                losses_list.append(sum_losses.cpu().detach().numpy().astype(np.float32))
+            eval_dict["mae"] = np.array(losses_list)
+        if metrics is not None and "mse_norm" in metrics:
+            mse_loss_func = torch.nn.MSELoss()
+            batch_size = data_batch["features"].shape[0]
+            losses_list = []
+            for i in range(batch_size):
+                sum_losses = 0
+                for key in predictions_batch:
+                    true_values = data_batch[key].to(torch.float).to(device)[i]
+                    losses = mse_loss_func(
+                        F.normalize(predictions_batch[key][i], p=2, dim=-1),
+                        F.normalize(true_values, p=2, dim=-1),
+                    )
+                    sum_losses += losses
+                losses_list.append(sum_losses.cpu().detach().numpy().astype(np.float32))
+            eval_dict["mse_norm"] = np.array(losses_list)
+        if metrics is not None and "mae_norm" in metrics:
+            mae_loss_func = F.l1_loss
+            batch_size = data_batch["features"].shape[0]
+            losses_list = []
+            for i in range(batch_size):
+                sum_losses = 0
+                for key in predictions_batch:
+                    true_values = data_batch[key].to(torch.float).to(device)[i]
+                    losses = mae_loss_func(
+                        F.normalize(predictions_batch[key][i], p=2, dim=-1),
+                        F.normalize(true_values, p=2, dim=-1),
+                    )
+                    sum_losses += losses
+                losses_list.append(sum_losses.cpu().detach().numpy().astype(np.float32))
+            eval_dict["mae_norm"] = np.array(losses_list)
 
         return eval_dict
 

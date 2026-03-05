@@ -1,3 +1,5 @@
+from typing import Any
+
 import numpy as np
 import torch
 from pyepo.func import (
@@ -246,20 +248,62 @@ class DifferentiableDecisionMaker(DecisionMaker):
 
         log_dict = {
             "loss": logger_loss,
+            "used_loss": logger_loss,
             "solver_calls": self._solver_calls,
             "grad_norm": grad_norm,
         }
 
-        if self.loss_function_str != "mse":  # Evaluation below does not require more solves
-            eval_dict = self.problem.evaluate(
-                data_batch,
-                decisions_batch,
-                predictions_batch=predictions_batch,
-                metrics=["objective", "abs_regret", "rel_regret", "sym_rel_regret"],
-            )
-            log_dict.update(eval_dict)
+        evaluate_metrics = ["mse", "mae"]
+        if self.loss_function_str in ["objective", "regret", "smooth"]:
+            evaluate_metrics.extend(["objective", "abs_regret", "rel_regret", "sym_rel_regret"])
+        eval_dict = self.problem.evaluate(
+            data_batch,
+            decisions_batch,
+            predictions_batch=predictions_batch,
+            metrics=evaluate_metrics,
+        )
+        log_dict.update(eval_dict)
 
         return log_dict
+
+    def _get_batch_results(self, data_batch: dict[str, torch.Tensor], metrics: list[str] | None = None) -> dict[str, Any]:
+        """
+        Processes a single batch of data to get predictions, decisions, and evaluation metrics.
+        This extends the base implementation with support for used_loss and abs_regret_pyepo.
+        """
+        predictions_batch = self.predict(data_batch)
+
+        metrics = metrics or []
+        needs_decisions = any(m in metrics for m in ["objective", "abs_regret", "rel_regret", "sym_rel_regret", "abs_regret_pyepo", "used_loss"])
+        decisions_batch = self.decide(predictions_batch) if needs_decisions else None
+
+        batch_results = self.problem.evaluate(
+            data_batch,
+            decisions_batch,
+            predictions_batch=predictions_batch,
+            metrics=metrics,
+        )
+
+        for key in predictions_batch.keys():
+            batch_results[key] = predictions_batch[key].cpu().detach().numpy().astype(np.float32)
+        if decisions_batch is not None:
+            for key in decisions_batch.keys():
+                batch_results[key] = decisions_batch[key].cpu().detach().numpy().astype(np.float32)
+
+        if "used_loss" in metrics:
+            loss = self.get_loss(data_batch, decisions_batch, predictions_batch)
+            batch_results["used_loss"] = loss.cpu().detach().numpy().astype(np.float32)
+
+        if "abs_regret_pyepo" in metrics:
+            if decisions_batch is None:
+                decisions_batch = self.decide(predictions_batch)
+            optimal_decisions = self.problem.opt_model.solve_batch(data_batch)
+            optimal_objectives = self.problem.opt_model.get_objective(data_batch, optimal_decisions)
+            pred_objectives = self.problem.opt_model.get_objective(data_batch, decisions_batch, predictions_batch)
+            regret = (pred_objectives - optimal_objectives) * float(self.problem.opt_model.model_sense_int)
+            batch_results["abs_regret_pyepo"] = regret.mean().cpu().detach().numpy().astype(np.float32)
+
+        return batch_results
 
     def get_loss(
         self,

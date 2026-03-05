@@ -45,6 +45,19 @@ class Runner:
         "rel_regret",
         "sym_rel_regret",
         "mse",
+        "mae",
+        "used_loss",
+        "mse_norm",
+        "mae_norm",
+        "abs_regret_pyepo",
+    ]
+    default_metrics: list[str] = [
+        "objective",
+        "abs_regret",
+        "rel_regret",
+        "sym_rel_regret",
+        "mse",
+        "mae",
     ]
 
     def __init__(
@@ -138,8 +151,8 @@ class Runner:
             self.main_metric_sense = "MIN"
             self.best_val_metric = np.inf
 
-        self.val_metrics = self.allowed_metrics if val_metrics is None else val_metrics
-        self.test_metrics = self.allowed_metrics if test_metrics is None else test_metrics
+        self.val_metrics = self.default_metrics if val_metrics is None else val_metrics
+        self.test_metrics = self.default_metrics if test_metrics is None else test_metrics
 
         for metric in self.val_metrics + self.test_metrics:
             assert metric in self.allowed_metrics, f"Metric {metric} has to be from {self.allowed_metrics}."
@@ -189,6 +202,12 @@ class Runner:
         # Initial validation before training (epoch 0)
         if self.start_time is None:
             self.start_time = time.perf_counter()
+        if any(m in self.val_metrics or m in self.test_metrics for m in ["abs_regret", "rel_regret", "sym_rel_regret"]):
+            if not getattr(self.decision_maker.problem, "compute_optimal_objectives", False):
+                self._print_message(
+                    "Warning: regret metrics requested but compute_optimal_objectives=False. "
+                    "Optimal objectives will be computed on-the-fly during evaluation, which is slower than precomputing."
+                )
         self._print_message(f"Epoch 0/{self.num_epochs}: Starting initial validation...")
         validation_epoch_results_initial = self.decision_maker.run_epoch(mode="validation", epoch_num=0, metrics=self.val_metrics)
         validation_is_empty = len(validation_epoch_results_initial) == 0
