@@ -1,4 +1,5 @@
 import copy
+import time
 from typing import Any
 
 import numpy as np
@@ -61,11 +62,14 @@ class Runner:
         early_stop: bool = False,
         min_delta_early_stop: float | None = None,
         patience_early_stop: float | None = None,
+        patience_early_stop_seconds: float | None = None,
         save_best: bool = True,
         seed: int | None = None,
         full_reproducibility_GPUs: bool = False,
         config: dict[str, Any] | None = None,
         verbose: bool = True,
+        timeout_seconds: float | None = None,
+        start_time: float | None = None,
         # use_logging: bool = True,
     ):
         """
@@ -84,11 +88,14 @@ class Runner:
             min_delta_early_stop (float | None): The minimum change in the main metric to qualify as an improvement.
                                                  A smaller value means more sensitivity.
             patience_early_stop (float | None): Number of epochs with no improvement after which training is stopped.
+            patience_early_stop_seconds (float | None): Seconds without improvement after which training is stopped.
             save_best (bool): Flag to save the best performing model based on the main_metric on the validation set.
             seed (int | None): Seed for random number generators to ensure reproducibility.
             full_reproducibility_GPUs (bool): Flag to enable/disable GPU reproducibility.
             config (dict[str, Any] | None): A dictionary containing experiment configurations to be logged.
             verbose (bool): If True, print status messages to the console.
+            timeout_seconds (float | None): If set, stop training after this many seconds (test still runs).
+            start_time (float | None): If set, use this as the run start time for timeouts.
         """
 
         # Set up the seeds
@@ -106,17 +113,22 @@ class Runner:
         self.early_stop = early_stop
         self.min_delta_early_stop = min_delta_early_stop
         self.patience_early_stop = patience_early_stop
+        self.patience_early_stop_seconds = patience_early_stop_seconds
         self.save_best = save_best
         self.main_metric = main_metric
         self.store_min_and_max = store_min_and_max
         self.verbose = verbose
+        self.timeout_seconds = timeout_seconds
+        self.start_time = start_time
         self.no_improvement_count = 0
+        self.last_improvement_time = None
         # self.use_logging = use_logging
 
         if self.early_stop:
-            assert (
-                min_delta_early_stop is not None and patience_early_stop is not None
-            ), "If early_stop is True, min_delta_early_stop and patience_early_stop are required."
+            has_epoch_patience = patience_early_stop is not None
+            has_time_patience = patience_early_stop_seconds is not None
+            assert min_delta_early_stop is not None, "If early_stop is True, min_delta_early_stop is required."
+            assert has_epoch_patience or has_time_patience, "If early_stop is True, patience_early_stop or patience_early_stop_seconds is required."
 
         # State variables
         if self.main_metric == "objective" and self.decision_maker.problem.opt_model.model_sense == "MAX":
@@ -175,27 +187,53 @@ class Runner:
         # executed during the epoch. For each batch, a dictionary stores one FLOAT (not arrays/tensors) per key
 
         # Initial validation before training (epoch 0)
+        if self.start_time is None:
+            self.start_time = time.perf_counter()
         self._print_message(f"Epoch 0/{self.num_epochs}: Starting initial validation...")
         validation_epoch_results_initial = self.decision_maker.run_epoch(mode="validation", epoch_num=0, metrics=self.val_metrics)
-        initial_validation_eval = self.logger.log_epoch_results(validation_epoch_results_initial, epoch_num=0)
-        best_validation_results = copy.deepcopy(initial_validation_eval)
+        validation_is_empty = len(validation_epoch_results_initial) == 0
+        initial_validation_eval = None
+        if not validation_is_empty:
+            initial_validation_eval = self.logger.log_epoch_results(validation_epoch_results_initial, epoch_num=0)
+            if np.isinf(self.best_val_metric) or np.isneginf(self.best_val_metric):
+                self.best_val_metric = initial_validation_eval
+                self.last_improvement_time = time.perf_counter()
+                self.no_improvement_count = 0
+        best_validation_results = copy.deepcopy(initial_validation_eval) if initial_validation_eval is not None else None
 
-        if self.save_best:
+        if self.save_best and initial_validation_eval is not None:
             self.decision_maker.save_best_predictor()
             self._print_message(f"Initial best validation metric ({self.main_metric}): {initial_validation_eval}")
+        if self.last_improvement_time is None:
+            self.last_improvement_time = time.perf_counter()
 
         self._print_message("Starting training...")
+        train_eval = None
         for epoch in range(1, self.num_epochs + 1):
             self._print_message(f"Epoch: {epoch}/{self.num_epochs}")
 
             # Training epoch
             train_epoch_results = self.decision_maker.run_epoch(mode="train", epoch_num=epoch)
-            self.logger.log_epoch_results(train_epoch_results, epoch_num=epoch)
+            train_eval = self.logger.log_epoch_results(train_epoch_results, epoch_num=epoch)
+
+            if self.timeout_seconds is not None:
+                elapsed = time.perf_counter() - self.start_time
+                if elapsed >= self.timeout_seconds:
+                    self._print_message(f"Timeout reached after {elapsed:.2f}s at epoch {epoch}. Stopping training.")
+                    break
 
             # Validation epoch
-            validation_epoch_results = self.decision_maker.run_epoch(mode="validation", epoch_num=epoch, metrics=self.val_metrics)
-            validation_eval = self.logger.log_epoch_results(validation_epoch_results, epoch_num=epoch)
-            self._print_message(f"Validation evaluation ({self.main_metric}): {validation_eval}")
+            if not validation_is_empty:
+                validation_epoch_results = self.decision_maker.run_epoch(mode="validation", epoch_num=epoch, metrics=self.val_metrics)
+                validation_eval = self.logger.log_epoch_results(validation_epoch_results, epoch_num=epoch)
+                self._print_message(f"Validation evaluation ({self.main_metric}): {validation_eval}")
+            else:
+                validation_eval = train_eval
+                self._print_message(f"Train evaluation ({self.main_metric}): {validation_eval} (validation set empty)")
+                if np.isinf(self.best_val_metric) or np.isneginf(self.best_val_metric):
+                    self.best_val_metric = validation_eval
+                    self.last_improvement_time = time.perf_counter()
+                    self.no_improvement_count = 0
 
             # Optuna integration
             if optuna_trial is not None:
@@ -205,18 +243,18 @@ class Runner:
                     self._print_message(f"Optuna trial pruned at epoch {epoch}.")
                     raise optuna.TrialPruned()
 
+            # Saving best model found so far
+            if self.save_best:
+                if best_validation_results is None or validation_eval < best_validation_results:
+                    self._print_message(f"New best validation evaluation ({self.main_metric}): {validation_eval} " f"(was {best_validation_results})")
+                    self.decision_maker.save_best_predictor()
+                    best_validation_results = copy.deepcopy(validation_eval)
+
             # Early stopping
             if self.early_stop:
                 if self._check_early_stopping(validation_eval):
                     self._print_message(f"Early stopping triggered at epoch {epoch}!")
                     break
-
-            # Saving best model found so far
-            if self.save_best:
-                if validation_eval < best_validation_results:
-                    self._print_message(f"New best validation evaluation ({self.main_metric}): {validation_eval} " f"(was {best_validation_results})")
-                    self.decision_maker.save_best_predictor()
-                    best_validation_results = copy.deepcopy(validation_eval)
 
         # Test results
         self._print_message("Training finished. Evaluating on the test set...")
@@ -227,7 +265,7 @@ class Runner:
         self.logger.log_epoch_results(test_epoch_results, epoch_num=self.num_epochs)
         self.logger.finish()
 
-        return best_validation_results
+        return best_validation_results if best_validation_results is not None else train_eval
 
     def _check_early_stopping(self, current_val_metric: float) -> bool:
         """
@@ -239,20 +277,42 @@ class Runner:
         Returns:
             bool: True if early stopping should be triggered, False otherwise.
         """
-        if self.main_metric_sense == "MAX":
-            early_stop_condition_holds = current_val_metric > self.best_val_metric + self.min_delta_early_stop
+        if current_val_metric is None:
+            return False
+        if np.isinf(self.best_val_metric) or np.isneginf(self.best_val_metric):
+            self.best_val_metric = current_val_metric
+            self.no_improvement_count = 0
+            self.last_improvement_time = time.perf_counter()
+            return False
+        if self.min_delta_early_stop is None:
+            min_delta = 0.0
         else:
-            early_stop_condition_holds = current_val_metric < self.best_val_metric + self.min_delta_early_stop
+            min_delta = self.min_delta_early_stop
+        if self.main_metric_sense == "MAX":
+            threshold = self.best_val_metric + min_delta * abs(self.best_val_metric)
+            early_stop_condition_holds = current_val_metric > threshold
+        else:
+            threshold = self.best_val_metric - min_delta * abs(self.best_val_metric)
+            early_stop_condition_holds = current_val_metric < threshold
 
         if early_stop_condition_holds:
             self.best_val_metric = current_val_metric  # Update the best validation metric
             self.no_improvement_count = 0  # Reset the no improvement counter
+            self.last_improvement_time = time.perf_counter()
         else:  # No significant improvement
             self.no_improvement_count += 1  # Increment the counter if no improvement
 
         # Stop if there has been no improvement for 'patience' epochs
-        if self.no_improvement_count >= self.patience_early_stop:
+        if self.patience_early_stop is not None and self.no_improvement_count >= self.patience_early_stop:
             self._print_message(f"Early stopping condition met: No improvement for {self.no_improvement_count} epochs.")
             return True  # Trigger early stopping
+
+        if self.patience_early_stop_seconds is not None:
+            if self.last_improvement_time is None:
+                self.last_improvement_time = time.perf_counter()
+            elapsed = time.perf_counter() - self.last_improvement_time
+            if elapsed >= self.patience_early_stop_seconds:
+                self._print_message(f"Early stopping condition met: No improvement for {elapsed:.2f}s.")
+                return True
 
         return False
