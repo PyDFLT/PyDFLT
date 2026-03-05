@@ -127,6 +127,7 @@ class Problem:
         self.val_ratio = val_ratio
         self.time_respecting_split = time_respecting_split
         self.compute_optimal_decisions = compute_optimal_decisions
+        self.compute_optimal_objectives = compute_optimal_objectives
         self.knn_robust_loss = knn_robust_loss
         self.verbose = verbose
 

@@ -175,6 +175,12 @@ class Runner:
         # executed during the epoch. For each batch, a dictionary stores one FLOAT (not arrays/tensors) per key
 
         # Initial validation before training (epoch 0)
+        if any(m in self.val_metrics or m in self.test_metrics for m in ["abs_regret", "rel_regret", "sym_rel_regret"]):
+            if not getattr(self.decision_maker.problem, "compute_optimal_objectives", False):
+                self._print_message(
+                    "Warning: regret metrics requested but compute_optimal_objectives=False. "
+                    "Optimal objectives will be computed on-the-fly during evaluation, which is slower than precomputing."
+                )
         self._print_message(f"Epoch 0/{self.num_epochs}: Starting initial validation...")
         validation_epoch_results_initial = self.decision_maker.run_epoch(mode="validation", epoch_num=0, metrics=self.val_metrics)
         initial_validation_eval = self.logger.log_epoch_results(validation_epoch_results_initial, epoch_num=0)

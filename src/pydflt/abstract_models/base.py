@@ -219,7 +219,11 @@ class OptimizationModel(ABC):
             if "objective" in metrics:
                 eval_dict["objective"] = objectives.cpu().cpu().detach().numpy().astype(np.float32)
             if "abs_regret" in metrics or "rel_regret" in metrics or "sym_rel_regret" in metrics:
-                optimal_objectives = data_batch["objective_optimal"]
+                if "objective_optimal" in data_batch:
+                    optimal_objectives = data_batch["objective_optimal"]
+                else:
+                    optimal_decisions = self.solve_batch(data_batch)
+                    optimal_objectives = self.get_objective(data_batch, optimal_decisions)
                 regret = (objectives - optimal_objectives) * float(self.model_sense_int)
                 if "abs_regret" in metrics:
                     eval_dict["abs_regret"] = regret.cpu().detach().numpy().astype(np.float32)
