@@ -44,6 +44,19 @@ class Runner:
         "rel_regret",
         "sym_rel_regret",
         "mse",
+        "mae",
+        "used_loss",
+        "mse_norm",
+        "mae_norm",
+        "abs_regret_pyepo",
+    ]
+    default_metrics: list[str] = [
+        "objective",
+        "abs_regret",
+        "rel_regret",
+        "sym_rel_regret",
+        "mse",
+        "mae",
     ]
 
     def __init__(
@@ -126,8 +139,8 @@ class Runner:
             self.main_metric_sense = "MIN"
             self.best_val_metric = np.inf
 
-        self.val_metrics = self.allowed_metrics if val_metrics is None else val_metrics
-        self.test_metrics = self.allowed_metrics if test_metrics is None else test_metrics
+        self.val_metrics = self.default_metrics if val_metrics is None else val_metrics
+        self.test_metrics = self.default_metrics if test_metrics is None else test_metrics
 
         for metric in self.val_metrics + self.test_metrics:
             assert metric in self.allowed_metrics, f"Metric {metric} has to be from {self.allowed_metrics}."

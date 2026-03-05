@@ -4,6 +4,7 @@ from typing import Union
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 from scipy.spatial import distance
 
 from pydflt.abstract_models.base import OptimizationModel
@@ -532,6 +533,48 @@ class Problem:
                     sum_losses += losses
                 losses_list.append(sum_losses.cpu().detach().numpy().astype(np.float32))
             eval_dict["mse"] = np.array(losses_list)
+        if metrics is not None and "mae" in metrics:
+            mae_loss_func = F.l1_loss
+            batch_size = data_batch["features"].shape[0]
+            losses_list = []
+            for i in range(batch_size):
+                sum_losses = 0
+                for key in predictions_batch:
+                    true_values = data_batch[key].to(torch.float).to(device)[i]
+                    losses = mae_loss_func(predictions_batch[key][i], true_values)
+                    sum_losses += losses
+                losses_list.append(sum_losses.cpu().detach().numpy().astype(np.float32))
+            eval_dict["mae"] = np.array(losses_list)
+        if metrics is not None and "mse_norm" in metrics:
+            mse_loss_func = torch.nn.MSELoss()
+            batch_size = data_batch["features"].shape[0]
+            losses_list = []
+            for i in range(batch_size):
+                sum_losses = 0
+                for key in predictions_batch:
+                    true_values = data_batch[key].to(torch.float).to(device)[i]
+                    losses = mse_loss_func(
+                        F.normalize(predictions_batch[key][i], p=2, dim=-1),
+                        F.normalize(true_values, p=2, dim=-1),
+                    )
+                    sum_losses += losses
+                losses_list.append(sum_losses.cpu().detach().numpy().astype(np.float32))
+            eval_dict["mse_norm"] = np.array(losses_list)
+        if metrics is not None and "mae_norm" in metrics:
+            mae_loss_func = F.l1_loss
+            batch_size = data_batch["features"].shape[0]
+            losses_list = []
+            for i in range(batch_size):
+                sum_losses = 0
+                for key in predictions_batch:
+                    true_values = data_batch[key].to(torch.float).to(device)[i]
+                    losses = mae_loss_func(
+                        F.normalize(predictions_batch[key][i], p=2, dim=-1),
+                        F.normalize(true_values, p=2, dim=-1),
+                    )
+                    sum_losses += losses
+                losses_list.append(sum_losses.cpu().detach().numpy().astype(np.float32))
+            eval_dict["mae_norm"] = np.array(losses_list)
 
         return eval_dict
 
