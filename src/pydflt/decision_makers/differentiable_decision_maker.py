@@ -253,14 +253,16 @@ class DifferentiableDecisionMaker(DecisionMaker):
             "grad_norm": grad_norm,
         }
 
-        if self.loss_function_str != "mse":  # Evaluation below does not require more solves
-            eval_dict = self.problem.evaluate(
-                data_batch,
-                decisions_batch,
-                predictions_batch=predictions_batch,
-                metrics=["objective", "abs_regret", "rel_regret", "sym_rel_regret"],
-            )
-            log_dict.update(eval_dict)
+        evaluate_metrics = ["mse", "mae"]
+        if self.loss_function_str in ["objective", "regret", "smooth"]:
+            evaluate_metrics.extend(["objective", "abs_regret", "rel_regret", "sym_rel_regret"])
+        eval_dict = self.problem.evaluate(
+            data_batch,
+            decisions_batch,
+            predictions_batch=predictions_batch,
+            metrics=evaluate_metrics,
+        )
+        log_dict.update(eval_dict)
 
         return log_dict
 
@@ -275,14 +277,12 @@ class DifferentiableDecisionMaker(DecisionMaker):
         needs_decisions = any(m in metrics for m in ["objective", "abs_regret", "rel_regret", "sym_rel_regret", "abs_regret_pyepo", "used_loss"])
         decisions_batch = self.decide(predictions_batch) if needs_decisions else None
 
-        batch_results = {}
-        if decisions_batch is not None:
-            batch_results = self.problem.evaluate(
-                data_batch,
-                decisions_batch,
-                predictions_batch=predictions_batch,
-                metrics=metrics,
-            )
+        batch_results = self.problem.evaluate(
+            data_batch,
+            decisions_batch,
+            predictions_batch=predictions_batch,
+            metrics=metrics,
+        )
 
         for key in predictions_batch.keys():
             batch_results[key] = predictions_batch[key].cpu().detach().numpy().astype(np.float32)

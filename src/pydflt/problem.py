@@ -513,7 +513,7 @@ class Problem:
             dict[str, torch.Tensor]: A dictionary where keys are metric names and values are torch.Tensors
                 representing the metric values for the batch.
         """
-        device = list(decisions_batch.values())[0].device
+        device = list(predictions_batch.values())[0].device
         eval_dict = self.opt_model.evaluate(
             {key: val.to(device) for key, val in data_batch.items()},
             decisions_batch,
