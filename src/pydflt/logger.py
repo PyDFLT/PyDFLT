@@ -132,7 +132,7 @@ class Logger:
         self._write_to_file(aggregate_epoch_metrics, epoch_num)
         self.printout()
         for key in aggregate_epoch_metrics:
-            if key == (f"validation/{self.main_metric}_mean" or key == f"train/{self.main_metric}_mean" or key == f"test/{self.main_metric}_mean"):
+            if key == f"validation/{self.main_metric}_mean" or key == f"train/{self.main_metric}_mean" or key == f"test/{self.main_metric}_mean":
                 value = aggregate_epoch_metrics[key]
 
                 return value
