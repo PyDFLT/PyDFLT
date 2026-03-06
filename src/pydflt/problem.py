@@ -1,6 +1,6 @@
 import copy
 import random
-from typing import Union
+from typing import Any, Union
 
 import numpy as np
 import torch
@@ -62,7 +62,7 @@ class Problem:
 
     def __init__(
         self,
-        data_dict: dict[str, np.ndarray],
+        data_dict: dict[str, Any],
         opt_model: OptimizationModel,
         train_ratio: float = 0.7,
         val_ratio: float = 0.15,
@@ -72,6 +72,9 @@ class Problem:
         time_respecting_split: bool = False,
         knn_robust_loss: int = 0,
         knn_robust_loss_weight: float = 0.0,
+        pyepo_solve_ratio: float = 1.0,
+        pyepo_init_pool_from_optimal: bool = True,
+        cache_at_val: bool = False,
         seed: int | None = None,
         verbose: bool = True,
     ):
@@ -131,6 +134,13 @@ class Problem:
         self.compute_optimal_objectives = compute_optimal_objectives
         self.knn_robust_loss = knn_robust_loss
         self.verbose = verbose
+        self.pyepo_solve_ratio = pyepo_solve_ratio
+        if (self.pyepo_solve_ratio < 0) or (self.pyepo_solve_ratio > 1):
+            raise ValueError(f"Invalid pyepo_solve_ratio {self.pyepo_solve_ratio}. It should be between 0 and 1.")
+        self.pyepo_init_pool_from_optimal = pyepo_init_pool_from_optimal
+        self.cache_at_val = cache_at_val
+        self.solution_pool: np.ndarray | None = None
+        self._pyepo_modules: list[Any] = []
 
         # standardize features
         if standardize_features:
@@ -156,6 +166,9 @@ class Problem:
 
         if knn_robust_loss > 0:
             self._add_optimal_decisions_knn(compute_optimal_objectives, knn_robust_loss, knn_robust_loss_weight)
+
+        if self.pyepo_solve_ratio < 1:
+            self._initialize_solution_pool(self.pyepo_init_pool_from_optimal)
 
     def _print_message(self, message: str) -> None:
         """
@@ -292,6 +305,104 @@ class Problem:
         self.dataset.add_data("optimal", decisions_dict)
 
         self._print_message("k-NN robust decisions (train) and 'normal' optimal decisions (val/test) added to dataset.")
+
+    def _initialize_solution_pool(self, use_optimal: bool) -> None:
+        """
+        Initializes the solution pool used for PyEPO loss caching.
+        """
+        if use_optimal:
+            self._initialize_solution_pool_from_optimal()
+
+        if self.solution_pool is None or self.solution_pool.size == 0:
+            raise ValueError(
+                "PyEPO caching is enabled but no solutions are available in the solution pool. "
+                "Enable compute_optimal_decisions or add solutions via add_solutions_to_pool()."
+            )
+
+    def ensure_solution_pool(self) -> None:
+        """
+        Ensures the PyEPO solution pool is initialized.
+        """
+        if self.solution_pool is None or self.solution_pool.size == 0:
+            self._initialize_solution_pool(self.pyepo_init_pool_from_optimal)
+
+    def _initialize_solution_pool_from_optimal(self) -> None:
+        for name in self.opt_model.var_names:
+            key = f"{name}_optimal"
+            if key not in self.dataset.keys:
+                raise ValueError("Optimal decisions are required to initialize the PyEPO solution pool, " "but they are not available in the dataset.")
+        if self.cache_at_val:
+            idx = self.get_train_idx()
+        else:
+            idx = self.get_train_and_val_idx()
+        data_batch = self.dataset[idx]
+        decisions_batch = {name: data_batch[f"{name}_optimal"] for name in self.opt_model.var_names}
+        self.solution_pool = self._decisions_to_flat_array(decisions_batch)
+        self.solution_pool = np.unique(self.solution_pool, axis=0)
+
+    def add_solutions_to_pool(self, solutions: dict[str, torch.Tensor] | torch.Tensor | np.ndarray) -> None:
+        """
+        Adds solutions to the PyEPO solution pool.
+        """
+        if isinstance(solutions, dict):
+            flat = self._decisions_to_flat_array(solutions)
+        else:
+            flat = self._to_numpy_array(solutions)
+            if flat.ndim == 1:
+                flat = flat.reshape(1, -1)
+
+        if self.solution_pool is None:
+            self.solution_pool = flat
+        else:
+            self.solution_pool = np.unique(np.concatenate((self.solution_pool, flat), axis=0), axis=0)
+
+        self._sync_solution_pool()
+
+    def get_solution_pool(self) -> np.ndarray | None:
+        """
+        Returns the current PyEPO solution pool.
+        """
+        return self.solution_pool
+
+    def register_pyepo_module(self, module: Any) -> None:
+        """
+        Registers a PyEPO optModule to keep solution pools synchronized.
+        """
+        if module in self._pyepo_modules:
+            return
+        self._pyepo_modules.append(module)
+        if getattr(module, "_pydflt_solpool_hooked", False):
+            return
+        original_update = module._update_solution_pool
+
+        def _wrapped_update(sol):
+            original_update(sol)
+            self.add_solutions_to_pool(sol)
+
+        module._update_solution_pool = _wrapped_update
+        module._pydflt_solpool_hooked = True
+        self._sync_solution_pool()
+
+    def _sync_solution_pool(self) -> None:
+        if not self._pyepo_modules:
+            return
+        for module in self._pyepo_modules:
+            module.solpool = self.solution_pool
+
+    def _to_numpy_array(self, value: torch.Tensor | np.ndarray) -> np.ndarray:
+        if isinstance(value, torch.Tensor):
+            return value.detach().cpu().numpy()
+        if isinstance(value, np.ndarray):
+            return value
+        raise TypeError(f"Unsupported solution type: {type(value)}")
+
+    def _decisions_to_flat_array(self, decisions_batch: dict[str, torch.Tensor | np.ndarray]) -> np.ndarray:
+        flats = []
+        for var_name in self.opt_model.var_names:
+            var_values = decisions_batch[var_name]
+            var_np = self._to_numpy_array(var_values)
+            flats.append(var_np.reshape(var_np.shape[0], -1))
+        return np.concatenate(flats, axis=1)
 
     def split_dataset(self, seed: int | None = None) -> None:
         """
@@ -587,3 +698,7 @@ class Problem:
         idx_val = self.generate_batch_indices(batch_size=self.validation_size)[0]
 
         return np.append(idx_train, idx_val)
+
+    def get_train_idx(self):
+        self.set_mode("train")
+        return self.generate_batch_indices(batch_size=self.train_size)[0]
