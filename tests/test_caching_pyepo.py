@@ -71,8 +71,9 @@ class TestPyEPOCaching(unittest.TestCase):
             decision_maker,
             num_epochs=1,
             use_wandb=False,
-            main_metric="abs_regret_pyepo",
-            val_metrics=["abs_regret_pyepo"],
+            main_metric="abs_regret",
+            val_metrics=["abs_regret"],
+            test_metrics=["abs_regret"],
         )
         runner.run()
 

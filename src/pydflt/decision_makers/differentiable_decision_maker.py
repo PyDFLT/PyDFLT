@@ -285,14 +285,21 @@ class DifferentiableDecisionMaker(DecisionMaker):
     def _get_batch_results(self, data_batch: dict[str, torch.Tensor], metrics: list[str] | None = None) -> dict[str, Any]:
         """
         Processes a single batch of data to get predictions, decisions, and evaluation metrics.
-        This extends the base implementation with support for used_loss and abs_regret_pyepo.
+        This extends the base implementation with support for used_loss.
         """
         predictions_batch = self.predict(data_batch)
 
         metrics = metrics or []
-        needs_decisions = any(m in metrics for m in ["objective", "abs_regret", "rel_regret", "sym_rel_regret", "abs_regret_pyepo", "used_loss"])
-        decisions_batch = self.decide(predictions_batch) if needs_decisions else None
+        needs_decisions = any(m in metrics for m in ["objective", "abs_regret", "rel_regret", "sym_rel_regret", "used_loss"])
         batch_size = data_batch["features"].shape[0]
+
+        decisions_batch = None
+        loss_is_pyepo = isinstance(self.loss_function, optModule)
+        if needs_decisions:
+            if loss_is_pyepo:
+                decisions_batch = self._get_pyepo_decisions(predictions_batch)
+            else:
+                decisions_batch = self.decide(predictions_batch)
 
         batch_results = self.problem.evaluate(
             data_batch,
@@ -300,7 +307,15 @@ class DifferentiableDecisionMaker(DecisionMaker):
             predictions_batch=predictions_batch,
             metrics=metrics,
         )
-        batch_results["solver_calls"] = batch_size if decisions_batch is not None else 0
+        if loss_is_pyepo and decisions_batch is not None:
+            if self.problem.cache_at_val:
+                batch_results["solver_calls"] = 0
+            elif self.problem.pyepo_solve_ratio < 1:
+                batch_results["solver_calls"] = self.problem.pyepo_solve_ratio * batch_size
+            else:
+                batch_results["solver_calls"] = batch_size
+        else:
+            batch_results["solver_calls"] = batch_size if decisions_batch is not None else 0
 
         for key in predictions_batch.keys():
             batch_results[key] = predictions_batch[key].cpu().detach().numpy().astype(np.float32)
@@ -311,36 +326,6 @@ class DifferentiableDecisionMaker(DecisionMaker):
         if "used_loss" in metrics:
             loss = self.get_loss(data_batch, decisions_batch, predictions_batch)
             batch_results["used_loss"] = loss.cpu().detach().numpy().astype(np.float32)
-
-        if "abs_regret_pyepo" in metrics:
-            predictions = self.dict_to_predictions(predictions_batch)
-            predictions = predictions.detach().to("cpu").numpy()
-            true_parameters = self.dict_to_predictions(data_batch).detach().to("cpu").numpy()
-            optimal_decisions_batch = {}
-            for key in self.decision_model.var_names:
-                optimal_decisions_batch[key] = data_batch[key + "_optimal"]
-            optimal_objectives = self.problem.get_objective(data_batch, optimal_decisions_batch, predictions_batch)
-            optimal_objectives = optimal_objectives.detach().to("cpu").numpy().reshape(-1)
-
-            if self.problem.cache_at_val:
-                decisions, _ = _cache_in_pass(predictions, self.loss_function.optmodel, self.loss_function.solpool)
-            elif self.problem.pyepo_solve_ratio < 1:
-                decisions, _ = _solve_or_cache(predictions, self.loss_function)
-            else:
-                decisions, _ = _solve_in_pass(
-                    predictions,
-                    self.loss_function.optmodel,
-                    self.loss_function.processes,
-                    self.loss_function.solpool,
-                )
-                if self.problem.pyepo_solve_ratio < 1:
-                    self.loss_function._update_solution_pool(decisions)
-
-            loss = []
-            for i in range(len(decisions)):
-                loss.append(self.problem.opt_model.model_sense_int * (np.dot(decisions[i], true_parameters[i]) - optimal_objectives[i]))
-            abs_regret_pyepo = sum(loss) / len(loss)
-            batch_results["abs_regret_pyepo"] = np.array(abs_regret_pyepo, dtype=np.float32)
 
         return batch_results
 
@@ -452,6 +437,38 @@ class DifferentiableDecisionMaker(DecisionMaker):
             if relaxed_model is not None:
                 optimal_relaxed = relaxed_model.solve_batch(data)
                 self.problem.dataset.add_data("optimal_relaxed", optimal_relaxed, indices=batch_idx)
+
+    def _flat_to_decisions_dict(self, flat_decisions: torch.Tensor) -> dict[str, torch.Tensor]:
+        decisions_dict: dict[str, torch.Tensor] = {}
+        idx = 0
+        batch_size = flat_decisions.shape[0]
+        for var_name, shape in self.decision_model.var_shapes.items():
+            size = int(np.prod(shape))
+            decisions_dict[var_name] = flat_decisions[:, idx : idx + size].reshape(batch_size, *shape)
+            idx += size
+        return decisions_dict
+
+    def _get_pyepo_decisions(self, predictions_batch: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
+        predictions = self.dict_to_predictions(predictions_batch).detach().cpu().numpy()
+        if self.problem.cache_at_val:
+            decisions_np, _ = _cache_in_pass(predictions, self.loss_function.optmodel, self.loss_function.solpool)
+        elif self.problem.pyepo_solve_ratio < 1:
+            decisions_np, _ = _solve_or_cache(predictions, self.loss_function)
+        else:
+            decisions_np, _ = _solve_in_pass(
+                predictions,
+                self.loss_function.optmodel,
+                self.loss_function.processes,
+                self.loss_function.solpool,
+            )
+            if self.problem.pyepo_solve_ratio < 1:
+                self.loss_function._update_solution_pool(decisions_np)
+        decisions_tensor = torch.as_tensor(
+            decisions_np,
+            device=next(iter(predictions_batch.values())).device,
+            dtype=next(iter(predictions_batch.values())).dtype,
+        )
+        return self._flat_to_decisions_dict(decisions_tensor)
 
     def run_epoch(self, mode: str, epoch_num: int, metrics: list[str] = None) -> list[dict[str, float]]:
         """
