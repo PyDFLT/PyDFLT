@@ -1,6 +1,6 @@
 import copy
 import random
-from typing import Any, Union
+from typing import Any
 
 import numpy as np
 import torch
