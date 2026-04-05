@@ -580,6 +580,13 @@ class Problem:
         return eval_dict
 
     def get_train_and_val_idx(self):
+        """
+        Returns the combined array of training and validation indices.
+
+        Returns:
+            np.ndarray: A 1-D array containing the train indices followed by the validation
+                indices. If the validation set is empty, only the train indices are returned.
+        """
         self.set_mode("train")
         idx_train = self.generate_batch_indices(batch_size=self.train_size)[0]
         if self.validation_size == 0:

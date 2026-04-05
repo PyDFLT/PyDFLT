@@ -379,6 +379,15 @@ class DifferentiableDecisionMaker(DecisionMaker):
         return NotImplementedError
 
     def add_binding_constraints_to_data(self) -> None:
+        """
+        Pre-computes and stores binding constraints for all train and validation instances.
+
+        Solves the optimization problem for each instance in the combined train+validation set
+        using `solve_batch_with_binding_constraints`, then writes the resulting constraint
+        matrices into `self.problem.dataset` under the key `'bctr'`. Any previously stored
+        `'bctr'` data is removed first. Raises `ValueError` if the optimization model does not
+        support binding constraints (`supports_binding_constraints` must be True).
+        """
         if "bctr" in self.problem.dataset.data_dict:
             self.problem.dataset.remove_data("bctr")
         if not getattr(self.problem.opt_model, "supports_binding_constraints", False):
@@ -392,6 +401,18 @@ class DifferentiableDecisionMaker(DecisionMaker):
             self.problem.dataset.add_data("bctr", bctr_list, indices=batch_idx)
 
     def add_adjacent_vertices_to_data(self) -> None:
+        """
+        Pre-computes and stores adjacent vertices (and the relaxed optimal solution) for all
+        train and validation instances.
+
+        For each instance in the combined train+validation set, enumerates the adjacent vertices
+        of the optimal solution on the feasible polytope using `solve_batch_with_adjacent_vertices`
+        and writes the results into `self.problem.dataset` under the key `'adjver'`. If
+        `'optimal_relaxed'` is not yet present in the dataset, the LP relaxation of the model is
+        also solved and stored under `'optimal_relaxed'`. If both keys already exist, this method
+        returns immediately without recomputing. Raises `ValueError` if the optimization model does
+        not support adjacent vertices (`supports_adjacent_vertices` must be True).
+        """
         if "adjver" in self.problem.dataset.data_dict and "optimal_relaxed" in self.problem.dataset.data_dict:
             return
         if not getattr(self.problem.opt_model, "supports_adjacent_vertices", False):

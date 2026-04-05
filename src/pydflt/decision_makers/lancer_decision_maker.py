@@ -151,6 +151,13 @@ class LancerDecisionMaker(DecisionMaker):
         self._set_surrogate_model(pretraining_surrogate, num_epochs_pretraining_surrogate)
 
     def _set_surrogate_model(self, pretraining_surrogate: bool, max_iters: int):
+        """
+        Instantiates the surrogate MLP and its Adam optimizer, then optionally pretrains the surrogate.
+
+        Args:
+            pretraining_surrogate (bool): If True, runs `_pretrain_surrogate_model` after construction.
+            max_iters (int): Maximum number of pretraining iterations passed to `_pretrain_surrogate_model`.
+        """
         self.surrogate_model = IMPLEMENTED_PREDICTORS[self.surrogate_model_str](
             num_inputs=self.problem.num_predictions,
             num_outputs=1,
@@ -165,6 +172,10 @@ class LancerDecisionMaker(DecisionMaker):
             self._pretrain_surrogate_model(max_iters)
 
     def _set_optimizer(self):
+        """
+        Instantiates the Adam optimizer for the predictor model using `self.learning_rate_predictor`
+        and `self.weight_decay_predictor`.
+        """
         self.optimizer_predictor = torch.optim.Adam(
             self.trainable_predictive_model.parameters(),
             lr=self.learning_rate_predictor,
@@ -172,10 +183,25 @@ class LancerDecisionMaker(DecisionMaker):
         )
 
     def _set_loss_functions(self):
+        """
+        Initializes the MSE loss functions used for training the predictor and the surrogate model.
+        Both `self.loss_predictor` and `self.loss_surrogate_model` are set to `torch.nn.MSELoss`.
+        """
         self.loss_predictor = torch.nn.MSELoss()
         self.loss_surrogate_model = torch.nn.MSELoss()
 
     def _pretrain_surrogate_model(self, max_iter: int):
+        """
+        Pretrains the surrogate model on the full training set before the main training loop begins.
+
+        Uses the current (untrained) predictor to generate predictions for all training instances,
+        solves for the corresponding decisions, computes regret losses, and runs
+        `update_surrogate_model` for `max_iter` iterations to fit the surrogate to this initial
+        regret landscape.
+
+        Args:
+            max_iter (int): Maximum number of surrogate update iterations during pretraining.
+        """
         print(f"Start pretraining surrogate for {max_iter} epochs")
         self.problem.set_mode("train")
         data = self.problem.read_data(self.problem.mode_to_indices["train"])
@@ -291,6 +317,21 @@ class LancerDecisionMaker(DecisionMaker):
         return total_loss
 
     def run_epoch(self, mode: str, epoch_num: int, metrics: list[str] | None = None) -> list[dict[str, float]]:
+        """
+        Runs one complete epoch in the specified mode (train/validation/test).
+
+        In train mode, reads the entire training set, updates the experience replay buffer,
+        fits the surrogate model, and updates the predictor. In validation/test mode, evaluates
+        the predictor on each batch using `_get_batch_results`.
+
+        Args:
+            mode (str): The mode to run ('train', 'validation', or 'test').
+            epoch_num (int): The current epoch number (used to decide whether to reset the replay buffer).
+            metrics (list[str] | None): List of additional metrics to evaluate. Defaults to None.
+
+        Returns:
+            list[dict[str, float]]: List of result dictionaries, one per batch processed.
+        """
         assert mode in [
             "train",
             "validation",

@@ -65,6 +65,31 @@ class SFGEDecisionMaker(DecisionMaker):
             decision_model_kwargs,
         )
 
+        """
+        Initializes the SFGEDecisionMaker.
+
+        Args:
+            problem (Problem): The problem instance containing data and optimization model.
+            learning_rate (float): Learning rate for the Adam optimizer. Defaults to 1e-4.
+            batch_size (int): Number of samples per training batch. Defaults to 32.
+            device_str (str): Device for computations ('cpu' or 'cuda'). Defaults to 'cpu'.
+            predictor_str (str): Type of predictor to use (must be in `allowed_predictors`). Defaults to 'MLP'.
+            decision_model_str (str): Type of decision model. Defaults to 'base'.
+            loss_function_str (str): Loss function to use (must be in `allowed_losses`). Defaults to 'regret'.
+            to_decision_pars (str): Strategy for converting predictions to decision parameters. Defaults to 'none'.
+            use_dist_at_mode (str): Mode in which to use the distributional predictor. Defaults to 'none'.
+            standardize_predictions (bool): Whether to standardize predictions before passing to the decision model.
+                Defaults to True.
+            init_OLS (bool): Whether to initialize the predictor with OLS weights. Defaults to False.
+            seed (int | None): Random seed for reproducibility. Defaults to None.
+            predictor_kwargs (dict | None): Additional keyword arguments for predictor initialization. Defaults to None.
+            noisifier_kwargs (dict | None): Keyword arguments for the Noisifier (e.g. sigma). Defaults to None.
+            decision_model_kwargs (dict | None): Additional keyword arguments for decision model initialization.
+                Defaults to None.
+            standardize_loss (bool): Whether to standardize the SFGE loss across the batch. Defaults to True.
+            num_samples (int): Number of samples to draw from the distributional predictor per instance.
+                Defaults to 1.
+        """
         self.num_samples = num_samples
         self.standardize_loss = standardize_loss
         self.batch_size = batch_size

@@ -26,6 +26,9 @@ def run(config: dict[str, Any], optuna_trial: Trial | None = None) -> float:
                                  and 'runner'.
         optuna_trial (Optional[Trial]): An Optuna trial object. If provided, the method will report validation
                                         metrics to Optuna and check for pruning.
+
+    Returns:
+        float: The best validation metric achieved during the run, as returned by `Runner.run`.
     """
     if config.get("seed") is not None:
         set_seeds(config["seed"])
