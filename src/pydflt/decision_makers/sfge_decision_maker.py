@@ -45,7 +45,7 @@ class SFGEDecisionMaker(DecisionMaker):
         noisifier_kwargs: dict | None = None,
         decision_model_kwargs: dict | None = None,
         standardize_loss: bool = True,
-        num_samples: bool = 1,
+        num_samples: int = 1,
     ) -> None:
         super().__init__(
             problem,

@@ -49,8 +49,11 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
             weights_ub (float): Upper bound for item weights during random generation. Defaults to 8.0.
             dimension (int): Dimension of the weights for the items. Defaults to 1.
             rounding_decimal (int): Decimal places used when rounding generated item weights. Defaults to 1.
+            capacity_percentage (float | None): If provided, overrides `capacity` by setting it to this fraction
+                of the total item weight. Defaults to None.
             seed (int): Random seed for reproducible weight generation. Defaults to 5.
             num_scenarios (int): Number of scenarios for multi-scenario optimization. Defaults to 1.
+            time_limit (float | None): Optional Gurobi time limit in seconds. Defaults to None.
         """
         # Setting input parameters
         self.num_decisions = num_decisions

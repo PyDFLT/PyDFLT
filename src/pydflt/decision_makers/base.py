@@ -13,7 +13,7 @@ from pydflt.noisifier import Noisifier
 from pydflt.predictors import IMPLEMENTED_PREDICTORS
 from pydflt.predictors.base import Predictor
 from pydflt.problem import Problem
-from pydflt.utils.reproducability import set_seeds
+from pydflt.utils.reproducibility import set_seeds
 
 
 class DecisionMaker:

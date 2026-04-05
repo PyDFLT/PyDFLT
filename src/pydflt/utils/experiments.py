@@ -9,7 +9,7 @@ from pydflt.registries.data import get_data
 from pydflt.registries.decision_makers import make_decision_maker
 from pydflt.registries.models import make_model
 from pydflt.runner import Runner
-from pydflt.utils.reproducability import set_seeds
+from pydflt.utils.reproducibility import set_seeds
 
 
 def run(config: dict[str, Any], optuna_trial: Trial | None = None) -> float:

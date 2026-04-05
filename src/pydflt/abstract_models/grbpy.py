@@ -58,7 +58,7 @@ class GRBPYModel(OptimizationModel):
             extra_param_shapes (dict[str, tuple[int, ...]] | None): An optional dictionary specifying additional
                                                                     parameters that change from sample to sample
                                                                     but are known.
-            verbose (bool): If True, show a progress bar while solving batches. Defaults to True.
+            verbose (bool): If True, show a progress bar while solving batches. Defaults to False.
             time_limit (float | None): Optional Gurobi time limit in seconds. Defaults to None.
                                        When given, the currently best found decision is returned instead of the optimal.
                                        When no feasible decision has been found, an earlier found feasible decision

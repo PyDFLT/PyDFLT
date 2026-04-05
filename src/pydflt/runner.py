@@ -8,7 +8,7 @@ from optuna.trial import Trial
 
 from pydflt.decision_makers import DecisionMaker
 from pydflt.logger import Logger
-from pydflt.utils.reproducability import set_seeds
+from pydflt.utils.reproducibility import set_seeds
 
 
 class Runner:
