@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, ClassVar
 
 import numpy as np
 import torch
@@ -15,7 +15,7 @@ from pyepo.func.utlis import _cache_in_pass, _solve_in_pass, _solve_or_cache
 
 from pydflt.decision_makers.base import DecisionMaker
 from pydflt.problem import Problem
-from pydflt.utils.cave import innerConeAlignedCosine
+from pydflt.utils.cave import InnerConeAlignedCosine
 from pydflt.utils.lava import LAVA
 
 PYEPO_LOSS_FUNCTIONS = {
@@ -52,7 +52,7 @@ class DifferentiableDecisionMaker(DecisionMaker):
         loss_function (callable): The loss function used for training.
     """
 
-    allowed_losses: list[str] = [
+    allowed_losses: ClassVar[list[str]] = [
         "mse",
         "objective",
         "regret",
@@ -67,9 +67,9 @@ class DifferentiableDecisionMaker(DecisionMaker):
         "smooth",
     ]
 
-    allowed_decision_models: list[str] = ["base", "quadratic", "scenario_based"]
+    allowed_decision_models: ClassVar[list[str]] = ["base", "quadratic", "scenario_based"]
 
-    allowed_predictors: list[str] = [
+    allowed_predictors: ClassVar[list[str]] = [
         "LinearSKL",
         "MLP",
         "DiscreteUniform",
@@ -96,7 +96,7 @@ class DifferentiableDecisionMaker(DecisionMaker):
         decision_model_kwargs: dict | None = None,
         residual_SAA: bool = False,
         residual_SAA_scenarios: int = 1,
-    ):
+    ) -> None:
         """
         Initializes the DifferentiableDecisionMaker.
 
@@ -143,13 +143,13 @@ class DifferentiableDecisionMaker(DecisionMaker):
         self._set_optimizer()
         self._set_loss_function()
 
-    def _set_optimizer(self):
+    def _set_optimizer(self) -> None:
         """
         Initializes the Adam optimizer for training the trainable predictive model.
         """
         self.optimizer = torch.optim.Adam(self.trainable_predictive_model.parameters(), lr=self.learning_rate)
 
-    def _set_loss_function(self, **kwargs):
+    def _set_loss_function(self, **kwargs) -> None:
         """
         Sets the loss function based on the specified loss_function_str.
         Supports various loss types including traditional losses and PyEPO differentiable losses.
@@ -163,7 +163,7 @@ class DifferentiableDecisionMaker(DecisionMaker):
             self.loss_function = torch.nn.MSELoss()
         elif self.loss_function_str == "cave":
             self.add_binding_constraints_to_data()
-            self.loss_function = innerConeAlignedCosine(self.problem.opt_model)
+            self.loss_function = InnerConeAlignedCosine(self.problem.opt_model)
         elif self.loss_function_str == "lava":
             threshold = kwargs.get("threshold", -0.1)
             self.add_adjacent_vertices_to_data(**kwargs)
@@ -196,22 +196,22 @@ class DifferentiableDecisionMaker(DecisionMaker):
 
     def get_regret(
         self,
-        data_batch: dict[str, torch.tensor],
-        decisions_batch: dict[str, torch.tensor],
-        predictions_batch: dict[str, torch.tensor] = None,
-    ) -> torch.float32:
+        data_batch: dict[str, torch.Tensor],
+        decisions_batch: dict[str, torch.Tensor],
+        predictions_batch: dict[str, torch.Tensor] | None = None,
+    ) -> torch.Tensor:
         """
         Computes the regret for given decisions compared to optimal decisions.
         Regret is defined as the difference between the objective value of the current
         decisions and the optimal decisions.
 
         Args:
-            data_batch (dict[str, torch.tensor]): Input data batch.
-            decisions_batch (dict[str, torch.tensor]): Current decisions to evaluate.
-            predictions_batch (dict[str, torch.tensor], optional): Predictions used for decisions. Defaults to None.
+            data_batch (dict[str, torch.Tensor]): Input data batch.
+            decisions_batch (dict[str, torch.Tensor]): Current decisions to evaluate.
+            predictions_batch (dict[str, torch.Tensor], optional): Predictions used for decisions. Defaults to None.
 
         Returns:
-            torch.float32: The regret values for the batch.
+            torch.Tensor: The regret values for the batch.
         """
         objectives = self.problem.opt_model.get_objective(data_batch, decisions_batch, predictions_batch)
         optimal_decisions = self.problem.opt_model.solve_batch(data_batch)
@@ -219,7 +219,7 @@ class DifferentiableDecisionMaker(DecisionMaker):
 
         return self.problem.opt_model.model_sense_int * (objectives - optimal_objectives)
 
-    def update(self, data_batch: dict[str, torch.tensor]) -> dict[str, float]:
+    def update(self, data_batch: dict[str, torch.Tensor]) -> dict[str, float]:
         """
         Performs a single training update step using the specified loss function.
         Computes predictions, decisions (if needed), loss, gradients, and updates parameters.
@@ -317,10 +317,10 @@ class DifferentiableDecisionMaker(DecisionMaker):
         else:
             batch_results["solver_calls"] = batch_size if decisions_batch is not None else 0
 
-        for key in predictions_batch.keys():
+        for key in predictions_batch:
             batch_results[key] = predictions_batch[key].cpu().detach().numpy().astype(np.float32)
         if decisions_batch is not None:
-            for key in decisions_batch.keys():
+            for key in decisions_batch:
                 batch_results[key] = decisions_batch[key].cpu().detach().numpy().astype(np.float32)
 
         if "used_loss" in metrics:
@@ -331,21 +331,21 @@ class DifferentiableDecisionMaker(DecisionMaker):
 
     def get_loss(
         self,
-        data_batch: dict[str, torch.tensor],
-        decisions_batch: dict[str, torch.tensor],
-        predictions_batch: dict[str, torch.tensor],
-    ) -> torch.float32:
+        data_batch: dict[str, torch.Tensor],
+        decisions_batch: dict[str, torch.Tensor],
+        predictions_batch: dict[str, torch.Tensor],
+    ) -> torch.Tensor:
         """
         Computes the loss value based on the specified loss function.
         Handles different loss types including objective, regret, MSE, smooth, and PyEPO losses.
 
         Args:
-            data_batch (dict[str, torch.tensor]): Input data batch.
-            decisions_batch (dict[str, torch.tensor]): Decision variables.
-            predictions_batch (dict[str, torch.tensor]): Predicted parameters.
+            data_batch (dict[str, torch.Tensor]): Input data batch.
+            decisions_batch (dict[str, torch.Tensor]): Decision variables.
+            predictions_batch (dict[str, torch.Tensor]): Predicted parameters.
 
         Returns:
-            torch.float32: The computed loss value.
+            torch.Tensor: The computed loss value.
         """
         if (self.loss_function_str == "objective") or (self.loss_function_str == "regret"):
             return self.loss_function(data_batch, decisions_batch, predictions_batch)
@@ -353,13 +353,13 @@ class DifferentiableDecisionMaker(DecisionMaker):
             return self.loss_function(data_batch, decisions_batch, predictions_batch)
         if self.loss_function_str == "cave":
             predictions = self.dict_to_predictions(predictions_batch)
-            bctr = data_batch.get("bctr", None)
+            bctr = data_batch.get("bctr")
             if bctr is None:
                 raise ValueError("CAVE loss requires 'bctr' in data_batch.")
             return self.loss_function(predictions, bctr)
         if self.loss_function_str == "lava":
             predictions = self.dict_to_predictions(predictions_batch)
-            adjver = data_batch.get("adjver", None)
+            adjver = data_batch.get("adjver")
             if adjver is None:
                 raise ValueError("LAVA loss requires 'adjver' in data_batch.")
             w_rel_list = []
@@ -404,6 +404,15 @@ class DifferentiableDecisionMaker(DecisionMaker):
         return NotImplementedError
 
     def add_binding_constraints_to_data(self) -> None:
+        """
+        Pre-computes and stores binding constraints for all train and validation instances.
+
+        Solves the optimization problem for each instance in the combined train+validation set
+        using `solve_batch_with_binding_constraints`, then writes the resulting constraint
+        matrices into `self.problem.dataset` under the key `'bctr'`. Any previously stored
+        `'bctr'` data is removed first. Raises `ValueError` if the optimization model does not
+        support binding constraints (`supports_binding_constraints` must be True).
+        """
         if "bctr" in self.problem.dataset.data_dict:
             self.problem.dataset.remove_data("bctr")
         if not getattr(self.problem.opt_model, "supports_binding_constraints", False):
@@ -417,6 +426,18 @@ class DifferentiableDecisionMaker(DecisionMaker):
             self.problem.dataset.add_data("bctr", bctr_list, indices=batch_idx)
 
     def add_adjacent_vertices_to_data(self) -> None:
+        """
+        Pre-computes and stores adjacent vertices (and the relaxed optimal solution) for all
+        train and validation instances.
+
+        For each instance in the combined train+validation set, enumerates the adjacent vertices
+        of the optimal solution on the feasible polytope using `solve_batch_with_adjacent_vertices`
+        and writes the results into `self.problem.dataset` under the key `'adjver'`. If
+        `'optimal_relaxed'` is not yet present in the dataset, the LP relaxation of the model is
+        also solved and stored under `'optimal_relaxed'`. If both keys already exist, this method
+        returns immediately without recomputing. Raises `ValueError` if the optimization model does
+        not support adjacent vertices (`supports_adjacent_vertices` must be True).
+        """
         if "adjver" in self.problem.dataset.data_dict and "optimal_relaxed" in self.problem.dataset.data_dict:
             return
         if not getattr(self.problem.opt_model, "supports_adjacent_vertices", False):
@@ -470,7 +491,7 @@ class DifferentiableDecisionMaker(DecisionMaker):
         )
         return self._flat_to_decisions_dict(decisions_tensor)
 
-    def run_epoch(self, mode: str, epoch_num: int, metrics: list[str] = None) -> list[dict[str, float]]:
+    def run_epoch(self, mode: str, epoch_num: int, metrics: list[str] | None = None) -> list[dict[str, float]]:
         """
         Runs one complete epoch in the specified mode (train/validation/test).
         Handles residual SAA updates if configured and processes all batches.
@@ -508,7 +529,7 @@ class DifferentiableDecisionMaker(DecisionMaker):
                 batch_results = self.update(data_batch)
             else:
                 batch_results = self._get_batch_results(data_batch, metrics)
-            mode_batch_results = {"%s/%s" % (mode, key): val for key, val in batch_results.items()}
+            mode_batch_results = {f"{mode}/{key}": val for key, val in batch_results.items()}
             mode_batch_results["batch_size"] = len(idx)
             epoch_results.append(mode_batch_results)
 

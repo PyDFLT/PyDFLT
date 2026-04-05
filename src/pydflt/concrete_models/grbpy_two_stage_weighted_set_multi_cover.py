@@ -1,6 +1,6 @@
 import random
 from itertools import chain, combinations
-from typing import Any, Optional
+from typing import Any
 
 import cvxpy as cp
 import gurobipy as gp
@@ -26,7 +26,7 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
         cover_costs_ub: int,
         recovery_ratio: float = 0,
         seed: int = 5,
-        silvestri2023: bool = False,
+        silvestri2024: bool = False,
         density: float = 0.25,
         num_scenarios: int = 1,
     ):
@@ -41,8 +41,8 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
             cover_costs_ub (int): Upper bound for cover costs.
             recovery_ratio (float): Ratio for recovering costs from unused covers. Defaults to 0.
             seed (int): Random seed for reproducible generation. Defaults to 0.
-            silvestri2023 (bool): Whether to use Silvestri2023 parameter generation method. Defaults to False.
-            density (float): Density of the item-cover matrix when using Silvestri2023 method. Defaults to 0.25.
+            silvestri2024 (bool): Whether to use silvestri2024 parameter generation method. Defaults to False.
+            density (float): Density of the item-cover matrix when using silvestri2024 method. Defaults to 0.25.
             num_scenarios (int): Number of scenarios for multi-scenario optimization. Defaults to 1.
         """
         # Setting input parameters
@@ -53,7 +53,7 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
         self.cover_costs_ub = cover_costs_ub
         self.recovery_ratio = recovery_ratio
         self.seed = seed
-        self.silvestri2023 = silvestri2023
+        self.silvestri2024 = silvestri2024
         self.density = density
         self.num_scenarios = num_scenarios
 
@@ -66,8 +66,8 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
         extra_param_shapes = None
 
         # Setting additional model parameters
-        if self.silvestri2023:
-            self.cover_costs, self.item_cover_matrix = self._set_fixed_parameters_silvestri2023(cover_costs_lb, cover_costs_ub, density, seed)
+        if self.silvestri2024:
+            self.cover_costs, self.item_cover_matrix = self._set_fixed_parameters_silvestri2024(cover_costs_lb, cover_costs_ub, density, seed)
         else:
             self.cover_costs, self.item_cover_matrix = self._set_fixed_parameters(cover_costs_lb, cover_costs_ub, seed)
         self.max_cover_costs = (self.item_cover_matrix * self.cover_costs).max(axis=1)
@@ -80,7 +80,7 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
             extra_param_shapes=extra_param_shapes,
         )
 
-    def _create_model(self):
+    def _create_model(self) -> tuple[gp.Model, dict[str, gp.MVar | gp.Var]]:
         """
         Creates the Gurobi optimization model for the weighted set multi-cover problem.
         This method defines the first and second stage variables, constraints, and objective function.
@@ -128,7 +128,7 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
 
         return gp_model, vars_dict
 
-    def _set_params(self, *parameters_i: np.ndarray):
+    def _set_params(self, *parameters_i: np.ndarray) -> None:
         """
         Sets the parameters for the weighted set multi-cover model for a single instance.
         This corresponds to adjusting the coverage requirement scenarios in the constraints.
@@ -175,7 +175,7 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
         Returns:
             tuple: A tuple containing cover costs and item-cover matrix.
         """
-        np.random.seed(seed)
+        rng = np.random.default_rng(seed)
         random.seed(seed)
 
         # We iterate through all possible combinations
@@ -195,7 +195,7 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
                     break  # Stop if we filled all columns
                 item_cover_matrix[list(ones_positions), cover_idx] = 1
                 if num_items_to_cover == 1:
-                    costs = np.random.randint(cover_costs_lb, cover_costs_ub + 1)
+                    costs = rng.integers(cover_costs_lb, cover_costs_ub + 1)
                 else:  # num_items_to_cover > 1
                     subsets = list(chain.from_iterable(combinations(ones_positions, r) for r in range(1, len(ones_positions))))
                     disjoint_union_subsets = []
@@ -216,9 +216,9 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
 
         return cover_costs, item_cover_matrix
 
-    def _set_fixed_parameters_silvestri2023(self, cover_costs_lb: float, cover_costs_ub: float, density: float, seed: int):
+    def _set_fixed_parameters_silvestri2024(self, cover_costs_lb: float, cover_costs_ub: float, density: float, seed: int):
         """
-        Generates fixed parameters using the Silvestri2023 method.
+        Generates fixed parameters using the silvestri2024 method.
         This method creates covers and their costs using a different approach.
 
         Args:
@@ -230,24 +230,24 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
         Returns:
             tuple: A tuple containing cover costs and item-cover matrix.
         """
-        np.random.seed(seed)
-        cover_costs = np.random.uniform(cover_costs_lb, cover_costs_ub, self.num_covers)
+        rng = np.random.default_rng(seed)
+        cover_costs = rng.uniform(cover_costs_lb, cover_costs_ub, self.num_covers)
         item_cover_matrix = np.zeros((self.num_items, self.num_covers))
 
         for item in range(self.num_items):  # get two covers for each item
-            cover_1 = np.random.randint(0, self.num_covers)
+            cover_1 = rng.integers(0, self.num_covers)
             leftover_covers = [i for i in range(0, self.num_covers) if i != cover_1]
-            cover_2 = leftover_covers[np.random.randint(0, self.num_covers - 1)]
+            cover_2 = leftover_covers[rng.integers(0, self.num_covers - 1)]
             item_cover_matrix[item, cover_1] = 1
             item_cover_matrix[item, cover_2] = 1
         for cover in range(self.num_covers):  # cover an item
-            item = np.random.randint(0, self.num_items)
+            item = rng.integers(0, self.num_items)
             item_cover_matrix[item, cover] = 1
 
         # add until density is reached, note that with small problem cases density is often already a lot higher
         while item_cover_matrix.mean() < density:
-            item = np.random.randint(0, self.num_items)
-            cover = np.random.randint(0, self.num_covers)
+            item = rng.integers(0, self.num_items)
+            cover = rng.integers(0, self.num_covers)
             item_cover_matrix[item, cover] = 1
 
         return cover_costs, item_cover_matrix
@@ -266,7 +266,7 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
         return var_domain_dict
 
     @staticmethod
-    def get_constraints(vars_dict: dict[str, cp.Variable]) -> Optional[list[Any]]:
+    def get_constraints(vars_dict: dict[str, cp.Variable]) -> list[Any] | None:
         """
         Returns the constraints for the weighted set multi-cover problem in CVXPY format.
         Used when creating a quadratic variant.

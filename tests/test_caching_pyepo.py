@@ -30,13 +30,13 @@ class TestPyEPOCaching(unittest.TestCase):
             loss_function_str="SPOPlus",
         )
 
-        self.assertAlmostEqual(decision_maker.loss_function.solve_ratio, 0.5)
-        self.assertIsNotNone(problem.solution_pool)
-        self.assertIs(decision_maker.loss_function.solpool, problem.solution_pool)
+        assert abs(decision_maker.loss_function.solve_ratio - 0.5) < 1e-7
+        assert problem.solution_pool is not None
+        assert decision_maker.loss_function.solpool is problem.solution_pool
 
         runner = Runner(decision_maker, num_epochs=1, use_wandb=False)
         result = runner.run()
-        self.assertIsNotNone(result)
+        assert result is not None
 
     def test_spoplus_cache_at_val_zero_solve_ratio(self):
         opt_model = ShortestPath(grid=(4, 4))
@@ -61,9 +61,9 @@ class TestPyEPOCaching(unittest.TestCase):
             loss_function_str="SPOPlus",
         )
 
-        self.assertAlmostEqual(decision_maker.loss_function.solve_ratio, 0.0)
-        self.assertIsNotNone(problem.solution_pool)
-        self.assertIs(decision_maker.loss_function.solpool, problem.solution_pool)
+        assert abs(decision_maker.loss_function.solve_ratio - 0.0) < 1e-7
+        assert problem.solution_pool is not None
+        assert decision_maker.loss_function.solpool is problem.solution_pool
 
         pool_size_before = 0 if problem.solution_pool is None else problem.solution_pool.shape[0]
 
@@ -78,7 +78,7 @@ class TestPyEPOCaching(unittest.TestCase):
         runner.run()
 
         pool_size_after = 0 if problem.solution_pool is None else problem.solution_pool.shape[0]
-        self.assertEqual(pool_size_before, pool_size_after)
+        assert pool_size_before == pool_size_after
 
 
 if __name__ == "__main__":

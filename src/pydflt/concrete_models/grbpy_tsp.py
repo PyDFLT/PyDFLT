@@ -58,7 +58,7 @@ class TravelingSalesperson(GRBPYModel, tspDFJModel):
         )
         self.lazy_constraints_method = self._subtourelim
 
-    def _set_params(self, params_i: np.ndarray):
+    def _set_params(self, params_i: np.ndarray) -> None:
         """
         Sets the parameters for the TSP model for a single instance.
         Updates the objective function with the provided edge costs.
@@ -72,7 +72,7 @@ class TravelingSalesperson(GRBPYModel, tspDFJModel):
         # based on: https://github.com/khalil-research/CaVE
         if where == GRB.Callback.MIPSOL:
             xvals = model.cbGetSolution(model._x)
-            selected = gp.tuplelist((i, j) for i, j in model._x.keys() if xvals[i, j] > 1e-2)
+            selected = gp.tuplelist((i, j) for i, j in model._x if xvals[i, j] > 1e-2)
             uf = unionFind(model._n)
             for i, j in selected:
                 if not uf.union(i, j):
@@ -84,7 +84,7 @@ class TravelingSalesperson(GRBPYModel, tspDFJModel):
                     break
 
     def get_objective(
-        self, data_batch: dict[str, torch.Tensor], decisions_batch: dict[str, torch.Tensor], predictions_batch: dict[str, torch.Tensor] = None
+        self, data_batch: dict[str, torch.Tensor], decisions_batch: dict[str, torch.Tensor], predictions_batch: dict[str, torch.Tensor] | None = None
     ) -> torch.float:
         """
         Computes the objective function value for the TSP problem.
@@ -100,7 +100,7 @@ class TravelingSalesperson(GRBPYModel, tspDFJModel):
         """
         return (data_batch["edge_costs"] * decisions_batch["select_edge"]).sum(-1)
 
-    def _create_model(self):
+    def _create_model(self) -> tuple[gp.Model, dict[str, gp.MVar | gp.Var]]:
         """
         Creates the Gurobi optimization model for the TSP problem.
         This method reuses the PyEPO TSP model to ensure consistency.

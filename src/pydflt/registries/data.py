@@ -9,7 +9,8 @@ The core functionality includes:
 """
 
 import copy
-from typing import Any, Callable, Tuple
+from collections.abc import Callable
+from typing import Any
 
 from pydflt.generate_data_functions import (
     gen_data_knapsack,
@@ -19,7 +20,7 @@ from pydflt.generate_data_functions import (
 )
 from pydflt.utils.load import load_data_from_dict
 
-data_registry: dict[str, Tuple[Callable, dict[str, Any]]] = {}
+data_registry: dict[str, tuple[Callable, dict[str, Any]]] = {}
 
 
 def register_data(name: str, data_function: Callable, **params: Any) -> None:
@@ -35,7 +36,7 @@ def register_data(name: str, data_function: Callable, **params: Any) -> None:
     data_registry[name] = (data_function, params)
 
 
-def get_data(name: str, **override_params: Any) -> Tuple[Any, dict[str, Any]]:
+def get_data(name: str, **override_params: Any) -> tuple[Any, dict[str, Any]]:
     """
     Initialize a data generation function by its registered name with default or overridden parameters.
 
@@ -143,23 +144,23 @@ register_data(
 """
 References
 Elmachtoub2022
-Adam N. Elmachtoub and Paul Grigas. Smart “predict, then optimize”’. Management Science, 68:9–26, 2022.
+Adam N. Elmachtoub and Paul Grigas. Smart "predict, then optimize"'. Management Science, 68:9-26, 2022.
 doi:10.1287/mnsc.2020.3922.
 
 Schutte2024
 Noah Schutte, Krzysztof Postek, and Neil Yorke-Smith. Robust losses for decision-focused learning. In Proceedings of
-the Thirty-Third International Joint Conference on Artificial Intelligence, IJCAI’24, pages 4868–4875, 2024.
+the Thirty-Third International Joint Conference on Artificial Intelligence, IJCAI'24, pages 4868-4875, 2024.
 doi:10.24963/ijcai.2024/538.
 
 Silvestri2024
-Mattia Silvestri, Senne Berden, Jayanta Mandi, Ali ˙Irfan Mahmuto˘gulları, Maxime Mulamba, Allegra De Filippo,
+Mattia Silvestri, Senne Berden, Jayanta Mandi, Ali Irfan Mahmutogullari, Maxime Mulamba, Allegra De Filippo,
 Tias Guns, and Michele Lombardi. Score function gradient estimation to widen the applicability of decision-focused
 learning. CoRR, abs/2307.05213, 2023.
 doi:10.48550/arXiv.2307.05213.
 
 Tang2024
 Bo Tang and Elias B. Khalil. Pyepo: a pytorch-based end-to-end predict-then-optimize library for linear and integer
-programming. Mathematical Program-ming Computation, 16(3):297–335, 2024.
+programming. Mathematical Program-ming Computation, 16(3):297-335, 2024.
 doi:https://doi.org/10.1007/s12532-024-00255-x.
 
 Tang2024Cave

@@ -49,7 +49,7 @@ def convert_to_slack_form(model: gp.Model) -> gp.Model:
 
 def get_constraints_matrix_form_slack_model(model: gp.Model) -> tuple[np.ndarray, np.ndarray]:
     xs = model.getVars()
-    A = []
+    A = []  # noqa: N806
     b = []
     for constr in model.getConstrs():
         if constr.sense != GRB.EQUAL:
@@ -88,7 +88,7 @@ def get_adjacent_vertices(slack_model: gp.Model, A: np.ndarray, max_iterations_d
 def get_adjacent_vertices_non_degenerate_case(
     A: np.ndarray, basic_indices: np.ndarray, non_basic_indices: np.ndarray, sol: np.ndarray, max_adjacent_vertices: int = 1000
 ) -> list[np.ndarray]:
-    A_basic = A[:, basic_indices]
+    A_basic = A[:, basic_indices]  # noqa: N806
     dirs = scipy.linalg.solve(-A_basic, A[:, non_basic_indices])
     basic_var_values = sol[basic_indices]
 
@@ -126,12 +126,12 @@ def get_adjacent_vertices_degenerate_case(
 
     t_found = False
     while not t_found:
-        A_basic = A[:, basic_indices]
+        A_basic = A[:, basic_indices]  # noqa: N806
         if A_basic.shape[0] != A_basic.shape[1]:
             print("Skipping degenerate adjacent vertices: non-square basis matrix.")
             return set()
         basic_var_values = sol[basic_indices]
-        A_non_basic = A[:, non_basic_indices]
+        A_non_basic = A[:, non_basic_indices]  # noqa: N806
         dirs = scipy.linalg.solve(A_basic, A_non_basic)
         indices_basic_var_zero = np.where(basic_var_values == 0)[0]
         dirs_indices_basic_var_zero = dirs[indices_basic_var_zero, :]
@@ -143,9 +143,9 @@ def get_adjacent_vertices_degenerate_case(
 
     t = non_basic_indices[indices_transition_columns][0]
 
-    B = A[:, basic_indices]
-    B_inv = np.linalg.inv(B)
-    x_B = sol[basic_indices]
+    B = A[:, basic_indices]  # noqa: N806
+    B_inv = np.linalg.inv(B)  # noqa: N806
+    x_B = sol[basic_indices]  # noqa: N806
     elements_still_to_fix = np.where(x_B == 0)[0]
 
     if use_tnp_rule:
@@ -153,15 +153,15 @@ def get_adjacent_vertices_degenerate_case(
         cols = find_partial_lexipos(tmp, required_rows=elements_still_to_fix)
         if cols is not None:
             basic_indices_2 = cols
-            B_hat = -A[:, basic_indices_2]
-            B_hat_prime = scipy.linalg.solve(B, B_hat)
-            B_inv_L = np.concatenate([np.expand_dims(x_B, axis=1), B_hat_prime], axis=1)
+            B_hat = -A[:, basic_indices_2]  # noqa: N806
+            B_hat_prime = scipy.linalg.solve(B, B_hat)  # noqa: N806
+            B_inv_L = np.concatenate([np.expand_dims(x_B, axis=1), B_hat_prime], axis=1)  # noqa: N806
             if not is_lexicofeasible(B_inv_L):
                 return set()
         else:
-            B_hat = A[:, basic_indices]
+            B_hat = A[:, basic_indices]  # noqa: N806
     else:
-        B_hat = A[:, basic_indices]
+        B_hat = A[:, basic_indices]  # noqa: N806
 
     all_adjacent_vertices = set()
     visited_bases = {tuple(sorted(basic_indices))}
@@ -199,19 +199,19 @@ def get_adjacent_vertices_degenerate_case_helper(
     t: int,
     B_hat: np.ndarray,
 ) -> tuple[list[np.ndarray], list[np.ndarray], list[np.ndarray]]:
-    A_basic = A[:, basic_indices]
+    A_basic = A[:, basic_indices]  # noqa: N806
     if A_basic.shape[0] != A_basic.shape[1]:
         print("Skipping degenerate adjacent vertices: non-square basis matrix.")
         return [], [], []
-    B_hat_prime = scipy.linalg.solve(A_basic, B_hat)
+    B_hat_prime = scipy.linalg.solve(A_basic, B_hat)  # noqa: N806
     basic_var_values = sol[basic_indices]
-    A_non_basic = A[:, non_basic_indices]
+    A_non_basic = A[:, non_basic_indices]  # noqa: N806
     dirs = scipy.linalg.solve(A_basic, A_non_basic)
 
     t_index = np.where(non_basic_indices == t)[0]
-    x_B = sol[basic_indices]
+    x_B = sol[basic_indices]  # noqa: N806
 
-    EPSILON = 1e-10
+    EPSILON = 1e-10  # noqa: N806
     indices_basic_var_zero = np.where(basic_var_values == 0)[0]
     transition_column = dirs[indices_basic_var_zero, :]
     transition_column = transition_column[:, t_index]
@@ -276,12 +276,13 @@ def search_for_transition_column(
     sol: np.ndarray,
 ) -> tuple[np.ndarray, np.ndarray]:
     while True:
-        A_basic = A[:, basic_indices]
+        A_basic = A[:, basic_indices]  # noqa: N806
         dirs = np.linalg.solve(-A_basic, A[:, non_basic_indices])
         basic_var_values = sol[basic_indices]
 
-        EPSILON = 1e-10
-        i = np.random.choice(len(non_basic_indices))
+        EPSILON = 1e-10  # noqa: N806
+        rng = np.random.default_rng()
+        i = rng.choice(len(non_basic_indices))
         entering_var_index = non_basic_indices[i]
 
         direction = dirs[:, i]
@@ -295,7 +296,7 @@ def search_for_transition_column(
             min_ratio_indices = indices_dir_neg[np.where(ratios == min_ratio)[0]]
             if min_ratio > 0:
                 break
-            min_ratio_index = np.random.choice(min_ratio_indices)
+            min_ratio_index = rng.choice(min_ratio_indices)
             leaving_var_index = basic_indices[min_ratio_index]
 
             new_basic_indices = np.copy(basic_indices)
@@ -312,11 +313,11 @@ def search_for_transition_column(
 def find_partial_lexipos(A: np.ndarray, required_rows: np.ndarray) -> list[int] | None:
     start_time = time.time()
     m, n = A.shape
-    R = list(required_rows)
+    R = list(required_rows)  # noqa: N806
 
     pos_cols = {i: list(np.where(A[i] > 0)[0]) for i in R}
     neg_cols = {i: set(np.where(A[i] < 0)[0]) for i in R}
-    R_order = sorted(R, key=lambda i: len(pos_cols[i]))
+    R_order = sorted(R, key=lambda i: len(pos_cols[i]))  # noqa: N806
 
     pivots = {}
     graph = {}
@@ -334,10 +335,7 @@ def find_partial_lexipos(A: np.ndarray, required_rows: np.ndarray) -> list[int] 
             visited[u] = 2
             return False
 
-        for u in graph:
-            if visited.get(u, 0) == 0 and dfs(u):
-                return True
-        return False
+        return any(visited.get(u, 0) == 0 and dfs(u) for u in graph)
 
     def backtrack_req(k: int):
         if time.time() - start_time > 3:
@@ -374,13 +372,13 @@ def find_partial_lexipos(A: np.ndarray, required_rows: np.ndarray) -> list[int] 
     if not backtrack_req(0):
         return None
 
-    P = set(pivots.values())
+    P = set(pivots.values())  # noqa: N806
     extras_needed = m - len(P)
     extras = [c for c in range(n) if c not in P][:extras_needed]
     if len(extras) < extras_needed:
         return None
 
-    S = list(P) + extras
+    S = list(P) + extras  # noqa: N806
 
     for c in extras:
         graph.setdefault(c, set())
@@ -388,7 +386,7 @@ def find_partial_lexipos(A: np.ndarray, required_rows: np.ndarray) -> list[int] 
             if c in neg_cols[i]:
                 graph[pivots[i]].add(c)
 
-    in_deg = {c: 0 for c in S}
+    in_deg = dict.fromkeys(S, 0)
     for u in graph:
         for v in graph[u]:
             if v in in_deg:

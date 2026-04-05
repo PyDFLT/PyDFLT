@@ -41,7 +41,7 @@ predictor_str = "MLP"
 
 
 class TestDecisionMakerSettings(unittest.TestCase):
-    def test_init_OLS_SFGE(self):
+    def test_init_ols_sfge(self):
         decision_maker = SFGEDecisionMaker(
             problem=problem,
             learning_rate=0.001,

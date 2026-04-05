@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import torch
@@ -20,29 +20,29 @@ class GRBPYTwoStageModel(GRBPYModel):
 
     def __init__(
         self,
-        variable_shapes: dict[str, tuple[int, ...]],
+        var_shapes: dict[str, tuple[int, ...]],
         param_to_predict_shapes: dict[str, tuple[int, ...]],
         model_sense: str,
-        extra_param_shapes: Optional[dict[str, tuple[int, ...]]] = None,
+        extra_param_shapes: dict[str, tuple[int, ...]] | None = None,
     ) -> None:
         """
         Initializes the GRBPYTwoStageModel.
 
         Args:
-            variable_shapes (dict[str, tuple[int, ...]]): A dictionary specifying the names and shapes of
-                                                          all decision variables (including both first and second stage).
+            var_shapes (dict[str, tuple[int, ...]]): A dictionary specifying the names and shapes of
+                                                     all decision variables (including both first and second stage).
             param_to_predict_shapes (dict[str, tuple[int, ...]]): A dictionary specifying the names and shapes of
                                                                  parameters that must be provided prior to
                                                                  running optimization.
             model_sense (str): Specifies whether the model minimizes ('MIN') or maximizes ('MAX').
                                Must be either 'MIN' or 'MAX'.
-            extra_param_shapes (Optional[dict[str, tuple[int, ...]]]): An optional dictionary specifying additional
+            extra_param_shapes (dict[str, tuple[int, ...]] | None): An optional dictionary specifying additional
                                                                        parameters that change from sample to sample
                                                                        but are known.
         """
         GRBPYModel.__init__(
             self,
-            variable_shapes,
+            var_shapes,
             param_to_predict_shapes,
             model_sense,
             extra_param_shapes=extra_param_shapes,
@@ -52,7 +52,7 @@ class GRBPYTwoStageModel(GRBPYModel):
         self,
         data_batch: dict[str, torch.Tensor],
         decisions_batch: dict[str, torch.Tensor],
-        predictions_batch: Optional[dict[str, torch.Tensor]] = None,
+        predictions_batch: dict[str, torch.Tensor] | None = None,
     ) -> torch.Tensor:
         """
         Computes the objective function value for a batch of two-stage problem instances.
@@ -64,7 +64,7 @@ class GRBPYTwoStageModel(GRBPYModel):
                                                   including predicted parameters and extra parameters for each scenario.
             decisions_batch (dict[str, torch.Tensor]): A dictionary containing the computed first-stage decision
                                                        variables for the batch.
-            predictions_batch (Optional[dict[str, torch.Tensor]]): An optional dictionary containing the
+            predictions_batch (dict[str, torch.Tensor] | None): An optional dictionary containing the
                                                                    predictions for relevant parameters, if applicable.
 
         Returns:

@@ -1,11 +1,9 @@
-from typing import Optional
-
 import numpy as np
 import pyepo
 
 
 def gen_data_shortest_path(
-    seed: Optional[int] = None,
+    seed: int | None = None,
     num_data: int = 500,
     num_features: int = 5,
     grid: tuple[int, int] = (10, 10),

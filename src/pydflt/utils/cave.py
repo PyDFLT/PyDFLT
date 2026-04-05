@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding: utf-8
 """
 An autograd module for cone-aligned loss
 """
@@ -15,10 +14,10 @@ from pyepo import EPO
 from pyepo.model.opt import optModel
 from scipy.optimize import nnls
 from torch import nn
-from torch.nn import functional as F
+from torch.nn import functional
 
 
-class abstractConeAlignedCosine(nn.Module, ABC):
+class AbstractConeAlignedCosine(nn.Module, ABC):
     """
     An abstract base class for CaVE loss.
     """
@@ -44,20 +43,20 @@ class abstractConeAlignedCosine(nn.Module, ABC):
         # method for aggregating the loss
         self.reduction = reduction
         if self.reduction not in ["mean", "sum", "none"]:
-            raise ValueError("No reduction '{}'.".format(self.reduction))
+            raise ValueError(f"No reduction '{self.reduction}'.")
         # number of processes
-        self.processes = mp.cpu_count() if not processes else processes
+        self.processes = processes if processes else mp.cpu_count()
         # multi-core
         if self.processes > 1:
             # create a processes pool
             self.pool = ProcessingPool(self.processes)
-        print("Num of cores: {}".format(self.processes))
+        print(f"Num of cores: {self.processes}")
 
     def forward(self, pred_cost, tight_ctrs):
         """
         A Forward pass method.
         """
-        loss = self._calLoss(pred_cost, tight_ctrs)
+        loss = self._cal_loss(pred_cost, tight_ctrs)
         # loss reduction
         if self.reduction == "mean":
             loss = torch.mean(loss)
@@ -67,27 +66,27 @@ class abstractConeAlignedCosine(nn.Module, ABC):
             loss = loss
         return loss
 
-    def _calLoss(self, pred_cost, tight_ctrs):
+    def _cal_loss(self, pred_cost, tight_ctrs):
         """
         A method to calculate loss.
         """
         # change cost vectors direction
         pred_cost = self.vec_sign * pred_cost
         # get projection
-        proj = self._getProjection(pred_cost, tight_ctrs)
+        proj = self._get_projection(pred_cost, tight_ctrs)
         # calculate cosine similarity between predicted costs and their projections
-        loss = -F.cosine_similarity(pred_cost, proj, dim=1)
+        loss = -functional.cosine_similarity(pred_cost, proj, dim=1)
         return loss
 
     @abstractmethod
-    def _getProjection(self, pred_cost, tight_ctrs):
+    def _get_projection(self, pred_cost, tight_ctrs):
         """
         Abstract method to obtain projection.
         """
         pass
 
 
-class exactConeAlignedCosine(abstractConeAlignedCosine):
+class ExactConeAlignedCosine(AbstractConeAlignedCosine):
     """
     An autograd module for CaVE Exact
     """
@@ -104,16 +103,16 @@ class exactConeAlignedCosine(abstractConeAlignedCosine):
         # choose between 'clarabel' or 'nnls' as the QP solver.
         self.solver = solver
         if self.solver not in ["clarabel", "nnls"]:
-            message = "Invalid solver: {}. Must be 'clarabel' or 'nnls'.".format(self.solver)
+            message = f"Invalid solver: {self.solver}. Must be 'clarabel' or 'nnls'."
             raise ValueError(message)
         # clarabel which has better scalability
         if self.solver == "clarabel":
-            self._solveQP = self._solveClarabel
+            self._solve_qp = self._solve_clarabel
         # nnls from scipy which is very fast for small problems
         if self.solver == "nnls":
-            self._solveQP = self._solveNNLS
+            self._solve_qp = self._solve_nnls
 
-    def _getProjection(self, pred_cost, tight_ctrs):
+    def _get_projection(self, pred_cost, tight_ctrs):
         """
         A method to get the exact projection onto the optimal subcone.
         """
@@ -129,11 +128,11 @@ class exactConeAlignedCosine(abstractConeAlignedCosine):
             # calculate projections per instance
             for i, (cp, ctr) in enumerate(zip(pred_cost, tight_ctrs, strict=False)):
                 # solve QP
-                proj[i], _ = self._solveQP(cp, ctr)
+                proj[i], _ = self._solve_qp(cp, ctr)
         # multi-core
         else:
             # calculate projections with pool
-            res = self.pool.amap(self._solveQP, pred_cost, tight_ctrs).get()
+            res = self.pool.amap(self._solve_qp, pred_cost, tight_ctrs).get()
             # the projection
             proj, _ = zip(*res, strict=False)
             proj = torch.stack(proj, dim=0).to(device)
@@ -143,14 +142,14 @@ class exactConeAlignedCosine(abstractConeAlignedCosine):
         return vec
 
     @staticmethod
-    def _solveQP(cp, ctr):
+    def _solve_qp(cp, ctr):
         """
         A unimplemented method requires to solve QP
         """
         raise ValueError("No solver and its corresponding '_solveQP' method.")
 
     @staticmethod
-    def _solveClarabel(cp, ctr):
+    def _solve_clarabel(cp, ctr):
         """
         A static method to solve quadratic programming with Clarabel
         """
@@ -171,7 +170,7 @@ class exactConeAlignedCosine(abstractConeAlignedCosine):
         return torch.tensor(p, dtype=torch.float32), rnorm
 
     @staticmethod
-    def _solveNNLS(cp, ctr):
+    def _solve_nnls(cp, ctr):
         """
         A static method to solve quadratic programming with scipy
         """
@@ -185,7 +184,7 @@ class exactConeAlignedCosine(abstractConeAlignedCosine):
         return torch.tensor(p, dtype=torch.float32), rnorm
 
 
-class innerConeAlignedCosine(exactConeAlignedCosine):
+class InnerConeAlignedCosine(ExactConeAlignedCosine):
     """
     An autograd module for CaVE+ and CaVE Hybrid.
     """
@@ -208,23 +207,23 @@ class innerConeAlignedCosine(exactConeAlignedCosine):
         self.solve_ratio = solve_ratio
         # check if value is valid [0,1]
         if (self.solve_ratio < 0) or (self.solve_ratio > 1):
-            raise ValueError("Invalid solving ratio {}. It should be between 0 and 1.".format(self.solve_ratio))
+            raise ValueError(f"Invalid solving ratio {self.solve_ratio}. It should be between 0 and 1.")
         # inner ratio
         self.inner_ratio = inner_ratio
         # check if value is valid [0,1]
         if (self.inner_ratio < 0) or (self.inner_ratio > 1):
-            raise ValueError("Invalid inner ratio {}. It should be between 0 and 1.".format(self.inner_ratio))
+            raise ValueError(f"Invalid inner ratio {self.inner_ratio}. It should be between 0 and 1.")
 
-    def _getProjection(self, pred_cost, tight_ctrs):
+    def _get_projection(self, pred_cost, tight_ctrs):
         """
         A method to get the inner projection inside the optimal subcone.
         """
         # get device
         device = pred_cost.device
         # get average of the (normalized) binding constraints
-        avg = self._getAvg(tight_ctrs)
+        avg = self._get_avg(tight_ctrs)
         # inner project with QP
-        if np.random.uniform() <= self.solve_ratio:
+        if np.random.default_rng().uniform() <= self.solve_ratio:
             # to numpy
             pred_cost = pred_cost.detach().cpu().numpy()
             tight_ctrs = tight_ctrs.detach().cpu().numpy()
@@ -236,11 +235,11 @@ class innerConeAlignedCosine(exactConeAlignedCosine):
                 # calculate projections per instance
                 for i, (cp, ctr) in enumerate(zip(pred_cost, tight_ctrs, strict=False)):
                     # solve QP
-                    proj[i], rnorm[i] = self._solveQP(cp, ctr, self.max_iter)
+                    proj[i], rnorm[i] = self._solve_qp(cp, ctr, self.max_iter)
             # multi-core
             else:
                 # calculate projections with pool
-                res = self.pool.amap(self._solveQP, pred_cost, tight_ctrs, [self.max_iter] * len(pred_cost)).get()
+                res = self.pool.amap(self._solve_qp, pred_cost, tight_ctrs, [self.max_iter] * len(pred_cost)).get()
                 proj, rnorm = zip(*res, strict=False)
                 # the projection
                 proj = torch.stack(proj, dim=0).to(device)
@@ -267,7 +266,7 @@ class innerConeAlignedCosine(exactConeAlignedCosine):
             vec = (1 - self.inner_ratio) * pred_norm + self.inner_ratio * avg
         return vec.detach()
 
-    def _getAvg(self, tight_ctrs):
+    def _get_avg(self, tight_ctrs):
         """
         A method to get average of binding constraints
         """
@@ -278,7 +277,7 @@ class innerConeAlignedCosine(exactConeAlignedCosine):
         return avg
 
     @staticmethod
-    def _solveClarabel(cp, ctr, max_iter):
+    def _solve_clarabel(cp, ctr, max_iter):
         """
         A static method to solve quadratic programming with Clarabel
         """
@@ -299,7 +298,7 @@ class innerConeAlignedCosine(exactConeAlignedCosine):
         return torch.tensor(p, dtype=torch.float32), rnorm
 
     @staticmethod
-    def _solveNNLS(cp, ctr, max_iter):
+    def _solve_nnls(cp, ctr, max_iter):
         """
         A static method to solve quadratic programming with scipy
         """

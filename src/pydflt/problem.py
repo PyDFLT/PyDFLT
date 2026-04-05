@@ -1,10 +1,10 @@
 import copy
 import random
-from typing import Any, Union
+from typing import Any
 
 import numpy as np
 import torch
-import torch.nn.functional as F
+import torch.nn.functional as functional
 from scipy.spatial import distance
 
 from pydflt.abstract_models.base import OptimizationModel
@@ -32,10 +32,10 @@ class Problem:
         opt_model (OptimizationModel): The optimization model associated with the problem.
         num_vars (int): Number of decision variables in the optimization model.
         num_features (int): Number of features in the input data.
-        params_to_predict_shapes (Dict[str, Tuple]): Shapes of the parameters to be predicted
+        param_to_predict_shapes (Dict[str, Tuple]): Shapes of the parameters to be predicted
             by a machine learning model, as defined in `opt_model`.
         num_predictions (int): Total number of scalar values to be predicted, derived
-            from `params_to_predict_shapes`.
+            from `param_to_predict_shapes`.
         dataset (DFLDataset): The dataset object holding all problem instances.
         train_ratio (float): Proportion of the dataset to use for training.
         val_ratio (float): Proportion of the dataset to use for validation.
@@ -62,7 +62,7 @@ class Problem:
 
     def __init__(
         self,
-        data_dict: dict[str, Any],
+        data_dict: dict[str, np.ndarray],
         opt_model: OptimizationModel,
         train_ratio: float = 0.7,
         val_ratio: float = 0.15,
@@ -120,7 +120,7 @@ class Problem:
         self.opt_model = opt_model
         self.num_vars = self.opt_model.num_vars
         self.num_features = data_dict["features"].shape[1]
-        self.params_to_predict_shapes = self.opt_model.param_to_predict_shapes
+        self.param_to_predict_shapes = self.opt_model.param_to_predict_shapes
         self.num_predictions = self.opt_model.num_predictions
 
         # Wrap the data into the dataset class
@@ -415,16 +415,18 @@ class Problem:
 
         Args:
             seed (int | None, optional): A seed for NumPy's random number generator
-                to ensure reproducible shuffling and splitting. If None, the global
-                random state is used. Defaults to None.
+                to ensure reproducible shuffling and splitting. If None, a fresh
+                unseeded generator is used (non-deterministic). Defaults to None.
         """
         if seed is not None:
-            np.random.seed(seed)
+            rng = np.random.default_rng(seed)
             random.seed(seed)
+        else:
+            rng = np.random.default_rng()
 
         if not self.time_respecting_split:
             self._print_message("Shuffling indices before splitting...")
-            np.random.shuffle(self.all_indices)
+            rng.shuffle(self.all_indices)
 
         self.train_indices = self.all_indices[: self.train_size]
         self.validation_indices = self.all_indices[self.train_size : self.train_size + self.validation_size]
@@ -491,7 +493,7 @@ class Problem:
         ], "Set mode to train, validation, or test before sampling!"
         if self.mode == "train":
             indices_to_use = np.copy(self.train_indices)
-            np.random.shuffle(indices_to_use)
+            np.random.default_rng().shuffle(indices_to_use)
         elif self.mode == "validation":
             indices_to_use = np.copy(self.validation_indices)
         else:
@@ -501,7 +503,7 @@ class Problem:
 
         return batch_indices
 
-    def read_data(self, idx: Union[int, slice, list[int], np.ndarray]) -> dict[str, torch.Tensor]:
+    def read_data(self, idx: int | slice | list[int] | np.ndarray) -> dict[str, torch.Tensor]:
         """
         Retrieves data from the dataset for the specified indices. This is a direct wrapper around the
         `DFLDataset`'s `__getitem__` method.
@@ -520,7 +522,7 @@ class Problem:
             if name not in data or not isinstance(data[name], list):
                 return
             items = data[name]
-            if isinstance(idx, (int, np.integer)):
+            if isinstance(idx, int | np.integer):
                 if items is None:
                     data[name] = torch.zeros((0, self.opt_model.num_vars), dtype=torch.float32)
                     return
@@ -594,7 +596,7 @@ class Problem:
         Returns:
             torch.Tensor: A tensor containing the objective values for each instance in the batch.
         """
-        device = list(decisions_batch.values())[0].device
+        device = next(iter(decisions_batch.values())).device
         value = self.opt_model.get_objective(
             {key: val.to(device) for key, val in data_batch.items()},
             decisions_batch,
@@ -624,7 +626,7 @@ class Problem:
             dict[str, torch.Tensor]: A dictionary where keys are metric names and values are torch.Tensors
                 representing the metric values for the batch.
         """
-        device = list(predictions_batch.values())[0].device
+        device = next(iter(predictions_batch.values())).device
         eval_dict = self.opt_model.evaluate(
             {key: val.to(device) for key, val in data_batch.items()},
             decisions_batch,
@@ -645,7 +647,7 @@ class Problem:
                 losses_list.append(sum_losses.cpu().detach().numpy().astype(np.float32))
             eval_dict["mse"] = np.array(losses_list)
         if metrics is not None and "mae" in metrics:
-            mae_loss_func = F.l1_loss
+            mae_loss_func = functional.l1_loss
             batch_size = data_batch["features"].shape[0]
             losses_list = []
             for i in range(batch_size):
@@ -665,14 +667,14 @@ class Problem:
                 for key in predictions_batch:
                     true_values = data_batch[key].to(torch.float).to(device)[i]
                     losses = mse_loss_func(
-                        F.normalize(predictions_batch[key][i], p=2, dim=-1),
-                        F.normalize(true_values, p=2, dim=-1),
+                        functional.normalize(predictions_batch[key][i], p=2, dim=-1),
+                        functional.normalize(true_values, p=2, dim=-1),
                     )
                     sum_losses += losses
                 losses_list.append(sum_losses.cpu().detach().numpy().astype(np.float32))
             eval_dict["mse_norm"] = np.array(losses_list)
         if metrics is not None and "mae_norm" in metrics:
-            mae_loss_func = F.l1_loss
+            mae_loss_func = functional.l1_loss
             batch_size = data_batch["features"].shape[0]
             losses_list = []
             for i in range(batch_size):
@@ -680,8 +682,8 @@ class Problem:
                 for key in predictions_batch:
                     true_values = data_batch[key].to(torch.float).to(device)[i]
                     losses = mae_loss_func(
-                        F.normalize(predictions_batch[key][i], p=2, dim=-1),
-                        F.normalize(true_values, p=2, dim=-1),
+                        functional.normalize(predictions_batch[key][i], p=2, dim=-1),
+                        functional.normalize(true_values, p=2, dim=-1),
                     )
                     sum_losses += losses
                 losses_list.append(sum_losses.cpu().detach().numpy().astype(np.float32))
@@ -690,6 +692,13 @@ class Problem:
         return eval_dict
 
     def get_train_and_val_idx(self):
+        """
+        Returns the combined array of training and validation indices.
+
+        Returns:
+            np.ndarray: A 1-D array containing the train indices followed by the validation
+                indices. If the validation set is empty, only the train indices are returned.
+        """
         self.set_mode("train")
         idx_train = self.generate_batch_indices(batch_size=self.train_size)[0]
         if self.validation_size == 0:

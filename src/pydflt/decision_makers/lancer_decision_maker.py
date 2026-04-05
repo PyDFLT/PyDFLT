@@ -1,4 +1,4 @@
-from typing import Union
+from typing import ClassVar
 
 import numpy as np
 import torch
@@ -38,13 +38,13 @@ class LancerDecisionMaker(DecisionMaker):
         surrogate_model_kwargs (dict): Additional arguments for surrogate model initialization.
     """
 
-    allowed_losses: list[str] = ["lancer"]
+    allowed_losses: ClassVar[list[str]] = ["lancer"]
 
-    allowed_decision_models: list[str] = [
+    allowed_decision_models: ClassVar[list[str]] = [
         "base",
     ]
 
-    allowed_predictors: list[str] = [
+    allowed_predictors: ClassVar[list[str]] = [
         "LinearSKL",
         "MLP",
     ]
@@ -61,12 +61,12 @@ class LancerDecisionMaker(DecisionMaker):
         use_dist_at_mode: str = "none",
         standardize_predictions: bool = True,
         init_OLS: bool = False,
-        seed: Union[int, None] = None,
-        predictor_kwargs: dict = None,
-        decision_model_kwargs: dict = None,
+        seed: int | None = None,
+        predictor_kwargs: dict | None = None,
+        decision_model_kwargs: dict | None = None,
         regularizer: float = 0.1,
         surrogate_model_str: str = "MLP",
-        surrogate_model_kwargs: dict = None,
+        surrogate_model_kwargs: dict | None = None,
         batch_size_surrogate_update: int = 1024,
         batch_size_predictor_update: int = 128,
         max_iters_surrogate_update: int = 5,
@@ -78,7 +78,7 @@ class LancerDecisionMaker(DecisionMaker):
         num_epochs_pretraining_surrogate: int = 100,
         pretraining_surrogate: bool = False,
         **kwargs,
-    ):
+    ) -> None:
         """
         Initializes the LancerDecisionMaker.
 
@@ -151,6 +151,13 @@ class LancerDecisionMaker(DecisionMaker):
         self._set_surrogate_model(pretraining_surrogate, num_epochs_pretraining_surrogate)
 
     def _set_surrogate_model(self, pretraining_surrogate: bool, max_iters: int):
+        """
+        Instantiates the surrogate MLP and its Adam optimizer, then optionally pretrains the surrogate.
+
+        Args:
+            pretraining_surrogate (bool): If True, runs `_pretrain_surrogate_model` after construction.
+            max_iters (int): Maximum number of pretraining iterations passed to `_pretrain_surrogate_model`.
+        """
         self.surrogate_model = IMPLEMENTED_PREDICTORS[self.surrogate_model_str](
             num_inputs=self.problem.num_predictions,
             num_outputs=1,
@@ -164,36 +171,55 @@ class LancerDecisionMaker(DecisionMaker):
         if pretraining_surrogate:
             self._pretrain_surrogate_model(max_iters)
 
-    def _set_optimizer(self):
+    def _set_optimizer(self) -> None:
+        """
+        Instantiates the Adam optimizer for the predictor model using `self.learning_rate_predictor`
+        and `self.weight_decay_predictor`.
+        """
         self.optimizer_predictor = torch.optim.Adam(
             self.trainable_predictive_model.parameters(),
             lr=self.learning_rate_predictor,
             weight_decay=self.weight_decay_predictor,
         )
 
-    def _set_loss_functions(self):
+    def _set_loss_functions(self) -> None:
+        """
+        Initializes the MSE loss functions used for training the predictor and the surrogate model.
+        Both `self.loss_predictor` and `self.loss_surrogate_model` are set to `torch.nn.MSELoss`.
+        """
         self.loss_predictor = torch.nn.MSELoss()
         self.loss_surrogate_model = torch.nn.MSELoss()
 
     def _pretrain_surrogate_model(self, max_iter: int):
+        """
+        Pretrains the surrogate model on the full training set before the main training loop begins.
+
+        Uses the current (untrained) predictor to generate predictions for all training instances,
+        solves for the corresponding decisions, computes regret losses, and runs
+        `update_surrogate_model` for `max_iter` iterations to fit the surrogate to this initial
+        regret landscape.
+
+        Args:
+            max_iter (int): Maximum number of surrogate update iterations during pretraining.
+        """
         print(f"Start pretraining surrogate for {max_iter} epochs")
         self.problem.set_mode("train")
-        data = self.problem.read_data(self.problem.mode_to_indices["train"])
+        data_batch = self.problem.read_data(self.problem.mode_to_indices["train"])
 
         # Obtain predictions for all samples in dataset (no grad computation)
-        features = data["features"].to(torch.float32).to(self.device)
+        features = data_batch["features"].to(torch.float32).to(self.device)
 
         # Get predictions and decisions for all training data points
         self.trainable_predictive_model.eval()  # We are not training the predictor right now
         with torch.no_grad():
             predictions = self.predictor.forward(features)
         predictions_dict = self.predictions_to_dict(predictions)
-        true_values = self.dict_to_tensor(data)
+        true_values = self.dict_to_tensor(data_batch)
         decisions = self.decide(predictions_dict)
 
         # Compute losses
-        objectives = self.problem.opt_model.get_objective(data, decisions, predictions_batch=predictions)
-        optimal_objectives = data["objective_optimal"]
+        objectives = self.problem.opt_model.get_objective(data_batch, decisions, predictions_batch=predictions)
+        optimal_objectives = data_batch["objective_optimal"]
 
         # We use absolute regret here, alternatively one could consider relative regret, or only the objective
         losses = (objectives - optimal_objectives) * self.problem.opt_model.model_sense_int
@@ -205,7 +231,7 @@ class LancerDecisionMaker(DecisionMaker):
 
         print(f"After pretraining surrogate loss is {surrogate_loss}")
 
-    def update_surrogate_model(self, predictions, true_values, objectives, max_iter):
+    def update_surrogate_model(self, predictions, true_values, objectives, max_iter) -> torch.Tensor:
         """
         Updates the surrogate model by training it on collected experience data.
         The surrogate model learns to approximate the regret landscape using prediction errors
@@ -222,11 +248,12 @@ class LancerDecisionMaker(DecisionMaker):
         assert predictions.shape == true_values.shape
         assert true_values.shape[0] == objectives.shape[0]
         batch_size = self.batch_size_surrogate_update
-        N = true_values.shape[0]
+        N = true_values.shape[0]  # noqa: N806
         n_batches = int(N / batch_size)
         total_iter = 0
         while total_iter < max_iter:
-            random_indices = np.random.permutation(N)
+            rng = np.random.default_rng()
+            random_indices = rng.permutation(N)
             for bi in range(n_batches + 1):
                 idx = random_indices[bi * batch_size : (bi + 1) * batch_size]
                 true_value = true_values[idx]
@@ -245,30 +272,31 @@ class LancerDecisionMaker(DecisionMaker):
         # TODO: GV -- are you sure you want to return the loss on the last batch only?
         return loss
 
-    def update_predictor(self, data):
+    def update_predictor(self, data_batch: dict[str, torch.Tensor]) -> torch.Tensor:
         """
         Updates the predictor model using the surrogate model's approximated gradients.
         This implements the actor-critic approach where the surrogate model (critic) guides
         the predictor model (actor) training.
 
         Args:
-            data (dict[str, torch.Tensor]): Training data batch containing features and true values.
+            data_batch (dict[str, torch.Tensor]): Training data batch containing features and true values.
 
         Returns:
-            dict[str, float]: Dictionary containing loss and gradient norm information.
+            torch.Tensor: The total surrogate loss accumulated over all predictor update iterations.
         """
         self.surrogate_model.eval()
         self.trainable_predictive_model.train()
-        features = data["features"]
-        true_values = self.dict_to_tensor(data)
+        features = data_batch["features"]
+        true_values = self.dict_to_tensor(data_batch)
         assert features.shape[0] == true_values.shape[0]
         batch_size = self.batch_size_predictor_update
-        N = features.shape[0]
+        N = features.shape[0]  # noqa: N806
         n_batches = int(N / batch_size)
 
         total_iter = 0
         while total_iter < self.max_iters_predictor_update:
-            rand_indices = np.random.permutation(N)
+            rng = np.random.default_rng()
+            rand_indices = rng.permutation(N)
             for bi in range(n_batches + 1):
                 idxs = rand_indices[bi * batch_size : (bi + 1) * batch_size]
                 true_values_batch = true_values[idxs].to(torch.float32).to(self.device)
@@ -288,32 +316,47 @@ class LancerDecisionMaker(DecisionMaker):
 
         return total_loss
 
-    def run_epoch(self, mode: str, epoch_num: int, metrics: list[str] = None) -> list[dict[str, float]]:
+    def run_epoch(self, mode: str, epoch_num: int, metrics: list[str] | None = None) -> list[dict[str, float]]:
+        """
+        Runs one complete epoch in the specified mode (train/validation/test).
+
+        In train mode, reads the entire training set, updates the experience replay buffer,
+        fits the surrogate model, and updates the predictor. In validation/test mode, evaluates
+        the predictor on each batch using `_get_batch_results`.
+
+        Args:
+            mode (str): The mode to run ('train', 'validation', or 'test').
+            epoch_num (int): The current epoch number (used to decide whether to reset the replay buffer).
+            metrics (list[str] | None): List of additional metrics to evaluate. Defaults to None.
+
+        Returns:
+            list[dict[str, float]]: List of result dictionaries, one per batch processed.
+        """
         assert mode in [
             "train",
             "validation",
             "test",
         ], "Mode must be train/validation/test!"
         self.problem.set_mode(mode)
-        data = self.problem.read_data(self.problem.mode_to_indices[mode])
+        data_batch = self.problem.read_data(self.problem.mode_to_indices[mode])
 
         epoch_results = []
         if mode == "train":
             # Obtain predictions for all samples in dataset (no grad computation)
-            features = data["features"].to(torch.float32).to(self.device)
+            features = data_batch["features"].to(torch.float32).to(self.device)
 
             # Get predictions and decisions for all training data points
             self.trainable_predictive_model.eval()  # We are not training the predictor right now
             with torch.no_grad():
                 predictions = self.predictor.forward(features)
             predictions_dict = self.predictions_to_dict(predictions)
-            true_values = self.dict_to_tensor(data)
+            true_values = self.dict_to_tensor(data_batch)
             decisions = self.decide(predictions_dict)
 
             # Compute losses
-            objectives = self.problem.opt_model.get_objective(data, decisions, predictions_batch=predictions)
+            objectives = self.problem.opt_model.get_objective(data_batch, decisions, predictions_batch=predictions)
             # We can use regret, or relative regret, or only the objective
-            optimal_objectives = data["objective_optimal"]
+            optimal_objectives = data_batch["objective_optimal"]
             losses = (objectives - optimal_objectives) * self.problem.opt_model.model_sense_int
             absolute_regret = losses.detach().numpy().astype(np.float32)
 
@@ -336,7 +379,7 @@ class LancerDecisionMaker(DecisionMaker):
             )
 
             # Step over theta: learning predictor
-            predictor_loss = self.update_predictor(data)
+            predictor_loss = self.update_predictor(data_batch)
 
             # Store train results
             results = {
@@ -344,7 +387,7 @@ class LancerDecisionMaker(DecisionMaker):
                 "train/surrogate_loss": torch.mean(surrogate_loss).detach().numpy(),
                 "train/predictor_loss": torch.mean(predictor_loss).detach().numpy(),
                 "train/eval": absolute_regret,
-                "batch_size": len(data["features"]),
+                "batch_size": len(data_batch["features"]),
             }
             epoch_results.append(results)
 
@@ -353,7 +396,7 @@ class LancerDecisionMaker(DecisionMaker):
             for idx in self.problem.generate_batch_indices(size):
                 data_batch = self.problem.read_data(idx)
                 batch_results = self._get_batch_results(data_batch, metrics)
-                mode_batch_results = {"%s/%s" % (mode, key): val for key, val in batch_results.items()}
+                mode_batch_results = {f"{mode}/{key}": val for key, val in batch_results.items()}
                 mode_batch_results["batch_size"] = len(idx)
                 epoch_results.append(mode_batch_results)
 

@@ -1,11 +1,9 @@
-from typing import Optional
-
 import numpy as np
 import pyepo
 
 
 def gen_data_two_stage_knapsack(
-    seed: Optional[int],
+    seed: int | None,
     num_data: int,
     num_features: int,
     num_items: int,
@@ -35,7 +33,7 @@ def gen_data_two_stage_knapsack(
             - 'item_weights': Array of shape (num_data, num_items) with item weights for each sample
             - 'features': Array of shape (num_data, num_features) with feature vectors for each sample
     """
-    values, features, weights = pyepo.data.knapsack.genData(
+    _values, features, weights = pyepo.data.knapsack.genData(
         num_data,
         num_features,
         num_items,

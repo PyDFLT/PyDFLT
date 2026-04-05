@@ -1,5 +1,5 @@
 import random
-from typing import Union
+from typing import ClassVar
 
 import numpy as np
 import torch
@@ -12,7 +12,7 @@ Activation = str | nn.Module
 
 
 class SampleDistribution(Distribution):
-    arg_constraints = {}
+    arg_constraints: ClassVar[dict] = {}
 
     def __init__(self, average, samples):
         super().__init__()
@@ -40,7 +40,7 @@ class SamplePredictor(MLPPredictor):
         activation: Activation = "tanh",
         output_activation: Activation = "relu",
         scale: float = 0.1,  # scale and shift are arge for the 'scale_shift' output activation function
-        shift: Union[float, np.array] = 0.0,
+        shift: float | np.ndarray = 0.0,
         *args,
         **kwargs,
     ):
@@ -70,7 +70,7 @@ class SamplePredictor(MLPPredictor):
         return self.output_to_dist(output)
 
     def to(self, device):
-        return super(SamplePredictor, self).to(device)
+        return super().to(device)
 
     def output_to_dist(self, output: torch.Tensor):
         return SampleDistribution(output, self.samples)

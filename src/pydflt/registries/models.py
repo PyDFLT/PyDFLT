@@ -9,7 +9,7 @@ The core functionality includes:
 """
 
 import copy
-from typing import Any, Type
+from typing import Any
 
 from pydflt.concrete_models import (
     CVXPYDiffKnapsackModel,
@@ -24,7 +24,7 @@ from pydflt.concrete_models import (
 model_registry = {}
 
 
-def register_model(name: str, model_class: Type, **params: Any) -> None:
+def register_model(name: str, model_class: type, **params: Any) -> None:
     """
     Register an optimization model with a specific name and optional parameters.
 
@@ -102,7 +102,7 @@ register_model(
     penalty=5,  # \in [1, 5, 10]
     cover_costs_lb=1,
     cover_costs_ub=100,
-    Silvestri2024=True,
+    silvestri2024=True,
     seed=5,
 )
 
@@ -110,7 +110,7 @@ register_model(name="knapsack_continuous", model_class=CVXPYDiffKnapsackModel, n
 
 
 register_model(
-    name="knapsack_2_stage", model_class=TwoStageKnapsack, num_decision=10, capacity=20, penalty_add=0.1, penalty_remove=10, values_lb=3, values_ub=8, seed=5
+    name="knapsack_2_stage", model_class=TwoStageKnapsack, num_decisions=10, capacity=20, penalty_add=0.1, penalty_remove=10, values_lb=3, values_ub=8, seed=5
 )
 
 register_model(
@@ -139,23 +139,23 @@ register_model(
 """
 References
 Elmachtoub2022
-Adam N. Elmachtoub and Paul Grigas. Smart “predict, then optimize”’. Management Science, 68:9–26, 2022.
+Adam N. Elmachtoub and Paul Grigas. Smart "predict, then optimize"'. Management Science, 68:9-26, 2022.
 doi:10.1287/mnsc.2020.3922.
 
 Schutte2024
 Noah Schutte, Krzysztof Postek, and Neil Yorke-Smith. Robust losses for decision-focused learning. In Proceedings of
-the Thirty-Third International Joint Conference on Artificial Intelligence, IJCAI’24, pages 4868–4875, 2024.
+the Thirty-Third International Joint Conference on Artificial Intelligence, IJCAI'24, pages 4868-4875, 2024.
 doi:10.24963/ijcai.2024/538.
 
 Silvestri2024
-Mattia Silvestri, Senne Berden, Jayanta Mandi, Ali ˙Irfan Mahmuto˘gulları, Maxime Mulamba, Allegra De Filippo,
+Mattia Silvestri, Senne Berden, Jayanta Mandi, Ali Irfan Mahmutogullari, Maxime Mulamba, Allegra De Filippo,
 Tias Guns, and Michele Lombardi. Score function gradient estimation to widen the applicability of decision-focused
 learning. CoRR, abs/2307.05213, 2023.
 doi:10.48550/arXiv.2307.05213.
 
 Tang2024
 Bo Tang and Elias B. Khalil. Pyepo: a pytorch-based end-to-end predict-then-optimize library for linear and integer
-programming. Mathematical Program-ming Computation, 16(3):297–335, 2024.
+programming. Mathematical Program-ming Computation, 16(3):297-335, 2024.
 doi:https://doi.org/10.1007/s12532-024-00255-x.
 
 Tang2024Cave

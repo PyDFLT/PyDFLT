@@ -1,6 +1,6 @@
 import copy
 from abc import abstractmethod
-from typing import Any
+from typing import Any, ClassVar
 
 import numpy as np
 import torch
@@ -13,7 +13,7 @@ from pydflt.noisifier import Noisifier
 from pydflt.predictors import IMPLEMENTED_PREDICTORS
 from pydflt.predictors.base import Predictor
 from pydflt.problem import Problem
-from pydflt.utils.reproducability import set_seeds
+from pydflt.utils.reproducibility import set_seeds
 
 
 class DecisionMaker:
@@ -61,15 +61,15 @@ class DecisionMaker:
         _epoch_counts (int): Counter for the number of epochs run (though not explicitly updated in this snippet).
     """
 
-    allowed_losses: list[str] = [
+    allowed_losses: ClassVar[list[str]] = [
         # Define allowed loss function strings here, e.g., 'objective', 'regret'
     ]
 
-    allowed_decision_models: list[str] = [
+    allowed_decision_models: ClassVar[list[str]] = [
         # Define allowed decision model strings here, e.g., 'base', 'quadratic', 'scenario_based'
     ]
 
-    allowed_predictors: list[str] = [
+    allowed_predictors: ClassVar[list[str]] = [
         # Define allowed predictor strings here, e.g., 'MLP', 'Normal', 'LinearSKL'
     ]
 
@@ -96,7 +96,7 @@ class DecisionMaker:
         predictor_kwargs: dict | None = None,
         noisifier_kwargs: dict | None = None,
         decision_model_kwargs: dict | None = None,
-    ):
+    ) -> None:
         """
         Initializes a DecisionMaker instance.
 
@@ -144,13 +144,13 @@ class DecisionMaker:
                 Defaults to None (empty dict).
         """
 
-        assert loss_function_str in self.allowed_losses, "Loss must be from %s" % self.allowed_losses
-        assert decision_model_str in self.allowed_decision_models, "Decision model must be from %s" % self.allowed_decision_models
-        assert predictor_str in self.allowed_predictors, "Predictor must be from %s" % self.allowed_predictors
+        assert loss_function_str in self.allowed_losses, f"Loss must be from {self.allowed_losses}"
+        assert decision_model_str in self.allowed_decision_models, f"Decision model must be from {self.allowed_decision_models}"
+        assert predictor_str in self.allowed_predictors, f"Predictor must be from {self.allowed_predictors}"
         allowed_to_decision_pars_approaches = ["none", "sample", "quantiles"]
-        assert to_decision_pars in allowed_to_decision_pars_approaches, "To decision pars must be from %s" % allowed_to_decision_pars_approaches
+        assert to_decision_pars in allowed_to_decision_pars_approaches, f"To decision pars must be from {allowed_to_decision_pars_approaches}"
         use_dist_at_mode_approaches = ["none", "test"]
-        assert use_dist_at_mode in use_dist_at_mode_approaches, "Use dist at mode must be from %s" % use_dist_at_mode_approaches
+        assert use_dist_at_mode in use_dist_at_mode_approaches, f"Use dist at mode must be from {use_dist_at_mode_approaches}"
         if decision_model_str == "quadratic" and (standardize_predictions or init_OLS):
             assert problem.compute_optimal_decisions or problem.knn_robust_loss > 0, (
                 "When the decision model is quadratic and init_OLS or standardize_predictions is True, "
@@ -338,9 +338,9 @@ class DecisionMaker:
             metrics=metrics,
         )
         # Note that these metrics are over all dimensions, per batch, and the epoch mean will be logged.
-        for key in predictions_batch.keys():
+        for key in predictions_batch:
             batch_results[key] = predictions_batch[key].cpu().detach().numpy().astype(np.float32)
-        for key in decisions_batch.keys():
+        for key in decisions_batch:
             batch_results[key] = decisions_batch[key].cpu().detach().numpy().astype(np.float32)
 
         return batch_results
@@ -378,7 +378,7 @@ class DecisionMaker:
         if self.to_decision_pars == "sample":
             sample = dist.sample(torch.Size([self.num_scenarios]))
             num_dims = sample.dim()
-            new_order = list(range(1, num_dims)) + [0]
+            new_order = [*range(1, num_dims), 0]
             scenarios = sample.permute(new_order)  # We put the scenario/sample dimension as last
         elif self.to_decision_pars == "quantiles":
             first_quantile_loc = 1 / (self.num_scenarios + 1)
@@ -389,7 +389,7 @@ class DecisionMaker:
                 quantile_locs = quantile_locs.unsqueeze(-1)
             quantile_locs = quantile_locs.expand(-1, *shape)
             quantiles = dist.icdf(quantile_locs)
-            new_order = list(range(1, num_dims + 1)) + [0]
+            new_order = [*range(1, num_dims + 1), 0]
             scenarios = quantiles.permute(new_order)  # We put the scenario/sample dimension as last
         else:
             raise ValueError(f"Unsupported 'to_decision_pars' strategy: {self.to_decision_pars}")
@@ -489,13 +489,13 @@ class DecisionMaker:
     ) -> torch.Tensor:
         """
         Converts a dictionary of tensors to a single tensor by concatenating them.
-        This method seems similar to `dict_to_predictions` but uses `self.problem.params_to_predict_shapes`
+        This method seems similar to `dict_to_predictions` but uses `self.problem.param_to_predict_shapes`
         as the reference for keys and order, which might differ from `self.decision_model.param_to_predict_shapes`.
         It also concatenates along `dim=1`, assuming features.
 
         Args:
             predictions_dict (dict[str, torch.Tensor]): Dictionary of parameter names to tensors.
-                The keys should align with `self.problem.params_to_predict_shapes`.
+                The keys should align with `self.problem.param_to_predict_shapes`.
             output_device (str | torch.device | None, optional): Device to move the final tensor to.
                 Defaults to `self.device`.
 
@@ -510,7 +510,7 @@ class DecisionMaker:
         tensors_list = []
 
         # Iterate through the keys in keys_to_predict
-        for key in self.problem.params_to_predict_shapes:
+        for key in self.problem.param_to_predict_shapes:
             if key in predictions_dict:
                 tensor = predictions_dict[key]
                 tensor = tensor.to(output_device)  # Move to output_device if necessary
@@ -565,8 +565,11 @@ class DecisionMaker:
         if "num_scenarios" in self.decision_model_kwargs and self.predictor_str == "MLP":
             # For now when the decision_model kwargs has num_scenarios, the predictor_kwargs gets the same number
             assert (
-                "num_scenarios" in predictor_kwargs_processed and predictor_kwargs_processed["num_scenarios"] != self.decision_model_kwargs["num_scenarios"]
-            ), "Num scenarios in predictor_kwargs cannot be specified and unequal to num scenarios in " "decision_model_kwargs."
+                "num_scenarios" in predictor_kwargs_processed
+            ), "Num scenarios in predictor_kwargs cannot be specified and unequal to num scenarios in decision_model_kwargs."
+            assert (
+                predictor_kwargs_processed["num_scenarios"] != self.decision_model_kwargs["num_scenarios"]
+            ), "Num scenarios in predictor_kwargs cannot be specified and unequal to num scenarios in decision_model_kwargs."
             predictor_kwargs_processed["num_scenarios"] = self.decision_model_kwargs["num_scenarios"]
 
         # If the standardize_predictions is True or not given, then an additional layer is added to the predictor that
@@ -577,9 +580,8 @@ class DecisionMaker:
                 predictor_kwargs_processed.get("num_hidden_layers", 1) == 0
             ), "When init_OLS is True, predictor_kwargs num_hidden_layers has to be set to 0 (linear model)."
         if self.standardize_predictions:
-            assert (
-                "shift" not in predictor_kwargs_processed and "scale" not in predictor_kwargs_processed
-            ), "When standardize_predictions is not specified or True, it will overwrite scale and shift."
+            assert "shift" not in predictor_kwargs_processed, "When standardize_predictions is not specified or True, it will overwrite scale and shift."
+            assert "scale" not in predictor_kwargs_processed, "When standardize_predictions is not specified or True, it will overwrite scale and shift."
             predictor_kwargs_processed["shift"] = self._get_means()
             predictor_kwargs_processed["scale"] = self._get_stds()
 
@@ -587,7 +589,7 @@ class DecisionMaker:
         base_predictor = IMPLEMENTED_PREDICTORS[self.predictor_str](**predictor_kwargs_processed).to(self.device)
 
         if self.init_OLS:
-            base_predictor = self._init_OLS(base_predictor)
+            base_predictor = self._init_ols(base_predictor)
 
         # Set the predictor
         self.predictor = base_predictor
@@ -621,7 +623,7 @@ class DecisionMaker:
 
         return noisifier
 
-    def _init_OLS(self, predictor: Predictor) -> Predictor:
+    def _init_ols(self, predictor: Predictor) -> Predictor:
         """
         Initializes the weights of a linear predictor layer using Ordinary Least Squares (OLS).
 
@@ -713,7 +715,7 @@ class DecisionMaker:
                 means.append(train_data[f"{name}_optimal"].mean(dim=0).detach().numpy().reshape(-1))
             means = np.concatenate(means)
         else:
-            params_shapes = self.problem.params_to_predict_shapes
+            params_shapes = self.problem.param_to_predict_shapes
             params_keys = params_shapes.keys()
             means = []
             for key in params_keys:
@@ -744,7 +746,7 @@ class DecisionMaker:
                 stds.append(train_data[f"{name}_optimal"].std(dim=0).detach().numpy().reshape(-1))
             stds = np.concatenate(stds)
         else:
-            params_shapes = self.problem.params_to_predict_shapes
+            params_shapes = self.problem.param_to_predict_shapes
             params_keys = params_shapes.keys()
             stds = []
             for key in params_keys:
@@ -766,7 +768,7 @@ class DecisionMaker:
         This method is primarily used when `self.to_decision_pars == 'quantiles' and the
         decision model is 'scenario_based', for initializing predictor biases or targets.
         It computes `self.decision_model.num_scenarios` quantiles for each parameter
-        defined in `self.problem.params_to_predict_shapes`.
+        defined in `self.problem.param_to_predict_shapes`.
 
         Returns:
             np.ndarray: A NumPy array where rows correspond to different quantiles/scenarios
@@ -776,7 +778,7 @@ class DecisionMaker:
         self.problem.set_mode("train")
         idx = self.problem.generate_batch_indices(batch_size=self.problem.train_size)[0]
         train_data = self.problem.read_data(idx)
-        params_shapes = self.problem.params_to_predict_shapes
+        params_shapes = self.problem.param_to_predict_shapes
         params_keys = params_shapes.keys()
 
         first_quantile_loc = 1 / (self.decision_model.num_scenarios + 1)

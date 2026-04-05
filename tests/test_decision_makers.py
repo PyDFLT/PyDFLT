@@ -142,10 +142,7 @@ class TestDecisionMakersUsingWSMC(unittest.TestCase):
         expected_objective = problem.opt_model.get_objective(data_batch, decisions_batch, data_batch)
 
         # For a minimization problem, the loss should be exactly the objective
-        self.assertTrue(
-            torch.allclose(loss_min, expected_objective),
-            "Loss for minimization problem should be equal to the objective.",
-        )
+        assert torch.allclose(loss_min, expected_objective), "Loss for minimization problem should be equal to the objective."
 
         # 2. Test MAXIMIZATION problem
         # Create a copy of the problem to avoid affecting other tests
@@ -175,10 +172,7 @@ class TestDecisionMakersUsingWSMC(unittest.TestCase):
         objective_for_max = problem.opt_model.get_objective(data_batch, decisions_batch, data_batch)
 
         # For a maximization problem, the loss should be the *negative* objective
-        self.assertTrue(
-            torch.allclose(loss_max, -objective_for_max),
-            "Loss for maximization problem should be equal to the negative objective.",
-        )
+        assert torch.allclose(loss_max, -objective_for_max), "Loss for maximization problem should be equal to the negative objective."
 
 
 if __name__ == "__main__":

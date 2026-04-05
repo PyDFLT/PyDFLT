@@ -9,7 +9,7 @@ The core functionality includes:
 """
 
 import copy
-from typing import Any, Tuple
+from typing import Any
 
 from pydflt.decision_makers import (
     DifferentiableDecisionMaker,
@@ -17,7 +17,7 @@ from pydflt.decision_makers import (
     SFGEDecisionMaker,
 )
 
-decision_maker_registry: dict[str, Tuple[type, dict[str, Any]]] = {}
+decision_maker_registry: dict[str, tuple[type, dict[str, Any]]] = {}
 
 
 def register_decision_maker(name: str, model_class: type, **params: Any) -> None:
@@ -33,7 +33,7 @@ def register_decision_maker(name: str, model_class: type, **params: Any) -> None
     decision_maker_registry[name] = (model_class, params)
 
 
-def make_decision_maker(problem: Any, name: str, **override_params: Any) -> Tuple[Any, dict[str, Any]]:
+def make_decision_maker(problem: Any, name: str, **override_params: Any) -> tuple[Any, dict[str, Any]]:
     """
     Initialize a decision maker model by its registered name with default or overridden parameters.
 

@@ -12,8 +12,8 @@ class TestTSP(unittest.TestCase):
 
         # For 4 nodes, we should have 6 edges (triangle number: 4*3/2)
         expected_num_edges = num_nodes * (num_nodes - 1) // 2
-        self.assertEqual(len(tsp.edges), expected_num_edges)
-        self.assertEqual(tsp.num_nodes, num_nodes)
+        assert len(tsp.edges) == expected_num_edges
+        assert tsp.num_nodes == num_nodes
 
     def test_dummy_problem(self):
         """
@@ -48,14 +48,14 @@ class TestTSP(unittest.TestCase):
         selected_edges = decision_dict["select_edge"]
 
         # Check that we have a valid binary solution
-        self.assertTrue(np.all((selected_edges == 0) | (selected_edges == 1)))
+        assert np.all(selected_edges == 0 | (selected_edges == 1))
 
         # Check that exactly 4 edges are selected (forming a complete tour)
-        self.assertEqual(np.sum(selected_edges), num_nodes)
+        assert np.sum(selected_edges) == num_nodes
 
         # Check that the total cost is 4 (optimal square perimeter)
         total_cost = np.sum(edge_costs * selected_edges)
-        self.assertEqual(total_cost, 4.0)
+        assert total_cost == 4.0
 
         # Verify that only the square edges are selected
         selected_edge_tuples = []
@@ -79,7 +79,7 @@ class TestTSP(unittest.TestCase):
             selected_undirected.add((edge[1], edge[0]))
 
         # The intersection should contain all square edges
-        self.assertTrue(expected_set.issubset(selected_undirected))
+        assert expected_set.issubset(selected_undirected)
 
 
 if __name__ == "__main__":

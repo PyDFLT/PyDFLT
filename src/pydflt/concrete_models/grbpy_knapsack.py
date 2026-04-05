@@ -34,7 +34,7 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
         weights_ub: float = 8.0,
         dimension: int = 1,
         seed: int = 5,
-        rounding_decimals: int = 1,
+        rounding_decimal: int = 1,
         capacity_percentage: float | None = None,
         num_scenarios: int = 1,
         time_limit: float | None = None,
@@ -48,8 +48,12 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
             weights_lb (float): Lower bound for item weights during random generation. Defaults to 3.0.
             weights_ub (float): Upper bound for item weights during random generation. Defaults to 8.0.
             dimension (int): Dimension of the weights for the items. Defaults to 1.
-            seed (int): Random seed for reproducible weight generation. Defaults to None.
+            rounding_decimal (int): Decimal places used when rounding generated item weights. Defaults to 1.
+            capacity_percentage (float | None): If provided, overrides `capacity` by setting it to this fraction
+                of the total item weight. Defaults to None.
+            seed (int): Random seed for reproducible weight generation. Defaults to 5.
             num_scenarios (int): Number of scenarios for multi-scenario optimization. Defaults to 1.
+            time_limit (float | None): Optional Gurobi time limit in seconds. Defaults to None.
         """
         # Setting input parameters
         self.num_decisions = num_decisions
@@ -58,7 +62,7 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
         self.weights_ub = weights_ub
         self.dimension = dimension
         self.seed = seed
-        self.rounding_decimals = rounding_decimals
+        self.rounding_decimal = rounding_decimal
         self.capacity_percentage = capacity_percentage
         self.num_scenarios = num_scenarios
         self.time_limit = time_limit
@@ -71,11 +75,11 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
         extra_param_shapes = None
 
         # Setting additional model parameters
-        np.random.seed(seed)
+        rng = np.random.default_rng(seed)
 
         # Initialize fixed parameters
-        unrounded_weights = np.random.uniform(weights_lb, weights_ub, (dimension, num_decisions))
-        self.weights = np.round(unrounded_weights, rounding_decimals)
+        unrounded_weights = rng.uniform(weights_lb, weights_ub, (dimension, num_decisions))
+        self.weights = np.round(unrounded_weights, rounding_decimal)
         if capacity_percentage is not None:
             self.capacity_np = self.weights.sum(axis=1) * capacity_percentage
         else:
@@ -92,7 +96,7 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
         self.supports_binding_constraints = True
         self.supports_adjacent_vertices = True
 
-    def _create_model(self):
+    def _create_model(self) -> tuple[gp.Model, dict[str, gp.MVar | gp.Var]]:
         """
         Creates the Gurobi optimization model for the knapsack problem.
         This method defines the decision variables, constraints, and model sense.
@@ -116,7 +120,7 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
 
         return gp_model, vars_dict
 
-    def _set_params(self, *params_i: np.ndarray):
+    def _set_params(self, *params_i: np.ndarray) -> None:
         """
         Sets the parameters for the knapsack model for a single instance.
         Updates the objective function with the provided item values.
@@ -134,8 +138,8 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
         self,
         data_batch: dict[str, torch.Tensor],
         decisions_batch: dict[str, torch.Tensor],
-        predictions_batch: dict[str, torch.Tensor] = None,
-    ) -> torch.float:
+        predictions_batch: dict[str, torch.Tensor] | None = None,
+    ) -> torch.Tensor:
         """
         Computes the objective function value for the knapsack problem.
         The objective is to maximize the total value of selected items.
@@ -150,7 +154,7 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
         """
         return (data_batch["item_value"] * decisions_batch["select_item"]).sum(-1)
 
-    def _getModel(
+    def _getModel(  # noqa: N802
         self,
     ):
         """

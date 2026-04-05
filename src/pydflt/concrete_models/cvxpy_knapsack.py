@@ -62,8 +62,8 @@ class CVXPYDiffKnapsackModel(CVXPYDiffModel):
         extra_param_shapes = None
 
         # Setting additional model parameters
-        np.random.seed(seed)
-        self.weights = np.random.uniform(weights_lb, weights_ub, (dimension, num_decisions))
+        rng = np.random.default_rng(seed)
+        self.weights = rng.uniform(weights_lb, weights_ub, (dimension, num_decisions))
         self.capacity_np = self.capacity * np.ones(dimension)
 
         super().__init__(
@@ -77,7 +77,7 @@ class CVXPYDiffKnapsackModel(CVXPYDiffModel):
         self,
         data_batch: dict[str, torch.Tensor],
         decisions_batch: dict[str, torch.Tensor],
-        predictions_batch: dict[str, torch.Tensor] = None,
+        predictions_batch: dict[str, torch.Tensor] | None = None,
     ) -> torch.float:
         """
         Computes the objective function value for the knapsack problem.

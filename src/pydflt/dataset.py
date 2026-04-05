@@ -1,5 +1,4 @@
 import copy
-from typing import Union
 
 import numpy as np
 import torch
@@ -27,7 +26,7 @@ class DFLDataset(Dataset):
 
     def __init__(
         self,
-        data_dict: dict[str, Union[np.ndarray, torch.Tensor]],
+        data_dict: dict[str, np.ndarray | torch.Tensor],
     ):
         """
         Initializes the DFLDataset.
@@ -62,7 +61,7 @@ class DFLDataset(Dataset):
         """
         return self.num_samples
 
-    def __getitem__(self, idx: Union[int, slice, list[int], torch.Tensor, np.ndarray]) -> dict[str, torch.Tensor]:
+    def __getitem__(self, idx: int | slice | list[int] | torch.Tensor | np.ndarray) -> dict[str, torch.Tensor]:
         """
         Retrieves a sample or a batch of samples from the dataset by index. Supports various indexing types
         compatible with PyTorch tensor indexing, including single integer, slice, list of integers,
@@ -113,8 +112,8 @@ class DFLDataset(Dataset):
         original keys. All added tensors are ensured to be at least 2D and have the correct number of samples.
 
         Args:
-            key (str): The primary key name if `data_to_add` is a single tensor,
-                              or the suffix to append to keys if `data_to_add` is a dictionary.
+            key (str): The primary key name if `data` is a single tensor,
+                              or the suffix to append to keys if `data` is a dictionary.
             data (torch.Tensor | dict[str, torch.Tensor] | list): The data to add.
                 Can be a single torch.Tensor, a dictionary of torch.Tensors, or a list.
                 The first dimension of any tensor must match `self.num_samples`.
@@ -132,7 +131,7 @@ class DFLDataset(Dataset):
             indices_list = None
 
         if isinstance(data, dict):
-            for data_key in data.keys():
+            for data_key in data:
                 tensor = data[data_key]
                 if indices_list is None:
                     assert tensor.shape[0] == self.num_samples, "Trying to add data with wrong number of samples."
@@ -144,7 +143,7 @@ class DFLDataset(Dataset):
                     if isinstance(existing, torch.Tensor):
                         full_tensor = existing
                     else:
-                        full_shape = (self.num_samples,) + tuple(tensor.shape[1:])
+                        full_shape = (self.num_samples, *tuple(tensor.shape[1:]))
                         full_tensor = tensor.new_zeros(full_shape)
                     full_tensor[indices_list] = tensor
                     self.data_dict[f"{data_key}_{key}"] = full_tensor
@@ -159,7 +158,7 @@ class DFLDataset(Dataset):
                 if isinstance(existing, torch.Tensor):
                     full_tensor = existing
                 else:
-                    full_shape = (self.num_samples,) + tuple(data.shape[1:])
+                    full_shape = (self.num_samples, *tuple(data.shape[1:]))
                     full_tensor = data.new_zeros(full_shape)
                 full_tensor[indices_list] = data
                 self.data_dict[f"{key}"] = full_tensor

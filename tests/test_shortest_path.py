@@ -10,7 +10,7 @@ class TestShortestPath(unittest.TestCase):
         grid = (5, 5)
         sp = ShortestPath(grid)
         num_coef = grid[0] * (grid[1] - 1) + grid[1] * (grid[0] - 1)
-        self.assertEqual(len(sp.arcs), num_coef)
+        assert len(sp.arcs) == num_coef
 
     def test_generate_data_seed(self):
         """
@@ -20,10 +20,10 @@ class TestShortestPath(unittest.TestCase):
         print(data_sp_one)
         data_sp_two = gen_data_shortest_path(seed=1, num_data=2, num_features=1, grid=(2, 2))
 
-        self.assertEqual(data_sp_one["features"][0], data_sp_two["features"][0])
-        self.assertEqual(data_sp_one["arc_costs"][0][0], data_sp_two["arc_costs"][0][0])
-        self.assertEqual(data_sp_one["features"][1], data_sp_two["features"][1])
-        self.assertEqual(data_sp_one["arc_costs"][1][0], data_sp_two["arc_costs"][1][0])
+        assert data_sp_one["features"][0] == data_sp_two["features"][0]
+        assert data_sp_one["arc_costs"][0][0] == data_sp_two["arc_costs"][0][0]
+        assert data_sp_one["features"][1] == data_sp_two["features"][1]
+        assert data_sp_one["arc_costs"][1][0] == data_sp_two["arc_costs"][1][0]
 
     def test_dummy_problem(self):
         # Create a simple 3x3 grid for easier testing
@@ -56,15 +56,15 @@ class TestShortestPath(unittest.TestCase):
         selected_arcs = decision_dict["select_arc"]
 
         # Check that we have a valid binary solution
-        self.assertTrue(np.all((selected_arcs == 0) | (selected_arcs == 1)))
+        assert np.all(selected_arcs == 0 | (selected_arcs == 1))
 
         # Check that exactly 4 arcs are selected (the optimal path length)
         expected_path_length = grid_rows + grid_cols - 2
-        self.assertEqual(np.sum(selected_arcs), expected_path_length)
+        assert np.sum(selected_arcs) == expected_path_length
 
         # Check that all selected arcs have cost 0 (i.e., we found the optimal path)
         selected_cost = np.sum(arc_costs * selected_arcs)
-        self.assertEqual(selected_cost, 0)
+        assert selected_cost == 0
 
 
 if __name__ == "__main__":

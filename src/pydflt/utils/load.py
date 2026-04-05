@@ -1,9 +1,9 @@
 import pickle
 from pathlib import Path
-from typing import Any, Optional, Tuple
+from typing import Any
 
 
-def print_registry(registry: dict[str, Tuple[Any, dict[str, Any]]], filter_word=""):
+def print_registry(registry: dict[str, tuple[Any, dict[str, Any]]], filter_word=""):
     """
     Prints the contents of a given registry, optionally filtering by a keyword.
     This function iterates through the items in a registry. For each item, it prints
@@ -36,7 +36,7 @@ def load_log(log_file_path: Path) -> dict[int, dict[str, float]]:
     """
     logs = {}
     try:
-        with open(log_file_path, "r") as f:
+        with open(log_file_path) as f:
             current_epoch = None
             for line in f:
                 line = line.strip()
@@ -57,7 +57,7 @@ def load_log(log_file_path: Path) -> dict[int, dict[str, float]]:
     return logs
 
 
-def load_data_from_dict(path: Optional[str] = None) -> dict[str, Any]:
+def load_data_from_dict(path: str | None = None) -> dict[str, Any]:
     """
     Loads a pickled data dictionary from a specified file path.
     This function opens a file in binary read mode, loads the data using pickle,
@@ -77,7 +77,7 @@ def load_data_from_dict(path: Optional[str] = None) -> dict[str, Any]:
 
     with open(path, "rb") as f:
         data_dict = pickle.load(f)
-    print("Loaded data from %s" % path)
+    print(f"Loaded data from {path}")
     for key, value in data_dict.items():
         print(key, value.shape)
 

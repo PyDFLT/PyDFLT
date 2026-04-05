@@ -1,11 +1,12 @@
+import gurobipy as gp
 import numpy as np
 import torch
 
 from pydflt.abstract_models.grbpy import GRBPYModel
-from pydflt.utils.vrp import vrpModel
+from pydflt.utils.vrp import VrpModel
 
 
-class VehicleRouting(GRBPYModel, vrpModel):
+class VehicleRouting(GRBPYModel, VrpModel):
     """
     Gurobi-based capacitated Vehicle Routing Problem (VRP) using the PyEPO vrpModel.
 
@@ -46,8 +47,8 @@ class VehicleRouting(GRBPYModel, vrpModel):
         self.time_limit = time_limit
 
         # Setting additional model parameters
-        (np.random.seed(seed),)
-        self.demands = np.round(self.demands_lb + np.random.rand(self.num_nodes - 1) * (self.demands_ub - self.demands_lb))
+        rng = np.random.default_rng(seed)
+        self.demands = np.round(self.demands_lb + rng.random(self.num_nodes - 1) * (self.demands_ub - self.demands_lb))
         if scale_demand > 0:
             total_demand = sum(self.demands)
             total_goal_demand = capacity * num_vehicles * scale_demand
@@ -55,7 +56,7 @@ class VehicleRouting(GRBPYModel, vrpModel):
             assert max(self.demands) <= capacity, "Vrp parameters cause a single demand to exceed capacity"
 
         # Initialize the underlying PyEPO VRP model
-        vrpModel.__init__(self, num_nodes=num_nodes, demands=self.demands, capacity=capacity, num_vehicles=num_vehicles)
+        VrpModel.__init__(self, num_nodes=num_nodes, demands=self.demands, capacity=capacity, num_vehicles=num_vehicles)
 
         num_edges = len(self.edges)
         model_sense = "MIN"
@@ -78,7 +79,7 @@ class VehicleRouting(GRBPYModel, vrpModel):
         )
 
         # Use the VRP lazy constraint callback
-        self.lazy_constraints_method = self._vrpCallback
+        self.lazy_constraints_method = self._vrp_callback
 
     def _set_params(self, params_i: np.ndarray) -> None:
         """
@@ -98,7 +99,7 @@ class VehicleRouting(GRBPYModel, vrpModel):
         """
         return (data_batch["edge_costs"] * decisions_batch["select_edge"]).sum(-1)
 
-    def _create_model(self):
+    def _create_model(self) -> tuple[gp.Model, dict[str, gp.MVar | gp.Var]]:
         """
         Reuse the PyEPO VRP model to ensure consistent formulation.
         """

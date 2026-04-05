@@ -58,7 +58,7 @@ class GRBPYModel(OptimizationModel):
             extra_param_shapes (dict[str, tuple[int, ...]] | None): An optional dictionary specifying additional
                                                                     parameters that change from sample to sample
                                                                     but are known.
-            verbose (bool): If True, show a progress bar while solving batches. Defaults to True.
+            verbose (bool): If True, show a progress bar while solving batches. Defaults to False.
             time_limit (float | None): Optional Gurobi time limit in seconds. Defaults to None.
                                        When given, the currently best found decision is returned instead of the optimal.
                                        When no feasible decision has been found, an earlier found feasible decision
@@ -89,6 +89,11 @@ class GRBPYModel(OptimizationModel):
         self._stored_feasible_decision: dict[str, np.ndarray] | None = None
 
     def relax_in_place(self) -> None:
+        """
+        Converts all integer and binary variables in `self.gp_model` to continuous in-place.
+        This mutates the underlying Gurobi model directly, producing a continuous relaxation
+        without creating a new model object.
+        """
         self.gp_model.update()
         for var in self.gp_model.getVars():
             if var.VType != gp.GRB.CONTINUOUS:
@@ -152,7 +157,7 @@ class GRBPYModel(OptimizationModel):
             dict[str, torch.Tensor]: A dictionary containing the computed decision variables for the batch,
                                      matching the keys in `var_shapes`.
         """
-        assert all(key in data_batch.keys() for key in self.all_param_names), "data_batch must contain param_names!"
+        assert all(key in data_batch for key in self.all_param_names), "data_batch must contain param_names!"
 
         list_decisions_batch = {key: [] for key in self.var_names}  # Here we save the output
         batch_size = len(data_batch[self.all_param_names[0]])  # Read batch size from the data
@@ -168,7 +173,7 @@ class GRBPYModel(OptimizationModel):
                 list_decisions_batch[key].append(val)
         # Transform to tensor and match the device
         tensor_decisions_batch = {}
-        for key in list_decisions_batch.keys():
+        for key in list_decisions_batch:
             tensor_decisions_batch[key] = torch.from_numpy(np.stack(list_decisions_batch[key], axis=0)).to(torch.float32).to(device_data)
 
         return tensor_decisions_batch
@@ -178,7 +183,7 @@ class GRBPYModel(OptimizationModel):
         Solves a batch and also returns binding constraints per instance.
         Based on: https://github.com/khalil-research/CaVE
         """
-        assert all(key in data_batch.keys() for key in self.all_param_names), "data_batch must contain param_names!"
+        assert all(key in data_batch for key in self.all_param_names), "data_batch must contain param_names!"
         list_decisions_batch = {}
         binding_constraints = []
         batch_size = len(data_batch[self.all_param_names[0]])
@@ -200,8 +205,29 @@ class GRBPYModel(OptimizationModel):
         max_iterations_degenerate: int = 250,
         max_adjacent_vertices: int = 10000,
     ) -> tuple[dict[str, np.ndarray], list[np.ndarray]]:
+        """
+        Solves a batch and also returns the adjacent vertices of each optimal solution.
+        Based on: https://github.com/ML-KULeuven/Solver-Free-DFL/
+
+        For each instance, the problem is solved to obtain the optimal decision, and then the
+        adjacent vertices of that solution on the feasible polytope are enumerated. Adjacent
+        vertices are used by the LAVA loss function.
+
+        Args:
+            data_batch (dict[str, torch.Tensor]): A dictionary containing input data for the optimization.
+            max_iterations_degenerate (int): Maximum pivot iterations when handling degenerate vertices.
+                Defaults to 250.
+            max_adjacent_vertices (int): Maximum number of adjacent vertices to collect per instance.
+                Defaults to 10000.
+
+        Returns:
+            tuple[dict[str, np.ndarray], list[np.ndarray]]: A tuple of:
+                - decisions_batch: dict mapping variable names to stacked optimal decisions.
+                - adjacent_vertices: list of arrays (one per instance), each containing the
+                  adjacent vertices of that instance's optimal solution.
+        """
         # based on: https://github.com/ML-KULeuven/Solver-Free-DFL/
-        assert all(key in data_batch.keys() for key in self.all_param_names), "data_batch must contain param_names!"
+        assert all(key in data_batch for key in self.all_param_names), "data_batch must contain param_names!"
         from pydflt.utils.adjacent_vertices import (
             convert_to_slack_form,
             get_adjacent_vertices,
@@ -216,7 +242,7 @@ class GRBPYModel(OptimizationModel):
         if getattr(base_model, "NumQConstrs", 0) > 0 or getattr(base_model, "NumQObj", 0) > 0:
             raise ValueError("Adjacent vertices require a linear model.")
         slack_model = convert_to_slack_form(base_model)
-        slack_model_A, _ = get_constraints_matrix_form_slack_model(slack_model)
+        slack_model_A, _ = get_constraints_matrix_form_slack_model(slack_model)  # noqa: N806
         slack_vars = slack_model.getVars()
         num_vars = len(base_model.getVars())
 
@@ -292,6 +318,23 @@ class GRBPYModel(OptimizationModel):
         return decision_dict_i
 
     def _solve_sample_with_binding_constraints(self, *params_i_np: np.ndarray, quiet: bool = True) -> tuple[dict[str, np.ndarray], np.ndarray]:
+        """
+        Solves one instance and returns both the optimal decision and its binding constraints.
+        Based on: https://github.com/khalil-research/CaVE
+
+        If the model uses lazy constraints, they are applied during the solve and then cleared
+        afterwards to restore the model to its base state.
+
+        Args:
+            *params_i_np (np.ndarray): Parameters for the current instance.
+            quiet (bool): If True, suppresses Gurobi solver output. Defaults to True.
+
+        Returns:
+            tuple[dict[str, np.ndarray], np.ndarray]: A tuple of:
+                - decision_dict_i: dict mapping variable names to the optimal decision arrays.
+                - bctr: a float32 array of shape (num_binding, num_vars) containing the
+                  coefficient rows of all binding constraints at the optimal solution.
+        """
         # based on: https://github.com/khalil-research/CaVE
         if quiet:
             self.gp_model.Params.OutputFlag = 0
@@ -303,9 +346,8 @@ class GRBPYModel(OptimizationModel):
             self.gp_model.optimize(self.lazy_constraints_method)
         else:
             self.gp_model.optimize()
-        if self.time_limit is not None and self.gp_model.Status == gp.GRB.TIME_LIMIT:
-            if self.gp_model.SolCount <= 0:
-                raise RuntimeError("Time limit reached without a feasible solution.")
+        if self.time_limit is not None and self.gp_model.Status == gp.GRB.TIME_LIMIT and self.gp_model.SolCount <= 0:
+            raise RuntimeError("Time limit reached without a feasible solution.")
 
         if existing_constrs is not None:
             self._capture_lazy_constraints(existing_constrs)
@@ -325,6 +367,24 @@ class GRBPYModel(OptimizationModel):
         return decision_dict_i, bctr
 
     def _get_binding_constraints(self, slack_tol: float = 1e-5) -> np.ndarray:
+        """
+        Returns the coefficient rows of all binding constraints at the current optimal solution.
+        Based on: https://github.com/khalil-research/CaVE
+
+        A constraint is considered binding if its slack is below `slack_tol`. For inequality
+        constraints, the row is negated for >= constraints so that all rows represent active
+        upper bounds. Equality constraints contribute two rows (positive and negated).
+        Additionally, variable bound constraints are included for variables at their lower
+        (≤ 1e-5) or upper (≥ 1 - 1e-5) bounds.
+
+        Args:
+            slack_tol (float): Tolerance below which a constraint slack is treated as zero
+                (i.e., the constraint is considered binding). Defaults to 1e-5.
+
+        Returns:
+            np.ndarray: A float32 array of shape (num_binding, num_vars) containing the
+                coefficient rows of all binding constraints.
+        """
         # based on: https://github.com/khalil-research/CaVE
         vars_list = self.gp_model.getVars()
         num_vars = len(vars_list)
@@ -334,7 +394,7 @@ class GRBPYModel(OptimizationModel):
             for constr in self.lazy_constraints:
                 added_constrs.append(self.gp_model.addConstr(constr))
             for var in vars_list:
-                var.start = int(round(var.x))
+                var.start = round(var.x)
             self.gp_model.update()
             self.gp_model.optimize()
         for constr in self.gp_model.getConstrs():
@@ -362,6 +422,11 @@ class GRBPYModel(OptimizationModel):
         return np.array(constrs, dtype=np.float32)
 
     def _clear_lazy_constraints(self) -> None:
+        """
+        Removes all lazy constraints that were added to `self.gp_model` during the most recent solve.
+        After removal, `self._lazy_constraints_grb` is reset to an empty list so the model is
+        restored to its base constraint set for the next solve.
+        """
         if not self._lazy_constraints_grb:
             return
         self.gp_model.remove(self._lazy_constraints_grb)
@@ -369,6 +434,16 @@ class GRBPYModel(OptimizationModel):
         self._lazy_constraints_grb = []
 
     def _capture_lazy_constraints(self, existing_constrs: list[gp.Constr]) -> None:
+        """
+        Records the lazy constraints that were dynamically added during the most recent solve.
+        Computes the difference between the current constraint set and `existing_constrs` (the
+        constraints present before the solve began) and stores the new ones in
+        `self._lazy_constraints_grb` for later removal by `_clear_lazy_constraints`.
+
+        Args:
+            existing_constrs (list[gp.Constr]): The list of constraints that existed in
+                `self.gp_model` before the solve started.
+        """
         existing_set = set(existing_constrs)
         current = self.gp_model.getConstrs()
         self._lazy_constraints_grb = [constr for constr in current if constr not in existing_set]

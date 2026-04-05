@@ -1,6 +1,6 @@
 import copy
 import time
-from typing import Any
+from typing import Any, ClassVar
 
 import numpy as np
 import optuna
@@ -8,7 +8,7 @@ from optuna.trial import Trial
 
 from pydflt.decision_makers import DecisionMaker
 from pydflt.logger import Logger
-from pydflt.utils.reproducability import set_seeds
+from pydflt.utils.reproducibility import set_seeds
 
 
 class Runner:
@@ -39,7 +39,7 @@ class Runner:
         logger (Logger): The logger instance used for recording experiment results.
     """
 
-    allowed_metrics: list[str] = [
+    allowed_metrics: ClassVar[list[str]] = [
         "objective",
         "abs_regret",
         "rel_regret",
@@ -50,7 +50,7 @@ class Runner:
         "mse_norm",
         "mae_norm",
     ]
-    default_metrics: list[str] = [
+    default_metrics: ClassVar[list[str]] = [
         "objective",
         "abs_regret",
         "rel_regret",
@@ -201,12 +201,14 @@ class Runner:
         # Initial validation before training (epoch 0)
         if self.start_time is None:
             self.start_time = time.perf_counter()
-        if any(m in self.val_metrics or m in self.test_metrics for m in ["abs_regret", "rel_regret", "sym_rel_regret"]):
-            if not getattr(self.decision_maker.problem, "compute_optimal_objectives", False):
-                self._print_message(
-                    "Warning: regret metrics requested but compute_optimal_objectives=False. "
-                    "Optimal objectives will be computed on-the-fly during evaluation, which is slower than precomputing."
-                )
+        regret_metrics = ["abs_regret", "rel_regret", "sym_rel_regret"]
+        if any(m in self.val_metrics or m in self.test_metrics for m in regret_metrics) and not getattr(
+            self.decision_maker.problem, "compute_optimal_objectives", False
+        ):
+            self._print_message(
+                "Warning: regret metrics requested but compute_optimal_objectives=False. "
+                "Optimal objectives will be computed on-the-fly during evaluation, which is slower than precomputing."
+            )
         self._print_message(f"Epoch 0/{self.num_epochs}: Starting initial validation...")
         validation_epoch_results_initial = self.decision_maker.run_epoch(mode="validation", epoch_num=0, metrics=self.val_metrics)
         validation_is_empty = len(validation_epoch_results_initial) == 0
@@ -262,17 +264,15 @@ class Runner:
                     raise optuna.TrialPruned()
 
             # Saving best model found so far
-            if self.save_best:
-                if best_validation_results is None or validation_eval < best_validation_results:
-                    self._print_message(f"New best validation evaluation ({self.main_metric}): {validation_eval} " f"(was {best_validation_results})")
-                    self.decision_maker.save_best_predictor()
-                    best_validation_results = copy.deepcopy(validation_eval)
+            if self.save_best and (best_validation_results is None or validation_eval < best_validation_results):
+                self._print_message(f"New best validation evaluation ({self.main_metric}): {validation_eval} " f"(was {best_validation_results})")
+                self.decision_maker.save_best_predictor()
+                best_validation_results = copy.deepcopy(validation_eval)
 
             # Early stopping
-            if self.early_stop:
-                if self._check_early_stopping(validation_eval):
-                    self._print_message(f"Early stopping triggered at epoch {epoch}!")
-                    break
+            if self.early_stop and self._check_early_stopping(validation_eval):
+                self._print_message(f"Early stopping triggered at epoch {epoch}!")
+                break
 
         # Test results
         self._print_message("Training finished. Evaluating on the test set...")

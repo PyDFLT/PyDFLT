@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
 import optuna
@@ -14,13 +14,13 @@ class SearchSpaceConfig:
 
     def __init__(self, config_path: str):
         """Load search space configuration from YAML file."""
-        with open(config_path, "r") as f:
+        with open(config_path) as f:
             # This config is of depth two: {'decision_maker': {'lr':...}, 'predictor': ...}
             self.config = yaml.safe_load(f)
         self.components = list(self.config.keys())
-        self.keys = {key: comp for comp in self.components for key in self.config[comp].keys()}
+        self.keys = {key: comp for comp in self.components for key in self.config[comp]}
 
-    def suggest_value(self, trial: optuna.Trial, param_name: str, param_config: Dict[str, Any]):
+    def suggest_value(self, trial: optuna.Trial, param_name: str, param_config: dict[str, Any]):
         """Suggest a value for a parameter based on its configuration."""
         if param_config["type"] == "float":
             return trial.suggest_float(
@@ -41,7 +41,7 @@ class SearchSpaceConfig:
         else:
             raise ValueError(f"Unknown parameter type: {param_config['type']}")
 
-    def get_trial_config(self, trial: optuna.Trial) -> Dict[str, Any]:
+    def get_trial_config(self, trial: optuna.Trial) -> dict[str, Any]:
         """Define the hyperparameters for a trial."""
         config = {}
         for component in self.components:

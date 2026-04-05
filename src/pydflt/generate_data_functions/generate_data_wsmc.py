@@ -1,9 +1,7 @@
-from typing import Optional
-
 import numpy as np
 
 
-def gen_data_wsmc(seed: Optional[int], num_data: int, num_features: int, num_items: int, degree: int = 1, noise_width: float = 0.0) -> dict[str, np.ndarray]:
+def gen_data_wsmc(seed: int | None, num_data: int, num_features: int, num_items: int, degree: int = 1, noise_width: float = 0.0) -> dict[str, np.ndarray]:
     """
     Generate synthetic data for Weighted Set Multi-Cover (WSMC) problems.
 
@@ -33,16 +31,16 @@ def gen_data_wsmc(seed: Optional[int], num_data: int, num_features: int, num_ite
     if degree <= 0:
         raise ValueError(f"degree = {degree} should be positive.")
 
-    np.random.seed(seed)
+    rng = np.random.default_rng(seed)
 
     n = num_data
     p = num_features
     m = num_items
 
     # Random matrix parameter B
-    B = np.random.binomial(1, 0.5, (m, p))
+    B = rng.binomial(1, 0.5, (m, p))  # noqa: N806
     # Feature vectors
-    x = np.random.normal(0, 1, (n, p))
+    x = rng.normal(0, 1, (n, p))
     # Value of items
     c = np.zeros((n, m), dtype=int)
 
@@ -53,7 +51,7 @@ def gen_data_wsmc(seed: Optional[int], num_data: int, num_features: int, num_ite
         values *= 5
         values /= 3.5**degree
         # Add noise
-        epsilon = np.random.uniform(1 - noise_width, 1 + noise_width, m)
+        epsilon = rng.uniform(1 - noise_width, 1 + noise_width, m)
         values *= epsilon
         # Round to int
         values = np.ceil(values)
