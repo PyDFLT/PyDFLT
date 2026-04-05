@@ -20,7 +20,7 @@ class GRBPYTwoStageModel(GRBPYModel):
 
     def __init__(
         self,
-        variable_shapes: dict[str, tuple[int, ...]],
+        var_shapes: dict[str, tuple[int, ...]],
         param_to_predict_shapes: dict[str, tuple[int, ...]],
         model_sense: str,
         extra_param_shapes: dict[str, tuple[int, ...]] | None = None,
@@ -29,8 +29,8 @@ class GRBPYTwoStageModel(GRBPYModel):
         Initializes the GRBPYTwoStageModel.
 
         Args:
-            variable_shapes (dict[str, tuple[int, ...]]): A dictionary specifying the names and shapes of
-                                                          all decision variables (including both first and second stage).
+            var_shapes (dict[str, tuple[int, ...]]): A dictionary specifying the names and shapes of
+                                                     all decision variables (including both first and second stage).
             param_to_predict_shapes (dict[str, tuple[int, ...]]): A dictionary specifying the names and shapes of
                                                                  parameters that must be provided prior to
                                                                  running optimization.
@@ -42,7 +42,7 @@ class GRBPYTwoStageModel(GRBPYModel):
         """
         GRBPYModel.__init__(
             self,
-            variable_shapes,
+            var_shapes,
             param_to_predict_shapes,
             model_sense,
             extra_param_shapes=extra_param_shapes,

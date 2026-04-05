@@ -31,10 +31,10 @@ class Problem:
         opt_model (OptimizationModel): The optimization model associated with the problem.
         num_vars (int): Number of decision variables in the optimization model.
         num_features (int): Number of features in the input data.
-        params_to_predict_shapes (Dict[str, Tuple]): Shapes of the parameters to be predicted
+        param_to_predict_shapes (Dict[str, Tuple]): Shapes of the parameters to be predicted
             by a machine learning model, as defined in `opt_model`.
         num_predictions (int): Total number of scalar values to be predicted, derived
-            from `params_to_predict_shapes`.
+            from `param_to_predict_shapes`.
         dataset (DFLDataset): The dataset object holding all problem instances.
         train_ratio (float): Proportion of the dataset to use for training.
         val_ratio (float): Proportion of the dataset to use for validation.
@@ -116,7 +116,7 @@ class Problem:
         self.opt_model = opt_model
         self.num_vars = self.opt_model.num_vars
         self.num_features = data_dict["features"].shape[1]
-        self.params_to_predict_shapes = self.opt_model.param_to_predict_shapes
+        self.param_to_predict_shapes = self.opt_model.param_to_predict_shapes
         self.num_predictions = self.opt_model.num_predictions
 
         # Wrap the data into the dataset class

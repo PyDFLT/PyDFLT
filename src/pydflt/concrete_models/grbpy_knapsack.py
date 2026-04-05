@@ -34,7 +34,7 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
         weights_ub: float = 8.0,
         dimension: int = 1,
         seed: int = 5,
-        rounding_decimals: int = 1,
+        rounding_decimal: int = 1,
         capacity_percentage: float | None = None,
         num_scenarios: int = 1,
         time_limit: float | None = None,
@@ -48,7 +48,8 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
             weights_lb (float): Lower bound for item weights during random generation. Defaults to 3.0.
             weights_ub (float): Upper bound for item weights during random generation. Defaults to 8.0.
             dimension (int): Dimension of the weights for the items. Defaults to 1.
-            seed (int): Random seed for reproducible weight generation. Defaults to None.
+            rounding_decimal (int): Decimal places used when rounding generated item weights. Defaults to 1.
+            seed (int): Random seed for reproducible weight generation. Defaults to 5.
             num_scenarios (int): Number of scenarios for multi-scenario optimization. Defaults to 1.
         """
         # Setting input parameters
@@ -58,7 +59,7 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
         self.weights_ub = weights_ub
         self.dimension = dimension
         self.seed = seed
-        self.rounding_decimals = rounding_decimals
+        self.rounding_decimal = rounding_decimal
         self.capacity_percentage = capacity_percentage
         self.num_scenarios = num_scenarios
         self.time_limit = time_limit
@@ -75,7 +76,7 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
 
         # Initialize fixed parameters
         unrounded_weights = rng.uniform(weights_lb, weights_ub, (dimension, num_decisions))
-        self.weights = np.round(unrounded_weights, rounding_decimals)
+        self.weights = np.round(unrounded_weights, rounding_decimal)
         if capacity_percentage is not None:
             self.capacity_np = self.weights.sum(axis=1) * capacity_percentage
         else:

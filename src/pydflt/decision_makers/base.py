@@ -489,13 +489,13 @@ class DecisionMaker:
     ) -> torch.Tensor:
         """
         Converts a dictionary of tensors to a single tensor by concatenating them.
-        This method seems similar to `dict_to_predictions` but uses `self.problem.params_to_predict_shapes`
+        This method seems similar to `dict_to_predictions` but uses `self.problem.param_to_predict_shapes`
         as the reference for keys and order, which might differ from `self.decision_model.param_to_predict_shapes`.
         It also concatenates along `dim=1`, assuming features.
 
         Args:
             predictions_dict (dict[str, torch.Tensor]): Dictionary of parameter names to tensors.
-                The keys should align with `self.problem.params_to_predict_shapes`.
+                The keys should align with `self.problem.param_to_predict_shapes`.
             output_device (str | torch.device | None, optional): Device to move the final tensor to.
                 Defaults to `self.device`.
 
@@ -510,7 +510,7 @@ class DecisionMaker:
         tensors_list = []
 
         # Iterate through the keys in keys_to_predict
-        for key in self.problem.params_to_predict_shapes:
+        for key in self.problem.param_to_predict_shapes:
             if key in predictions_dict:
                 tensor = predictions_dict[key]
                 tensor = tensor.to(output_device)  # Move to output_device if necessary
@@ -715,7 +715,7 @@ class DecisionMaker:
                 means.append(train_data[f"{name}_optimal"].mean(dim=0).detach().numpy().reshape(-1))
             means = np.concatenate(means)
         else:
-            params_shapes = self.problem.params_to_predict_shapes
+            params_shapes = self.problem.param_to_predict_shapes
             params_keys = params_shapes.keys()
             means = []
             for key in params_keys:
@@ -746,7 +746,7 @@ class DecisionMaker:
                 stds.append(train_data[f"{name}_optimal"].std(dim=0).detach().numpy().reshape(-1))
             stds = np.concatenate(stds)
         else:
-            params_shapes = self.problem.params_to_predict_shapes
+            params_shapes = self.problem.param_to_predict_shapes
             params_keys = params_shapes.keys()
             stds = []
             for key in params_keys:
@@ -768,7 +768,7 @@ class DecisionMaker:
         This method is primarily used when `self.to_decision_pars == 'quantiles' and the
         decision model is 'scenario_based', for initializing predictor biases or targets.
         It computes `self.decision_model.num_scenarios` quantiles for each parameter
-        defined in `self.problem.params_to_predict_shapes`.
+        defined in `self.problem.param_to_predict_shapes`.
 
         Returns:
             np.ndarray: A NumPy array where rows correspond to different quantiles/scenarios
@@ -778,7 +778,7 @@ class DecisionMaker:
         self.problem.set_mode("train")
         idx = self.problem.generate_batch_indices(batch_size=self.problem.train_size)[0]
         train_data = self.problem.read_data(idx)
-        params_shapes = self.problem.params_to_predict_shapes
+        params_shapes = self.problem.param_to_predict_shapes
         params_keys = params_shapes.keys()
 
         first_quantile_loc = 1 / (self.decision_model.num_scenarios + 1)
