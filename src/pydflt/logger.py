@@ -1,7 +1,7 @@
 import os
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import wandb
@@ -31,7 +31,7 @@ class Logger:
         self,
         experiment_name: str,
         project_name: str,
-        config: Optional[dict[str, Any]] = None,
+        config: dict[str, Any] | None = None,
         use_wandb: bool = True,
         experiments_folder: str = "results/",
         main_metric: str = "abs_regret",

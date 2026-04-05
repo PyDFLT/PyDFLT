@@ -13,7 +13,7 @@ def set_seeds(seed: int, full_reproducibility_GPUs: bool = False) -> None:
         full_reproducibility_GPUs (bool): Set to True to enable full GPU reproducibility. Might impact performance.
     """
 
-    np.random.seed(seed)
+    np.random.seed(seed)  # noqa: NPY002
     random.seed(seed)
     torch.manual_seed(seed)
     if torch.cuda.is_available():

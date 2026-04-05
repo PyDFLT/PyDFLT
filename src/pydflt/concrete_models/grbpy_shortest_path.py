@@ -140,7 +140,7 @@ class ShortestPath(GRBPYModel, optGrbModel):
         self,
         data_batch: dict[str, torch.Tensor],
         decisions_batch: dict[str, torch.Tensor],
-        predictions_batch: dict[str, torch.Tensor] = None,
+        predictions_batch: dict[str, torch.Tensor] | None = None,
     ) -> torch.float:
         """
         Computes the objective function value for the shortest path problem.
@@ -156,7 +156,7 @@ class ShortestPath(GRBPYModel, optGrbModel):
         """
         return (data_batch["arc_costs"] * decisions_batch["select_arc"]).sum(-1)
 
-    def _getModel(
+    def _getModel(  # noqa: N802
         self,
     ):
         """

@@ -1,6 +1,6 @@
 # Partially based on: https://github.com/facebookresearch/LANCER
 
-from typing import Iterator
+from collections.abc import Iterator
 
 import numpy as np
 import torch

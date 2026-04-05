@@ -1,6 +1,6 @@
 import copy
 from abc import abstractmethod
-from typing import Any
+from typing import Any, ClassVar
 
 import numpy as np
 import torch
@@ -61,15 +61,15 @@ class DecisionMaker:
         _epoch_counts (int): Counter for the number of epochs run (though not explicitly updated in this snippet).
     """
 
-    allowed_losses: list[str] = [
+    allowed_losses: ClassVar[list[str]] = [
         # Define allowed loss function strings here, e.g., 'objective', 'regret'
     ]
 
-    allowed_decision_models: list[str] = [
+    allowed_decision_models: ClassVar[list[str]] = [
         # Define allowed decision model strings here, e.g., 'base', 'quadratic', 'scenario_based'
     ]
 
-    allowed_predictors: list[str] = [
+    allowed_predictors: ClassVar[list[str]] = [
         # Define allowed predictor strings here, e.g., 'MLP', 'Normal', 'LinearSKL'
     ]
 
@@ -144,13 +144,13 @@ class DecisionMaker:
                 Defaults to None (empty dict).
         """
 
-        assert loss_function_str in self.allowed_losses, "Loss must be from %s" % self.allowed_losses
-        assert decision_model_str in self.allowed_decision_models, "Decision model must be from %s" % self.allowed_decision_models
-        assert predictor_str in self.allowed_predictors, "Predictor must be from %s" % self.allowed_predictors
+        assert loss_function_str in self.allowed_losses, f"Loss must be from {self.allowed_losses}"
+        assert decision_model_str in self.allowed_decision_models, f"Decision model must be from {self.allowed_decision_models}"
+        assert predictor_str in self.allowed_predictors, f"Predictor must be from {self.allowed_predictors}"
         allowed_to_decision_pars_approaches = ["none", "sample", "quantiles"]
-        assert to_decision_pars in allowed_to_decision_pars_approaches, "To decision pars must be from %s" % allowed_to_decision_pars_approaches
+        assert to_decision_pars in allowed_to_decision_pars_approaches, f"To decision pars must be from {allowed_to_decision_pars_approaches}"
         use_dist_at_mode_approaches = ["none", "test"]
-        assert use_dist_at_mode in use_dist_at_mode_approaches, "Use dist at mode must be from %s" % use_dist_at_mode_approaches
+        assert use_dist_at_mode in use_dist_at_mode_approaches, f"Use dist at mode must be from {use_dist_at_mode_approaches}"
         if decision_model_str == "quadratic" and (standardize_predictions or init_OLS):
             assert problem.compute_optimal_decisions or problem.knn_robust_loss > 0, (
                 "When the decision model is quadratic and init_OLS or standardize_predictions is True, "
@@ -338,9 +338,9 @@ class DecisionMaker:
             metrics=metrics,
         )
         # Note that these metrics are over all dimensions, per batch, and the epoch mean will be logged.
-        for key in predictions_batch.keys():
+        for key in predictions_batch:
             batch_results[key] = predictions_batch[key].cpu().detach().numpy().astype(np.float32)
-        for key in decisions_batch.keys():
+        for key in decisions_batch:
             batch_results[key] = decisions_batch[key].cpu().detach().numpy().astype(np.float32)
 
         return batch_results
@@ -378,7 +378,7 @@ class DecisionMaker:
         if self.to_decision_pars == "sample":
             sample = dist.sample(torch.Size([self.num_scenarios]))
             num_dims = sample.dim()
-            new_order = list(range(1, num_dims)) + [0]
+            new_order = [*range(1, num_dims), 0]
             scenarios = sample.permute(new_order)  # We put the scenario/sample dimension as last
         elif self.to_decision_pars == "quantiles":
             first_quantile_loc = 1 / (self.num_scenarios + 1)
@@ -389,7 +389,7 @@ class DecisionMaker:
                 quantile_locs = quantile_locs.unsqueeze(-1)
             quantile_locs = quantile_locs.expand(-1, *shape)
             quantiles = dist.icdf(quantile_locs)
-            new_order = list(range(1, num_dims + 1)) + [0]
+            new_order = [*range(1, num_dims + 1), 0]
             scenarios = quantiles.permute(new_order)  # We put the scenario/sample dimension as last
         else:
             raise ValueError(f"Unsupported 'to_decision_pars' strategy: {self.to_decision_pars}")
@@ -565,8 +565,11 @@ class DecisionMaker:
         if "num_scenarios" in self.decision_model_kwargs and self.predictor_str == "MLP":
             # For now when the decision_model kwargs has num_scenarios, the predictor_kwargs gets the same number
             assert (
-                "num_scenarios" in predictor_kwargs_processed and predictor_kwargs_processed["num_scenarios"] != self.decision_model_kwargs["num_scenarios"]
-            ), "Num scenarios in predictor_kwargs cannot be specified and unequal to num scenarios in " "decision_model_kwargs."
+                "num_scenarios" in predictor_kwargs_processed
+            ), "Num scenarios in predictor_kwargs cannot be specified and unequal to num scenarios in decision_model_kwargs."
+            assert (
+                predictor_kwargs_processed["num_scenarios"] != self.decision_model_kwargs["num_scenarios"]
+            ), "Num scenarios in predictor_kwargs cannot be specified and unequal to num scenarios in decision_model_kwargs."
             predictor_kwargs_processed["num_scenarios"] = self.decision_model_kwargs["num_scenarios"]
 
         # If the standardize_predictions is True or not given, then an additional layer is added to the predictor that
@@ -577,9 +580,8 @@ class DecisionMaker:
                 predictor_kwargs_processed.get("num_hidden_layers", 1) == 0
             ), "When init_OLS is True, predictor_kwargs num_hidden_layers has to be set to 0 (linear model)."
         if self.standardize_predictions:
-            assert (
-                "shift" not in predictor_kwargs_processed and "scale" not in predictor_kwargs_processed
-            ), "When standardize_predictions is not specified or True, it will overwrite scale and shift."
+            assert "shift" not in predictor_kwargs_processed, "When standardize_predictions is not specified or True, it will overwrite scale and shift."
+            assert "scale" not in predictor_kwargs_processed, "When standardize_predictions is not specified or True, it will overwrite scale and shift."
             predictor_kwargs_processed["shift"] = self._get_means()
             predictor_kwargs_processed["scale"] = self._get_stds()
 
@@ -587,7 +589,7 @@ class DecisionMaker:
         base_predictor = IMPLEMENTED_PREDICTORS[self.predictor_str](**predictor_kwargs_processed).to(self.device)
 
         if self.init_OLS:
-            base_predictor = self._init_OLS(base_predictor)
+            base_predictor = self._init_ols(base_predictor)
 
         # Set the predictor
         self.predictor = base_predictor
@@ -621,7 +623,7 @@ class DecisionMaker:
 
         return noisifier
 
-    def _init_OLS(self, predictor: Predictor) -> Predictor:
+    def _init_ols(self, predictor: Predictor) -> Predictor:
         """
         Initializes the weights of a linear predictor layer using Ordinary Least Squares (OLS).
 

@@ -71,10 +71,10 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
         extra_param_shapes = None
 
         # Setting additional model parameters
-        np.random.seed(seed)
+        rng = np.random.default_rng(seed)
 
         # Initialize fixed parameters
-        unrounded_weights = np.random.uniform(weights_lb, weights_ub, (dimension, num_decisions))
+        unrounded_weights = rng.uniform(weights_lb, weights_ub, (dimension, num_decisions))
         self.weights = np.round(unrounded_weights, rounding_decimals)
         if capacity_percentage is not None:
             self.capacity_np = self.weights.sum(axis=1) * capacity_percentage
@@ -134,7 +134,7 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
         self,
         data_batch: dict[str, torch.Tensor],
         decisions_batch: dict[str, torch.Tensor],
-        predictions_batch: dict[str, torch.Tensor] = None,
+        predictions_batch: dict[str, torch.Tensor] | None = None,
     ) -> torch.float:
         """
         Computes the objective function value for the knapsack problem.
@@ -150,7 +150,7 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
         """
         return (data_batch["item_value"] * decisions_batch["select_item"]).sum(-1)
 
-    def _getModel(
+    def _getModel(  # noqa: N802
         self,
     ):
         """

@@ -1,5 +1,4 @@
 from abc import abstractmethod
-from typing import Optional
 
 import cvxpy as cp
 import torch
@@ -30,7 +29,7 @@ class CVXPYDiffModel(OptimizationModel):
         var_shapes: dict[str, tuple[int, ...]],
         param_to_predict_shapes: dict[str, tuple[int, ...]],
         model_sense: str,
-        extra_param_shapes: Optional[dict[str, tuple[int, ...]]] = None,
+        extra_param_shapes: dict[str, tuple[int, ...]] | None = None,
     ) -> None:
         """
         Initializes the CVXPYDiffModel.
@@ -65,7 +64,7 @@ class CVXPYDiffModel(OptimizationModel):
         self,
         data_batch: dict[str, torch.Tensor],
         decisions_batch: dict[str, torch.Tensor],
-        predictions_batch: Optional[dict[str, torch.Tensor]] = None,
+        predictions_batch: dict[str, torch.Tensor] | None = None,
     ) -> torch.Tensor:
         """
         Computes the objective function value achieved by `decisions_batch` for the given `data_batch`.
@@ -118,7 +117,7 @@ class CVXPYDiffModel(OptimizationModel):
             dict[str, torch.Tensor]: A dictionary containing the computed decision variables for the batch,
                                      matching the keys in `var_shapes`.
         """
-        assert all(key in data_batch.keys() for key in self.all_param_names), "data_batch must contain all param_names!"
+        assert all(key in data_batch for key in self.all_param_names), "data_batch must contain all param_names!"
 
         layer_input = [data_batch[key] for key in self.all_param_names]
         layer_output = self.layer(*layer_input, solver_args={"eps_abs": 10**-9, "eps_rel": 10**-9})

@@ -1,5 +1,5 @@
 import copy
-from typing import Any, Optional
+from typing import Any
 
 from optuna.trial import Trial
 
@@ -12,7 +12,7 @@ from pydflt.runner import Runner
 from pydflt.utils.reproducability import set_seeds
 
 
-def run(config: dict[str, Any], optuna_trial: Optional[Trial] = None) -> float:
+def run(config: dict[str, Any], optuna_trial: Trial | None = None) -> float:
     """
     Executes a complete experiment run based on the provided configuration.
 
@@ -27,14 +27,14 @@ def run(config: dict[str, Any], optuna_trial: Optional[Trial] = None) -> float:
         optuna_trial (Optional[Trial]): An Optuna trial object. If provided, the method will report validation
                                         metrics to Optuna and check for pruning.
     """
-    if config.get("seed", None) is not None:
+    if config.get("seed") is not None:
         set_seeds(config["seed"])
     model, config["model"] = make_model(**config["model"])
     data_dict, config["data"] = get_data(**config["data"])
     problem = Problem(data_dict=data_dict, opt_model=model, **config["problem"])
     decision_maker, config["decision_maker"] = make_decision_maker(problem=problem, **config["decision_maker"])
 
-    if config.get("pretraining", None) is not None:
+    if config.get("pretraining") is not None:
         assert "decision_maker" in config["pretraining"], "Pretraining requires a decision maker to be specified."
         assert "runner" in config["pretraining"], "Pretraining requires a runner to be specified."
         decision_maker_seed = config["decision_maker"].get("seed", None)

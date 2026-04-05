@@ -1,6 +1,6 @@
 import random
 from itertools import chain, combinations
-from typing import Any, Optional
+from typing import Any
 
 import cvxpy as cp
 import gurobipy as gp
@@ -175,7 +175,7 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
         Returns:
             tuple: A tuple containing cover costs and item-cover matrix.
         """
-        np.random.seed(seed)
+        rng = np.random.default_rng(seed)
         random.seed(seed)
 
         # We iterate through all possible combinations
@@ -195,7 +195,7 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
                     break  # Stop if we filled all columns
                 item_cover_matrix[list(ones_positions), cover_idx] = 1
                 if num_items_to_cover == 1:
-                    costs = np.random.randint(cover_costs_lb, cover_costs_ub + 1)
+                    costs = rng.integers(cover_costs_lb, cover_costs_ub + 1)
                 else:  # num_items_to_cover > 1
                     subsets = list(chain.from_iterable(combinations(ones_positions, r) for r in range(1, len(ones_positions))))
                     disjoint_union_subsets = []
@@ -230,24 +230,24 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
         Returns:
             tuple: A tuple containing cover costs and item-cover matrix.
         """
-        np.random.seed(seed)
-        cover_costs = np.random.uniform(cover_costs_lb, cover_costs_ub, self.num_covers)
+        rng = np.random.default_rng(seed)
+        cover_costs = rng.uniform(cover_costs_lb, cover_costs_ub, self.num_covers)
         item_cover_matrix = np.zeros((self.num_items, self.num_covers))
 
         for item in range(self.num_items):  # get two covers for each item
-            cover_1 = np.random.randint(0, self.num_covers)
+            cover_1 = rng.integers(0, self.num_covers)
             leftover_covers = [i for i in range(0, self.num_covers) if i != cover_1]
-            cover_2 = leftover_covers[np.random.randint(0, self.num_covers - 1)]
+            cover_2 = leftover_covers[rng.integers(0, self.num_covers - 1)]
             item_cover_matrix[item, cover_1] = 1
             item_cover_matrix[item, cover_2] = 1
         for cover in range(self.num_covers):  # cover an item
-            item = np.random.randint(0, self.num_items)
+            item = rng.integers(0, self.num_items)
             item_cover_matrix[item, cover] = 1
 
         # add until density is reached, note that with small problem cases density is often already a lot higher
         while item_cover_matrix.mean() < density:
-            item = np.random.randint(0, self.num_items)
-            cover = np.random.randint(0, self.num_covers)
+            item = rng.integers(0, self.num_items)
+            cover = rng.integers(0, self.num_covers)
             item_cover_matrix[item, cover] = 1
 
         return cover_costs, item_cover_matrix
@@ -266,7 +266,7 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
         return var_domain_dict
 
     @staticmethod
-    def get_constraints(vars_dict: dict[str, cp.Variable]) -> Optional[list[Any]]:
+    def get_constraints(vars_dict: dict[str, cp.Variable]) -> list[Any] | None:
         """
         Returns the constraints for the weighted set multi-cover problem in CVXPY format.
         Used when creating a quadratic variant.

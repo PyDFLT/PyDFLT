@@ -59,9 +59,6 @@ examples = [
 required-version = "0.6.16"
 default-groups = ["dev", "docs"]
 
-[tool.black]
-line-length = 160
-
 [tool.ruff]
 line-length = 160
 extend-include = ["*.ipynb"]
@@ -69,15 +66,26 @@ extend-include = ["*.ipynb"]
 
 [tool.ruff.lint]
 select = [
-    "E",  # pycodestyle errors
-    "I",  # isort
-    "W",  # pycodestyle warnings,
-    "F",  # pyflakes,
-    "C",  # flake8-comprehensions,
-    "B",  # flake8-bugbear
+    "E",    # pycodestyle errors
+    "I",    # isort
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "C",    # flake8-comprehensions
+    "B",    # flake8-bugbear
+    "UP",   # pyupgrade (Python 3.10+ syntax)
+    "RUF",  # ruff-specific rules
+    "SIM",  # simplification hints
+    "PT",   # pytest style
+    "N",    # pep8-naming
+    "NPY",  # numpy rules
+    "PD",   # pandas-vet
+    "TCH",  # type-checking imports
 ]
 ignore = [
-    "C901",  # too complex
+    "C901",    # too complex
+    "SIM108",  # ternary operator (can hurt readability in ML code)
+    "N803",    # uppercase argument names (common in math/ML: A, X, W — and camelCase abbreviations like init_OLS)
+    "PD901",   # df variable name (too common to ban)
 ]
 
 [tool.ruff.lint.isort]

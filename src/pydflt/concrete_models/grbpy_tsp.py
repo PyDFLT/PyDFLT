@@ -72,7 +72,7 @@ class TravelingSalesperson(GRBPYModel, tspDFJModel):
         # based on: https://github.com/khalil-research/CaVE
         if where == GRB.Callback.MIPSOL:
             xvals = model.cbGetSolution(model._x)
-            selected = gp.tuplelist((i, j) for i, j in model._x.keys() if xvals[i, j] > 1e-2)
+            selected = gp.tuplelist((i, j) for i, j in model._x if xvals[i, j] > 1e-2)
             uf = unionFind(model._n)
             for i, j in selected:
                 if not uf.union(i, j):
@@ -84,7 +84,7 @@ class TravelingSalesperson(GRBPYModel, tspDFJModel):
                     break
 
     def get_objective(
-        self, data_batch: dict[str, torch.Tensor], decisions_batch: dict[str, torch.Tensor], predictions_batch: dict[str, torch.Tensor] = None
+        self, data_batch: dict[str, torch.Tensor], decisions_batch: dict[str, torch.Tensor], predictions_batch: dict[str, torch.Tensor] | None = None
     ) -> torch.float:
         """
         Computes the objective function value for the TSP problem.

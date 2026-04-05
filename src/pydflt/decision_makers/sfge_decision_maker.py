@@ -1,4 +1,4 @@
-from typing import Union
+from typing import ClassVar
 
 import numpy as np
 import torch
@@ -9,7 +9,7 @@ from pydflt.problem import Problem
 
 class SFGEDecisionMaker(DecisionMaker):
     """
-    The SFGE decision maker is based on the paper "Silvestri, M., Berden, S., Mandi, J., Mahmutoğulları, A. İ., Amos, B.,
+    The SFGE decision maker is based on the paper "Silvestri, M., Berden, S., Mandi, J., Mahmutogullari, A. I., Amos, B.,
     Guns, T., & Lombardi, M. (2023). Score Function Gradient Estimation to Widen the Applicability of Decision-Focused
     Learning. arXiv preprint arXiv:2307.05213". The SFGE approach overcomes the zero-gradient problem in DFL by using
     a stochastic predictor at training time to smoothen the regret loss. In this codebase, we use the object Noisifier
@@ -17,11 +17,11 @@ class SFGEDecisionMaker(DecisionMaker):
     Note that the Noisifier parameters are passed through "noisifier_kwargs",  which include the sigma setting.
     """
 
-    allowed_losses: list[str] = ["objective", "regret", "relative_regret"]
+    allowed_losses: ClassVar[list[str]] = ["objective", "regret", "relative_regret"]
 
-    allowed_decision_models: list[str] = ["base", "quadratic", "scenario_based"]
+    allowed_decision_models: ClassVar[list[str]] = ["base", "quadratic", "scenario_based"]
 
-    allowed_predictors: list[str] = [
+    allowed_predictors: ClassVar[list[str]] = [
         "Normal",
         "DiscreteUniform",
         "MLP",
@@ -40,10 +40,10 @@ class SFGEDecisionMaker(DecisionMaker):
         use_dist_at_mode: str = "none",
         standardize_predictions: bool = True,
         init_OLS: bool = False,
-        seed: Union[int, None] = None,
-        predictor_kwargs: dict = None,
-        noisifier_kwargs: dict = None,
-        decision_model_kwargs: dict = None,
+        seed: int | None = None,
+        predictor_kwargs: dict | None = None,
+        noisifier_kwargs: dict | None = None,
+        decision_model_kwargs: dict | None = None,
         standardize_loss: bool = True,
         num_samples: bool = 1,
     ):
@@ -141,7 +141,7 @@ class SFGEDecisionMaker(DecisionMaker):
         }
         return log_dict
 
-    def run_epoch(self, mode: str, epoch_num: int, metrics: list[str] = None) -> list[dict[str, float]]:
+    def run_epoch(self, mode: str, epoch_num: int, metrics: list[str] | None = None) -> list[dict[str, float]]:
         """
         Args:
            mode: either 'train' or 'validation' or 'test'
@@ -176,7 +176,7 @@ class SFGEDecisionMaker(DecisionMaker):
                 batch_results = self.update(data_batch)
             else:
                 batch_results = self._get_batch_results(data_batch, metrics=metrics)
-            mode_batch_results = {"%s/%s" % (mode, key): val for key, val in batch_results.items()}
+            mode_batch_results = {f"{mode}/{key}": val for key, val in batch_results.items()}
             mode_batch_results["batch_size"] = len(idx)
             epoch_results.append(mode_batch_results)
 

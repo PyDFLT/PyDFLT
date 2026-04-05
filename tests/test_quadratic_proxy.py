@@ -34,15 +34,15 @@ class TestQuadratic(unittest.TestCase):
 
         # 3. Assert: The decision should be the closest feasible point to the target
         # The model must select 2 items to satisfy the capacity constraint (sum(x) <= 2).
-        self.assertEqual(sum(decision_x), 2)
+        assert sum(decision_x) == 2
 
         # To be closest to the target [1, 1, 1, 0, 0], the decision must select two of the first three items.
         # This means the last two items must not be selected, as that would increase the distance.
-        self.assertEqual(decision_x[3], 0)
-        self.assertEqual(decision_x[4], 0)
+        assert decision_x[3] == 0
+        assert decision_x[4] == 0
 
         # The sum of the first three items in the decision must be 2.
-        self.assertEqual(sum(decision_x[:3]), 2)
+        assert sum(decision_x[:3]) == 2
 
 
 if __name__ == "__main__":

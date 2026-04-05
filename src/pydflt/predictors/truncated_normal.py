@@ -4,6 +4,7 @@ Source: https://github.com/toshas/torch_truncnorm/blob/main/TruncatedNormal.py
 
 import math
 from numbers import Number
+from typing import ClassVar
 
 import torch
 from torch.distributions import Distribution, constraints
@@ -22,7 +23,7 @@ class TruncatedStandardNormal(Distribution):
     https://people.sc.fsu.edu/~jburkardt/presentations/truncated_normal.pdf
     """
 
-    arg_constraints = {
+    arg_constraints: ClassVar[dict] = {
         "a": constraints.real,
         "b": constraints.real,
     }
@@ -34,7 +35,7 @@ class TruncatedStandardNormal(Distribution):
             batch_shape = torch.Size()
         else:
             batch_shape = self.a.size()
-        super(TruncatedStandardNormal, self).__init__(batch_shape, validate_args=validate_args)
+        super().__init__(batch_shape, validate_args=validate_args)
         if self.a.dtype != self.b.dtype:
             raise ValueError("Truncation bounds types are different")
         if any(
@@ -126,7 +127,7 @@ class TruncatedNormal(TruncatedStandardNormal):
         self.loc, self.scale, a, b = broadcast_all(loc, scale, a, b)
         a = (a - self.loc) / self.scale
         b = (b - self.loc) / self.scale
-        super(TruncatedNormal, self).__init__(a, b, validate_args=validate_args)
+        super().__init__(a, b, validate_args=validate_args)
         self._log_scale = self.scale.log()
         self._mean = self._mean * self.scale + self.loc
         self._variance = self._variance * self.scale**2
@@ -139,10 +140,10 @@ class TruncatedNormal(TruncatedStandardNormal):
         return value * self.scale + self.loc
 
     def cdf(self, value):
-        return super(TruncatedNormal, self).cdf(self._to_std_rv(value))
+        return super().cdf(self._to_std_rv(value))
 
     def icdf(self, value):
-        return self._from_std_rv(super(TruncatedNormal, self).icdf(value))
+        return self._from_std_rv(super().icdf(value))
 
     def log_prob(self, value):
-        return super(TruncatedNormal, self).log_prob(self._to_std_rv(value)) - self._log_scale
+        return super().log_prob(self._to_std_rv(value)) - self._log_scale

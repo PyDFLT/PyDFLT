@@ -1,4 +1,4 @@
-from typing import Union
+from typing import ClassVar
 
 import numpy as np
 import torch
@@ -38,13 +38,13 @@ class LancerDecisionMaker(DecisionMaker):
         surrogate_model_kwargs (dict): Additional arguments for surrogate model initialization.
     """
 
-    allowed_losses: list[str] = ["lancer"]
+    allowed_losses: ClassVar[list[str]] = ["lancer"]
 
-    allowed_decision_models: list[str] = [
+    allowed_decision_models: ClassVar[list[str]] = [
         "base",
     ]
 
-    allowed_predictors: list[str] = [
+    allowed_predictors: ClassVar[list[str]] = [
         "LinearSKL",
         "MLP",
     ]
@@ -61,12 +61,12 @@ class LancerDecisionMaker(DecisionMaker):
         use_dist_at_mode: str = "none",
         standardize_predictions: bool = True,
         init_OLS: bool = False,
-        seed: Union[int, None] = None,
-        predictor_kwargs: dict = None,
-        decision_model_kwargs: dict = None,
+        seed: int | None = None,
+        predictor_kwargs: dict | None = None,
+        decision_model_kwargs: dict | None = None,
         regularizer: float = 0.1,
         surrogate_model_str: str = "MLP",
-        surrogate_model_kwargs: dict = None,
+        surrogate_model_kwargs: dict | None = None,
         batch_size_surrogate_update: int = 1024,
         batch_size_predictor_update: int = 128,
         max_iters_surrogate_update: int = 5,
@@ -222,11 +222,12 @@ class LancerDecisionMaker(DecisionMaker):
         assert predictions.shape == true_values.shape
         assert true_values.shape[0] == objectives.shape[0]
         batch_size = self.batch_size_surrogate_update
-        N = true_values.shape[0]
+        N = true_values.shape[0]  # noqa: N806
         n_batches = int(N / batch_size)
         total_iter = 0
         while total_iter < max_iter:
-            random_indices = np.random.permutation(N)
+            rng = np.random.default_rng()
+            random_indices = rng.permutation(N)
             for bi in range(n_batches + 1):
                 idx = random_indices[bi * batch_size : (bi + 1) * batch_size]
                 true_value = true_values[idx]
@@ -263,12 +264,13 @@ class LancerDecisionMaker(DecisionMaker):
         true_values = self.dict_to_tensor(data)
         assert features.shape[0] == true_values.shape[0]
         batch_size = self.batch_size_predictor_update
-        N = features.shape[0]
+        N = features.shape[0]  # noqa: N806
         n_batches = int(N / batch_size)
 
         total_iter = 0
         while total_iter < self.max_iters_predictor_update:
-            rand_indices = np.random.permutation(N)
+            rng = np.random.default_rng()
+            rand_indices = rng.permutation(N)
             for bi in range(n_batches + 1):
                 idxs = rand_indices[bi * batch_size : (bi + 1) * batch_size]
                 true_values_batch = true_values[idxs].to(torch.float32).to(self.device)
@@ -288,7 +290,7 @@ class LancerDecisionMaker(DecisionMaker):
 
         return total_loss
 
-    def run_epoch(self, mode: str, epoch_num: int, metrics: list[str] = None) -> list[dict[str, float]]:
+    def run_epoch(self, mode: str, epoch_num: int, metrics: list[str] | None = None) -> list[dict[str, float]]:
         assert mode in [
             "train",
             "validation",
@@ -353,7 +355,7 @@ class LancerDecisionMaker(DecisionMaker):
             for idx in self.problem.generate_batch_indices(size):
                 data_batch = self.problem.read_data(idx)
                 batch_results = self._get_batch_results(data_batch, metrics)
-                mode_batch_results = {"%s/%s" % (mode, key): val for key, val in batch_results.items()}
+                mode_batch_results = {f"{mode}/{key}": val for key, val in batch_results.items()}
                 mode_batch_results["batch_size"] = len(idx)
                 epoch_results.append(mode_batch_results)
 

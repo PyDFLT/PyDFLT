@@ -53,19 +53,16 @@ class TestRegistries(unittest.TestCase):
         _, final_params = make_model(model_name, capacity=override_capacity, weights_lb=override_weights_lb)
 
         # Assert that the original parameters in the registry remain unchanged
-        self.assertEqual(model_registry[model_name][1]["capacity"], original_params["capacity"])
-        self.assertEqual(model_registry[model_name][1]["weights_lb"], original_params["weights_lb"])
-        self.assertEqual(model_registry[model_name][1]["weights_ub"], original_params["weights_ub"])
-        self.assertEqual(
-            model_registry[model_name][1]["num_decisions"],
-            original_params["num_decisions"],
-        )
+        assert model_registry[model_name][1]["capacity"] == original_params["capacity"]
+        assert model_registry[model_name][1]["weights_lb"] == original_params["weights_lb"]
+        assert model_registry[model_name][1]["weights_ub"] == original_params["weights_ub"]
+        assert model_registry[model_name][1]["num_decisions"] == original_params["num_decisions"]
 
         # Verify that the final_params indeed have the overrides
-        self.assertEqual(final_params["capacity"], override_capacity)
-        self.assertEqual(final_params["weights_lb"], override_weights_lb)
+        assert final_params["capacity"] == override_capacity
+        assert final_params["weights_lb"] == override_weights_lb
         # Ensure other params are from original
-        self.assertEqual(final_params["weights_ub"], original_params["weights_ub"])
+        assert final_params["weights_ub"] == original_params["weights_ub"]
 
     def test_data_registry_parameters_not_overwritten(self):
         """
@@ -85,15 +82,15 @@ class TestRegistries(unittest.TestCase):
         )
 
         # Assert that the original parameters in the registry remain unchanged
-        self.assertEqual(data_registry[data_name][1]["num_data"], original_params["num_data"])
-        self.assertEqual(data_registry[data_name][1]["noise_width"], original_params["noise_width"])
-        self.assertEqual(data_registry[data_name][1]["num_features"], original_params["num_features"])
+        assert data_registry[data_name][1]["num_data"] == original_params["num_data"]
+        assert data_registry[data_name][1]["noise_width"] == original_params["noise_width"]
+        assert data_registry[data_name][1]["num_features"] == original_params["num_features"]
 
         # Verify that the final_params indeed have the overrides
-        self.assertEqual(final_params["num_data"], override_num_data)
-        self.assertEqual(final_params["noise_width"], override_noise_width)
+        assert final_params["num_data"] == override_num_data
+        assert final_params["noise_width"] == override_noise_width
         # Ensure other params are from original
-        self.assertEqual(final_params["num_features"], original_params["num_features"])
+        assert final_params["num_features"] == original_params["num_features"]
 
 
 # This allows running the tests directly from the file

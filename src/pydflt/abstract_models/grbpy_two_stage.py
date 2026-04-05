@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import torch
@@ -23,7 +23,7 @@ class GRBPYTwoStageModel(GRBPYModel):
         variable_shapes: dict[str, tuple[int, ...]],
         param_to_predict_shapes: dict[str, tuple[int, ...]],
         model_sense: str,
-        extra_param_shapes: Optional[dict[str, tuple[int, ...]]] = None,
+        extra_param_shapes: dict[str, tuple[int, ...]] | None = None,
     ) -> None:
         """
         Initializes the GRBPYTwoStageModel.
@@ -52,7 +52,7 @@ class GRBPYTwoStageModel(GRBPYModel):
         self,
         data_batch: dict[str, torch.Tensor],
         decisions_batch: dict[str, torch.Tensor],
-        predictions_batch: Optional[dict[str, torch.Tensor]] = None,
+        predictions_batch: dict[str, torch.Tensor] | None = None,
     ) -> torch.Tensor:
         """
         Computes the objective function value for a batch of two-stage problem instances.

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, ClassVar
 
 import numpy as np
 import torch
@@ -13,7 +13,7 @@ from pyepo.func import (
 
 from pydflt.decision_makers.base import DecisionMaker
 from pydflt.problem import Problem
-from pydflt.utils.cave import innerConeAlignedCosine
+from pydflt.utils.cave import InnerConeAlignedCosine
 from pydflt.utils.lava import LAVA
 
 PYEPO_LOSS_FUNCTIONS = {
@@ -50,7 +50,7 @@ class DifferentiableDecisionMaker(DecisionMaker):
         loss_function (callable): The loss function used for training.
     """
 
-    allowed_losses: list[str] = [
+    allowed_losses: ClassVar[list[str]] = [
         "mse",
         "objective",
         "regret",
@@ -65,9 +65,9 @@ class DifferentiableDecisionMaker(DecisionMaker):
         "smooth",
     ]
 
-    allowed_decision_models: list[str] = ["base", "quadratic", "scenario_based"]
+    allowed_decision_models: ClassVar[list[str]] = ["base", "quadratic", "scenario_based"]
 
-    allowed_predictors: list[str] = [
+    allowed_predictors: ClassVar[list[str]] = [
         "LinearSKL",
         "MLP",
         "DiscreteUniform",
@@ -161,7 +161,7 @@ class DifferentiableDecisionMaker(DecisionMaker):
             self.loss_function = torch.nn.MSELoss()
         elif self.loss_function_str == "cave":
             self.add_binding_constraints_to_data()
-            self.loss_function = innerConeAlignedCosine(self.problem.opt_model)
+            self.loss_function = InnerConeAlignedCosine(self.problem.opt_model)
         elif self.loss_function_str == "lava":
             threshold = kwargs.get("threshold", -0.1)
             self.add_adjacent_vertices_to_data(**kwargs)
@@ -190,7 +190,7 @@ class DifferentiableDecisionMaker(DecisionMaker):
         self,
         data_batch: dict[str, torch.tensor],
         decisions_batch: dict[str, torch.tensor],
-        predictions_batch: dict[str, torch.tensor] = None,
+        predictions_batch: dict[str, torch.tensor] | None = None,
     ) -> torch.float32:
         """
         Computes the regret for given decisions compared to optimal decisions.
@@ -284,10 +284,10 @@ class DifferentiableDecisionMaker(DecisionMaker):
             metrics=metrics,
         )
 
-        for key in predictions_batch.keys():
+        for key in predictions_batch:
             batch_results[key] = predictions_batch[key].cpu().detach().numpy().astype(np.float32)
         if decisions_batch is not None:
-            for key in decisions_batch.keys():
+            for key in decisions_batch:
                 batch_results[key] = decisions_batch[key].cpu().detach().numpy().astype(np.float32)
 
         if "used_loss" in metrics:
@@ -329,13 +329,13 @@ class DifferentiableDecisionMaker(DecisionMaker):
             return self.loss_function(data_batch, decisions_batch, predictions_batch)
         if self.loss_function_str == "cave":
             predictions = self.dict_to_predictions(predictions_batch)
-            bctr = data_batch.get("bctr", None)
+            bctr = data_batch.get("bctr")
             if bctr is None:
                 raise ValueError("CAVE loss requires 'bctr' in data_batch.")
             return self.loss_function(predictions, bctr)
         if self.loss_function_str == "lava":
             predictions = self.dict_to_predictions(predictions_batch)
-            adjver = data_batch.get("adjver", None)
+            adjver = data_batch.get("adjver")
             if adjver is None:
                 raise ValueError("LAVA loss requires 'adjver' in data_batch.")
             w_rel_list = []
@@ -413,7 +413,7 @@ class DifferentiableDecisionMaker(DecisionMaker):
                 optimal_relaxed = relaxed_model.solve_batch(data)
                 self.problem.dataset.add_data("optimal_relaxed", optimal_relaxed, indices=batch_idx)
 
-    def run_epoch(self, mode: str, epoch_num: int, metrics: list[str] = None) -> list[dict[str, float]]:
+    def run_epoch(self, mode: str, epoch_num: int, metrics: list[str] | None = None) -> list[dict[str, float]]:
         """
         Runs one complete epoch in the specified mode (train/validation/test).
         Handles residual SAA updates if configured and processes all batches.
@@ -451,7 +451,7 @@ class DifferentiableDecisionMaker(DecisionMaker):
                 batch_results = self.update(data_batch)
             else:
                 batch_results = self._get_batch_results(data_batch, metrics)
-            mode_batch_results = {"%s/%s" % (mode, key): val for key, val in batch_results.items()}
+            mode_batch_results = {f"{mode}/{key}": val for key, val in batch_results.items()}
             mode_batch_results["batch_size"] = len(idx)
             epoch_results.append(mode_batch_results)
 

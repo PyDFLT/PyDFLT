@@ -1,5 +1,3 @@
-from typing import Optional, Union
-
 import numpy as np
 import pyepo
 import pyepo.data.tsp
@@ -7,14 +5,14 @@ import torch
 
 
 def gen_data_traveling_salesperson(
-    seed: Optional[int] = None,
+    seed: int | None = None,
     num_data: int = 500,
     num_features: int = 5,
     num_nodes: int = 10,
     polynomial_degree: int = 6,
     noise_width: float = 0.5,
     torch_tensors: bool = False,
-) -> dict[str, Union[np.ndarray, torch.Tensor]]:
+) -> dict[str, np.ndarray | torch.Tensor]:
     """
     Generate synthetic data for Traveling Salesperson Problem (TSP).
 

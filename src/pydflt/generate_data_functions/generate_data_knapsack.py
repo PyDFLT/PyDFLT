@@ -35,7 +35,7 @@ def gen_data_knapsack(
             - 'item_value': Array of shape (num_data, num_items) with item values for each sample
             - 'features': Array of shape (num_data, num_features) with feature vectors for each sample
     """
-    weights, features, values = pyepo.data.knapsack.genData(
+    _weights, features, values = pyepo.data.knapsack.genData(
         num_data,
         num_features,
         num_items,

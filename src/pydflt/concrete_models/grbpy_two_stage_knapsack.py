@@ -73,9 +73,9 @@ class TwoStageKnapsack(GRBPYTwoStageModel):
         extra_param_shapes = None
 
         # Setting additional model parameters
-        np.random.seed(seed)
+        rng = np.random.default_rng(seed)
         self.capacity_np = np.array(capacity)
-        self.values = np.random.uniform(values_lb, values_ub, num_decisions)
+        self.values = rng.uniform(values_lb, values_ub, num_decisions)
 
         GRBPYTwoStageModel.__init__(
             self,

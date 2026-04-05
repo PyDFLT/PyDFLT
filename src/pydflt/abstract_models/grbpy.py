@@ -152,7 +152,7 @@ class GRBPYModel(OptimizationModel):
             dict[str, torch.Tensor]: A dictionary containing the computed decision variables for the batch,
                                      matching the keys in `var_shapes`.
         """
-        assert all(key in data_batch.keys() for key in self.all_param_names), "data_batch must contain param_names!"
+        assert all(key in data_batch for key in self.all_param_names), "data_batch must contain param_names!"
 
         list_decisions_batch = {key: [] for key in self.var_names}  # Here we save the output
         batch_size = len(data_batch[self.all_param_names[0]])  # Read batch size from the data
@@ -168,7 +168,7 @@ class GRBPYModel(OptimizationModel):
                 list_decisions_batch[key].append(val)
         # Transform to tensor and match the device
         tensor_decisions_batch = {}
-        for key in list_decisions_batch.keys():
+        for key in list_decisions_batch:
             tensor_decisions_batch[key] = torch.from_numpy(np.stack(list_decisions_batch[key], axis=0)).to(torch.float32).to(device_data)
 
         return tensor_decisions_batch
@@ -178,7 +178,7 @@ class GRBPYModel(OptimizationModel):
         Solves a batch and also returns binding constraints per instance.
         Based on: https://github.com/khalil-research/CaVE
         """
-        assert all(key in data_batch.keys() for key in self.all_param_names), "data_batch must contain param_names!"
+        assert all(key in data_batch for key in self.all_param_names), "data_batch must contain param_names!"
         list_decisions_batch = {}
         binding_constraints = []
         batch_size = len(data_batch[self.all_param_names[0]])
@@ -201,7 +201,7 @@ class GRBPYModel(OptimizationModel):
         max_adjacent_vertices: int = 10000,
     ) -> tuple[dict[str, np.ndarray], list[np.ndarray]]:
         # based on: https://github.com/ML-KULeuven/Solver-Free-DFL/
-        assert all(key in data_batch.keys() for key in self.all_param_names), "data_batch must contain param_names!"
+        assert all(key in data_batch for key in self.all_param_names), "data_batch must contain param_names!"
         from pydflt.utils.adjacent_vertices import (
             convert_to_slack_form,
             get_adjacent_vertices,
@@ -216,7 +216,7 @@ class GRBPYModel(OptimizationModel):
         if getattr(base_model, "NumQConstrs", 0) > 0 or getattr(base_model, "NumQObj", 0) > 0:
             raise ValueError("Adjacent vertices require a linear model.")
         slack_model = convert_to_slack_form(base_model)
-        slack_model_A, _ = get_constraints_matrix_form_slack_model(slack_model)
+        slack_model_A, _ = get_constraints_matrix_form_slack_model(slack_model)  # noqa: N806
         slack_vars = slack_model.getVars()
         num_vars = len(base_model.getVars())
 
@@ -303,9 +303,8 @@ class GRBPYModel(OptimizationModel):
             self.gp_model.optimize(self.lazy_constraints_method)
         else:
             self.gp_model.optimize()
-        if self.time_limit is not None and self.gp_model.Status == gp.GRB.TIME_LIMIT:
-            if self.gp_model.SolCount <= 0:
-                raise RuntimeError("Time limit reached without a feasible solution.")
+        if self.time_limit is not None and self.gp_model.Status == gp.GRB.TIME_LIMIT and self.gp_model.SolCount <= 0:
+            raise RuntimeError("Time limit reached without a feasible solution.")
 
         if existing_constrs is not None:
             self._capture_lazy_constraints(existing_constrs)
@@ -334,7 +333,7 @@ class GRBPYModel(OptimizationModel):
             for constr in self.lazy_constraints:
                 added_constrs.append(self.gp_model.addConstr(constr))
             for var in vars_list:
-                var.start = int(round(var.x))
+                var.start = round(var.x)
             self.gp_model.update()
             self.gp_model.optimize()
         for constr in self.gp_model.getConstrs():

@@ -42,12 +42,12 @@ class TestGRBPYVRP(unittest.TestCase):
         selected_edges = decision_dict["select_edge"]
 
         routes = model.getTour(selected_edges)
-        self.assertEqual(len(routes), 2)
+        assert len(routes) == 2
 
         customer_sets = [set(route[1:-1]) for route in routes]
         expected = [{1, 2}, {3, 4}]
 
-        self.assertEqual(set(map(frozenset, customer_sets)), set(map(frozenset, expected)))
+        assert set(map(frozenset, customer_sets)) == set(map(frozenset, expected))
 
 
 if __name__ == "__main__":

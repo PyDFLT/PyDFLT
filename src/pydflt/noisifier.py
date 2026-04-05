@@ -1,4 +1,4 @@
-from typing import Union
+from typing import ClassVar
 
 import numpy as np
 import torch
@@ -39,7 +39,7 @@ class Noisifier(nn.Module):
             dist2 (Distribution): The second underlying distribution.
         """
 
-        arg_constraints = {}
+        arg_constraints: ClassVar[dict] = {}
 
         def __init__(self, dist1: Distribution, dist2: Distribution):
             """
@@ -108,7 +108,7 @@ class Noisifier(nn.Module):
         base_predictor: Predictor,
         bias: bool = True,
         sigma_setting: str = "independent",
-        sigma_init: Union[float, np.ndarray] = 1,
+        sigma_init: float | np.ndarray = 1,
         sigma_final: float = 0.1,
         total_steps_cooling: int = 100,
         cooling_type: str = "linear",
@@ -156,7 +156,7 @@ class Noisifier(nn.Module):
         self.sigma = None
         self._init_sigma(sigma_init, sigma_final, bias)
 
-    def _init_sigma(self, sigma_init: Union[float, np.ndarray], sigma_final: float, bias: bool) -> None:
+    def _init_sigma(self, sigma_init: float | np.ndarray, sigma_final: float, bias: bool) -> None:
         """
         Initializes the sigma parameter(s) based on the sigma_setting.
 
@@ -285,7 +285,7 @@ class Noisifier(nn.Module):
         """
         if self.sigma_setting in ["fixed", "cooling", "independent"]:
             self.sigma = self.sigma.to(device)
-        return super(Noisifier, self).to(device)
+        return super().to(device)
 
     def update_t(self, new_t: int) -> None:
         """

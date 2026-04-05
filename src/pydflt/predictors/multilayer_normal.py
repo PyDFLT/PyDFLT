@@ -1,4 +1,4 @@
-from typing import Iterator, Union
+from collections.abc import Iterator
 
 import numpy as np
 import torch
@@ -46,10 +46,10 @@ class MLPNormalPredictor(Predictor, nn.Module):
         size: int = 100,
         activation: Activation = "tanh",
         output_activation: Activation = "identity",
-        init_bias: Union[float, np.array] = 0.0,
-        init_bias_sigma: Union[float, np.array] = 0.0,
+        init_bias: float | np.ndarray = 0.0,
+        init_bias_sigma: float | np.ndarray = 0.0,
         scale: float = 0.1,  # scale and shift are arge for the 'scale_shift' output activation function
-        shift: Union[float, np.array] = 0.0,
+        shift: float | np.ndarray = 0.0,
         *args,
         **kwargs,
     ):
@@ -64,10 +64,10 @@ class MLPNormalPredictor(Predictor, nn.Module):
             size (int): The number of neurons in each hidden layer. Defaults to 100.
             activation (Activation): The activation function for hidden layers. Defaults to 'tanh'.
             output_activation (Activation): The activation function for output layers. Defaults to 'identity'.
-            init_bias (Union[float, np.array]): Initial bias for the mean layer. Defaults to 0.0.
-            init_bias_sigma (Union[float, np.array]): Initial bias for the sigma layer. Defaults to 0.0.
+            init_bias (Union[float, np.ndarray]): Initial bias for the mean layer. Defaults to 0.0.
+            init_bias_sigma (Union[float, np.ndarray]): Initial bias for the sigma layer. Defaults to 0.0.
             scale (float): Scale factor for the scale-shift output activation. Defaults to 0.1.
-            shift (Union[float, np.array]): Shift factor for the scale-shift output activation. Defaults to 0.0.
+            shift (Union[float, np.ndarray]): Shift factor for the scale-shift output activation. Defaults to 0.0.
             *args: Variable length argument list for nn.Module.
             **kwargs: Arbitrary keyword arguments for nn.Module.
         """
@@ -120,7 +120,7 @@ class MLPNormalPredictor(Predictor, nn.Module):
             torch.Tensor: The mean parameters only.
         """
         output = self.forward(x)
-        mu, log_sigma = torch.chunk(output, 2, dim=-1)
+        mu, _log_sigma = torch.chunk(output, 2, dim=-1)
         return mu
 
     def forward_dist(self, x: torch.Tensor):

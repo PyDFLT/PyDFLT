@@ -38,7 +38,7 @@ class TestProblemClass(unittest.TestCase):
             degree=5,
             noise_width=0.5,
         )
-        problem = Problem(data_dict=data_dict, opt_model=opt_model, train_ratio=0.5, val_ratio=0.4)
+        problem = Problem(data_dict=data_dict, opt_model=opt_model, train_ratio=0.5, val_ratio=0.4, seed=1)
         problem.set_mode("test")
         indices_test = problem.generate_batch_indices(batch_size=1)
         data = problem.read_data(indices_test)
@@ -61,19 +61,19 @@ class TestProblemClass(unittest.TestCase):
             degree=5,
             noise_width=0.5,
         )
-        problem = Problem(data_dict=data_dict, opt_model=opt_model, train_ratio=0.5, val_ratio=0.4)
+        problem = Problem(data_dict=data_dict, opt_model=opt_model, train_ratio=0.5, val_ratio=0.4, seed=1)
         problem.set_mode("test")
         indices_test_2 = problem.generate_batch_indices(batch_size=1)
         data_2 = problem.read_data(indices_test)
 
         # Check indices are the same
-        self.assertEqual(indices_test[0], indices_test_2[0])
+        assert indices_test[0] == indices_test_2[0]
 
         # Check data is the same
         coverage_equal = torch.equal(data["coverage_requirements"][0][0], data_2["coverage_requirements"][0][0])
         features_equal = torch.equal(data["features"][0][0], data_2["features"][0][0])
-        self.assertTrue(coverage_equal)
-        self.assertTrue(features_equal)
+        assert coverage_equal
+        assert features_equal
 
     def test_robust_losses(self):
         """
