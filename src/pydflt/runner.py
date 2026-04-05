@@ -49,7 +49,6 @@ class Runner:
         "used_loss",
         "mse_norm",
         "mae_norm",
-        "abs_regret_pyepo",
     ]
     default_metrics: ClassVar[list[str]] = [
         "objective",
