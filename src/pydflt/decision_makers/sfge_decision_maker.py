@@ -104,13 +104,19 @@ class SFGEDecisionMaker(DecisionMaker):
 
     def update(self, data_batch: dict[str, torch.Tensor], epsilon: float = 10**-5) -> dict[str, torch.Tensor]:
         """
+        Updates the predictive model using the MVD (Measure-Valued Derivative) gradient.
+
+        Samples from the distributional predictor, evaluates the objective for each sample,
+        computes the SFGE loss via the log-derivative trick, and performs one gradient step.
+
         Args:
-            data_batch: contains all needed data to the update step of the predictive model
+            data_batch (dict[str, torch.Tensor]): All data needed for the update step,
+                including features, true parameters, and optimal objectives.
+            epsilon (float): Unused parameter kept for API compatibility. Defaults to 1e-5.
 
         Returns:
-            the accumulated losses for the logger
-
-        This method updates the predictive model using the MVD gradient.
+            dict[str, torch.Tensor]: Accumulated losses and diagnostics for the logger,
+                containing keys 'loss', 'eval', 'solver_calls', and 'sigma'.
         """
 
         # Obtain the distributional predictor and sample
@@ -168,14 +174,19 @@ class SFGEDecisionMaker(DecisionMaker):
 
     def run_epoch(self, mode: str, epoch_num: int, metrics: list[str] | None = None) -> list[dict[str, float]]:
         """
+        Runs one complete epoch in the specified mode (train/validation/test).
+
+        In train mode, updates the noisifier's cooling schedule if configured, then processes
+        each batch by calling `update`. In validation/test mode, evaluates the predictor using
+        `_get_batch_results`.
+
         Args:
-           mode: either 'train' or 'validation' or 'test'
-           epoch_num: integer counter for epoch number needed for updating of the cooling scheme
+            mode (str): The mode to run ('train', 'validation', or 'test').
+            epoch_num (int): The current epoch number, used to update the noisifier cooling scheme.
+            metrics (list[str] | None): List of additional metrics to evaluate. Defaults to None.
 
         Returns:
-           epoch_results: accumulated results for logging
-
-        This method runs an epoch based on the mode.
+            list[dict[str, float]]: List of result dictionaries, one per batch processed.
         """
         assert mode in [
             "train",
@@ -210,15 +221,18 @@ class SFGEDecisionMaker(DecisionMaker):
     @staticmethod
     def standardize(input: torch.Tensor, epsilon: float = 10**-5):
         """
+        Standardizes a batch of losses along the batch dimension.
+
+        Standardization serves as a variance-reduction baseline for the SFGE gradient estimator,
+        based on insights from Silvestri et al. (2024).
+
         Args:
-            input: batch losses
-            epsilon: small value to avoid division by zero
+            input (torch.Tensor): Batch losses to standardize.
+            epsilon (float): Small value added to the standard deviation to avoid division by zero.
+                Defaults to 1e-5.
 
         Returns:
-        standardized batch losses
-
-        Standardization is applied and serves as a baseline to reduce the variance of the SFGE, based on insights
-        share by Silvestri et al. (2024)
+            torch.Tensor: Standardized batch losses with zero mean and unit variance along dim 1.
         """
         # We standardize along the batch dimension (dim=1), using keepdim for broadcasting.
         mean_input = torch.mean(input, dim=1, keepdim=True)
