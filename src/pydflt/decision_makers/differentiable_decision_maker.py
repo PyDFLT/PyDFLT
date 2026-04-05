@@ -94,7 +94,7 @@ class DifferentiableDecisionMaker(DecisionMaker):
         decision_model_kwargs: dict | None = None,
         residual_SAA: bool = False,
         residual_SAA_scenarios: int = 1,
-    ):
+    ) -> None:
         """
         Initializes the DifferentiableDecisionMaker.
 
@@ -141,13 +141,13 @@ class DifferentiableDecisionMaker(DecisionMaker):
         self._set_optimizer()
         self._set_loss_function()
 
-    def _set_optimizer(self):
+    def _set_optimizer(self) -> None:
         """
         Initializes the Adam optimizer for training the trainable predictive model.
         """
         self.optimizer = torch.optim.Adam(self.trainable_predictive_model.parameters(), lr=self.learning_rate)
 
-    def _set_loss_function(self, **kwargs):
+    def _set_loss_function(self, **kwargs) -> None:
         """
         Sets the loss function based on the specified loss_function_str.
         Supports various loss types including traditional losses and PyEPO differentiable losses.
@@ -188,22 +188,22 @@ class DifferentiableDecisionMaker(DecisionMaker):
 
     def get_regret(
         self,
-        data_batch: dict[str, torch.tensor],
-        decisions_batch: dict[str, torch.tensor],
-        predictions_batch: dict[str, torch.tensor] | None = None,
-    ) -> torch.float32:
+        data_batch: dict[str, torch.Tensor],
+        decisions_batch: dict[str, torch.Tensor],
+        predictions_batch: dict[str, torch.Tensor] | None = None,
+    ) -> torch.Tensor:
         """
         Computes the regret for given decisions compared to optimal decisions.
         Regret is defined as the difference between the objective value of the current
         decisions and the optimal decisions.
 
         Args:
-            data_batch (dict[str, torch.tensor]): Input data batch.
-            decisions_batch (dict[str, torch.tensor]): Current decisions to evaluate.
-            predictions_batch (dict[str, torch.tensor], optional): Predictions used for decisions. Defaults to None.
+            data_batch (dict[str, torch.Tensor]): Input data batch.
+            decisions_batch (dict[str, torch.Tensor]): Current decisions to evaluate.
+            predictions_batch (dict[str, torch.Tensor], optional): Predictions used for decisions. Defaults to None.
 
         Returns:
-            torch.float32: The regret values for the batch.
+            torch.Tensor: The regret values for the batch.
         """
         objectives = self.problem.opt_model.get_objective(data_batch, decisions_batch, predictions_batch)
         optimal_decisions = self.problem.opt_model.solve_batch(data_batch)
@@ -211,7 +211,7 @@ class DifferentiableDecisionMaker(DecisionMaker):
 
         return self.problem.opt_model.model_sense_int * (objectives - optimal_objectives)
 
-    def update(self, data_batch: dict[str, torch.tensor]) -> dict[str, float]:
+    def update(self, data_batch: dict[str, torch.Tensor]) -> dict[str, float]:
         """
         Performs a single training update step using the specified loss function.
         Computes predictions, decisions (if needed), loss, gradients, and updates parameters.
@@ -307,21 +307,21 @@ class DifferentiableDecisionMaker(DecisionMaker):
 
     def get_loss(
         self,
-        data_batch: dict[str, torch.tensor],
-        decisions_batch: dict[str, torch.tensor],
-        predictions_batch: dict[str, torch.tensor],
-    ) -> torch.float32:
+        data_batch: dict[str, torch.Tensor],
+        decisions_batch: dict[str, torch.Tensor],
+        predictions_batch: dict[str, torch.Tensor],
+    ) -> torch.Tensor:
         """
         Computes the loss value based on the specified loss function.
         Handles different loss types including objective, regret, MSE, smooth, and PyEPO losses.
 
         Args:
-            data_batch (dict[str, torch.tensor]): Input data batch.
-            decisions_batch (dict[str, torch.tensor]): Decision variables.
-            predictions_batch (dict[str, torch.tensor]): Predicted parameters.
+            data_batch (dict[str, torch.Tensor]): Input data batch.
+            decisions_batch (dict[str, torch.Tensor]): Decision variables.
+            predictions_batch (dict[str, torch.Tensor]): Predicted parameters.
 
         Returns:
-            torch.float32: The computed loss value.
+            torch.Tensor: The computed loss value.
         """
         if (self.loss_function_str == "objective") or (self.loss_function_str == "regret"):
             return self.loss_function(data_batch, decisions_batch, predictions_batch)

@@ -58,7 +58,7 @@ class TravelingSalesperson(GRBPYModel, tspDFJModel):
         )
         self.lazy_constraints_method = self._subtourelim
 
-    def _set_params(self, params_i: np.ndarray):
+    def _set_params(self, params_i: np.ndarray) -> None:
         """
         Sets the parameters for the TSP model for a single instance.
         Updates the objective function with the provided edge costs.
@@ -100,7 +100,7 @@ class TravelingSalesperson(GRBPYModel, tspDFJModel):
         """
         return (data_batch["edge_costs"] * decisions_batch["select_edge"]).sum(-1)
 
-    def _create_model(self):
+    def _create_model(self) -> tuple[gp.Model, dict[str, gp.MVar | gp.Var]]:
         """
         Creates the Gurobi optimization model for the TSP problem.
         This method reuses the PyEPO TSP model to ensure consistency.

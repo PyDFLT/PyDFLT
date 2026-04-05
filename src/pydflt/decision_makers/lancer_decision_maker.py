@@ -78,7 +78,7 @@ class LancerDecisionMaker(DecisionMaker):
         num_epochs_pretraining_surrogate: int = 100,
         pretraining_surrogate: bool = False,
         **kwargs,
-    ):
+    ) -> None:
         """
         Initializes the LancerDecisionMaker.
 
@@ -171,7 +171,7 @@ class LancerDecisionMaker(DecisionMaker):
         if pretraining_surrogate:
             self._pretrain_surrogate_model(max_iters)
 
-    def _set_optimizer(self):
+    def _set_optimizer(self) -> None:
         """
         Instantiates the Adam optimizer for the predictor model using `self.learning_rate_predictor`
         and `self.weight_decay_predictor`.
@@ -182,7 +182,7 @@ class LancerDecisionMaker(DecisionMaker):
             weight_decay=self.weight_decay_predictor,
         )
 
-    def _set_loss_functions(self):
+    def _set_loss_functions(self) -> None:
         """
         Initializes the MSE loss functions used for training the predictor and the surrogate model.
         Both `self.loss_predictor` and `self.loss_surrogate_model` are set to `torch.nn.MSELoss`.
@@ -231,7 +231,7 @@ class LancerDecisionMaker(DecisionMaker):
 
         print(f"After pretraining surrogate loss is {surrogate_loss}")
 
-    def update_surrogate_model(self, predictions, true_values, objectives, max_iter):
+    def update_surrogate_model(self, predictions, true_values, objectives, max_iter) -> torch.Tensor:
         """
         Updates the surrogate model by training it on collected experience data.
         The surrogate model learns to approximate the regret landscape using prediction errors
@@ -272,7 +272,7 @@ class LancerDecisionMaker(DecisionMaker):
         # TODO: GV -- are you sure you want to return the loss on the last batch only?
         return loss
 
-    def update_predictor(self, data):
+    def update_predictor(self, data) -> torch.Tensor:
         """
         Updates the predictor model using the surrogate model's approximated gradients.
         This implements the actor-critic approach where the surrogate model (critic) guides
@@ -282,7 +282,7 @@ class LancerDecisionMaker(DecisionMaker):
             data (dict[str, torch.Tensor]): Training data batch containing features and true values.
 
         Returns:
-            dict[str, float]: Dictionary containing loss and gradient norm information.
+            torch.Tensor: The total surrogate loss accumulated over all predictor update iterations.
         """
         self.surrogate_model.eval()
         self.trainable_predictive_model.train()

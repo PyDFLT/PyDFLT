@@ -46,7 +46,7 @@ class SFGEDecisionMaker(DecisionMaker):
         decision_model_kwargs: dict | None = None,
         standardize_loss: bool = True,
         num_samples: bool = 1,
-    ):
+    ) -> None:
         super().__init__(
             problem,
             learning_rate,
@@ -95,14 +95,14 @@ class SFGEDecisionMaker(DecisionMaker):
         self.batch_size = batch_size
         self._set_optimizer()
 
-    def _set_optimizer(self):
+    def _set_optimizer(self) -> None:
         """
         Sets the optimizer based on the trainable parameter of the predictor and the learning rate
         """
         print(f"set learning rate to {self.learning_rate}")
         self.optimizer = torch.optim.Adam(self.trainable_predictive_model.parameters(), lr=self.learning_rate)
 
-    def update(self, data_batch: dict[str, torch.tensor], epsilon: float = 10**-5) -> dict[str, torch.tensor]:
+    def update(self, data_batch: dict[str, torch.Tensor], epsilon: float = 10**-5) -> dict[str, torch.Tensor]:
         """
         Args:
             data_batch: contains all needed data to the update step of the predictive model
@@ -208,7 +208,7 @@ class SFGEDecisionMaker(DecisionMaker):
         return epoch_results
 
     @staticmethod
-    def standardize(input: torch.tensor, epsilon: float = 10**-5):
+    def standardize(input: torch.Tensor, epsilon: float = 10**-5):
         """
         Args:
             input: batch losses

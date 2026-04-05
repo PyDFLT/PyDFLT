@@ -96,7 +96,7 @@ class DecisionMaker:
         predictor_kwargs: dict | None = None,
         noisifier_kwargs: dict | None = None,
         decision_model_kwargs: dict | None = None,
-    ):
+    ) -> None:
         """
         Initializes a DecisionMaker instance.
 

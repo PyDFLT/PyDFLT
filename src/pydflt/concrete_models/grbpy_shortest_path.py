@@ -57,7 +57,7 @@ class ShortestPath(GRBPYModel, optGrbModel):
             extra_param_shapes=extra_param_shapes,
         )
 
-    def _create_model(self):
+    def _create_model(self) -> tuple[gp.Model, dict[str, gp.MVar | gp.Var]]:
         """
         Creates the Gurobi optimization model for the shortest path problem.
         This method defines the decision variables, flow conservation constraints, and model sense.
@@ -122,7 +122,7 @@ class ShortestPath(GRBPYModel, optGrbModel):
                 arcs.append((v, v + self.grid[1]))
         return arcs
 
-    def _set_params(self, *params_i: np.ndarray):
+    def _set_params(self, *params_i: np.ndarray) -> None:
         """
         Sets the parameters for the shortest path model for a single instance.
         Updates the objective function with the provided arc costs.

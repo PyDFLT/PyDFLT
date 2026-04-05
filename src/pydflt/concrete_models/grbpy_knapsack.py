@@ -92,7 +92,7 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
         self.supports_binding_constraints = True
         self.supports_adjacent_vertices = True
 
-    def _create_model(self):
+    def _create_model(self) -> tuple[gp.Model, dict[str, gp.MVar | gp.Var]]:
         """
         Creates the Gurobi optimization model for the knapsack problem.
         This method defines the decision variables, constraints, and model sense.
@@ -116,7 +116,7 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
 
         return gp_model, vars_dict
 
-    def _set_params(self, *params_i: np.ndarray):
+    def _set_params(self, *params_i: np.ndarray) -> None:
         """
         Sets the parameters for the knapsack model for a single instance.
         Updates the objective function with the provided item values.
@@ -135,7 +135,7 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
         data_batch: dict[str, torch.Tensor],
         decisions_batch: dict[str, torch.Tensor],
         predictions_batch: dict[str, torch.Tensor] | None = None,
-    ) -> torch.float:
+    ) -> torch.Tensor:
         """
         Computes the objective function value for the knapsack problem.
         The objective is to maximize the total value of selected items.

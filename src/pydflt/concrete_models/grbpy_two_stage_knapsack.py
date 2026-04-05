@@ -85,7 +85,7 @@ class TwoStageKnapsack(GRBPYTwoStageModel):
             extra_param_shapes=extra_param_shapes,
         )
 
-    def _create_model(self):
+    def _create_model(self) -> tuple[gp.Model, dict[str, gp.MVar | gp.Var]]:
         """
         Creates the Gurobi optimization model for the two-stage knapsack problem.
         This method defines the first and second stage variables, constraints, and objective function.
@@ -127,7 +127,7 @@ class TwoStageKnapsack(GRBPYTwoStageModel):
 
         return gp_model, vars_dict
 
-    def _set_params(self, *parameters_i: np.ndarray):
+    def _set_params(self, *parameters_i: np.ndarray) -> None:
         """
         Sets the parameters for the two-stage knapsack model for a single instance.
         This corresponds to adjusting the weight scenarios in the constraints.

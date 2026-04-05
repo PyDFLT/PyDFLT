@@ -1,3 +1,4 @@
+import gurobipy as gp
 import numpy as np
 import torch
 
@@ -98,7 +99,7 @@ class VehicleRouting(GRBPYModel, VrpModel):
         """
         return (data_batch["edge_costs"] * decisions_batch["select_edge"]).sum(-1)
 
-    def _create_model(self):
+    def _create_model(self) -> tuple[gp.Model, dict[str, gp.MVar | gp.Var]]:
         """
         Reuse the PyEPO VRP model to ensure consistent formulation.
         """
