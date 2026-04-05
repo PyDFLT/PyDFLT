@@ -2,9 +2,13 @@ import copy
 import unittest
 
 # Import the registries and their corresponding make/get functions
+from pydflt.concrete_models import GRBPYKnapsackModel
+from pydflt.generate_data_functions import gen_data_knapsack
+from pydflt.problem import Problem
 from pydflt.registries.data import data_registry, get_data
-from pydflt.registries.decision_makers import decision_maker_registry
+from pydflt.registries.decision_makers import decision_maker_registry, make_decision_maker
 from pydflt.registries.models import make_model, model_registry
+from pydflt.utils.load import load_data_from_dict
 
 
 class TestRegistries(unittest.TestCase):
@@ -91,6 +95,71 @@ class TestRegistries(unittest.TestCase):
         assert final_params["noise_width"] == override_noise_width
         # Ensure other params are from original
         assert final_params["num_features"] == original_params["num_features"]
+
+    def test_all_models_instantiate(self):
+        """
+        Verify that every model registered in the model registry can be instantiated
+        without raising an error.
+        """
+        for name in model_registry:
+            with self.subTest(model=name):
+                make_model(name)
+
+    def test_all_data_functions_call(self):
+        """
+        Verify that every data function registered in the data registry can be called
+        without raising an error. Entries that require an external file path (e.g.
+        load_data_from_dict) are skipped because they have no valid default path.
+        """
+        for name in data_registry:
+            with self.subTest(data=name):
+                data_fn, _ = data_registry[name]
+                if data_fn is load_data_from_dict:
+                    # This entry requires a caller-supplied file path and cannot be
+                    # smoke-tested without one; skip it.
+                    continue
+                get_data(name, num_data=10)
+
+    def test_all_decision_makers_instantiate(self):
+        """
+        Verify that every decision maker registered in the decision maker registry can
+        be instantiated without raising an error.
+
+        A small knapsack problem is used as the shared problem instance. It is
+        compatible with all registered decision makers, including those that require
+        PyEPO-style losses (SPOPlus) and those that run solver calls during __init__
+        (cave, lava).
+        """
+        opt_model = GRBPYKnapsackModel(
+            num_decisions=5,
+            capacity=10,
+            weights_lb=1,
+            weights_ub=3,
+            dimension=1,
+            seed=1,
+        )
+        data_dict = gen_data_knapsack(
+            seed=1,
+            num_data=10,
+            num_features=2,
+            num_items=5,
+            dimension=1,
+            polynomial_degree=1,
+            noise_width=0.5,
+        )
+        problem = Problem(
+            data_dict=data_dict,
+            opt_model=opt_model,
+            train_ratio=0.6,
+            val_ratio=0.2,
+            compute_optimal_decisions=True,
+            compute_optimal_objectives=True,
+            seed=1,
+        )
+
+        for name in decision_maker_registry:
+            with self.subTest(decision_maker=name):
+                make_decision_maker(problem, name)
 
 
 # This allows running the tests directly from the file

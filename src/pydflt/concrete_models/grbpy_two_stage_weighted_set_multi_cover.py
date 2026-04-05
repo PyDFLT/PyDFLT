@@ -26,7 +26,7 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
         cover_costs_ub: int,
         recovery_ratio: float = 0,
         seed: int = 5,
-        silvestri2023: bool = False,
+        silvestri2024: bool = False,
         density: float = 0.25,
         num_scenarios: int = 1,
     ):
@@ -41,8 +41,8 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
             cover_costs_ub (int): Upper bound for cover costs.
             recovery_ratio (float): Ratio for recovering costs from unused covers. Defaults to 0.
             seed (int): Random seed for reproducible generation. Defaults to 0.
-            silvestri2023 (bool): Whether to use Silvestri2023 parameter generation method. Defaults to False.
-            density (float): Density of the item-cover matrix when using Silvestri2023 method. Defaults to 0.25.
+            silvestri2024 (bool): Whether to use silvestri2024 parameter generation method. Defaults to False.
+            density (float): Density of the item-cover matrix when using silvestri2024 method. Defaults to 0.25.
             num_scenarios (int): Number of scenarios for multi-scenario optimization. Defaults to 1.
         """
         # Setting input parameters
@@ -53,7 +53,7 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
         self.cover_costs_ub = cover_costs_ub
         self.recovery_ratio = recovery_ratio
         self.seed = seed
-        self.silvestri2023 = silvestri2023
+        self.silvestri2024 = silvestri2024
         self.density = density
         self.num_scenarios = num_scenarios
 
@@ -66,8 +66,8 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
         extra_param_shapes = None
 
         # Setting additional model parameters
-        if self.silvestri2023:
-            self.cover_costs, self.item_cover_matrix = self._set_fixed_parameters_silvestri2023(cover_costs_lb, cover_costs_ub, density, seed)
+        if self.silvestri2024:
+            self.cover_costs, self.item_cover_matrix = self._set_fixed_parameters_silvestri2024(cover_costs_lb, cover_costs_ub, density, seed)
         else:
             self.cover_costs, self.item_cover_matrix = self._set_fixed_parameters(cover_costs_lb, cover_costs_ub, seed)
         self.max_cover_costs = (self.item_cover_matrix * self.cover_costs).max(axis=1)
@@ -216,9 +216,9 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
 
         return cover_costs, item_cover_matrix
 
-    def _set_fixed_parameters_silvestri2023(self, cover_costs_lb: float, cover_costs_ub: float, density: float, seed: int):
+    def _set_fixed_parameters_silvestri2024(self, cover_costs_lb: float, cover_costs_ub: float, density: float, seed: int):
         """
-        Generates fixed parameters using the Silvestri2023 method.
+        Generates fixed parameters using the silvestri2024 method.
         This method creates covers and their costs using a different approach.
 
         Args:

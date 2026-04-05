@@ -102,7 +102,7 @@ register_model(
     penalty=5,  # \in [1, 5, 10]
     cover_costs_lb=1,
     cover_costs_ub=100,
-    Silvestri2024=True,
+    silvestri2024=True,
     seed=5,
 )
 
@@ -110,7 +110,7 @@ register_model(name="knapsack_continuous", model_class=CVXPYDiffKnapsackModel, n
 
 
 register_model(
-    name="knapsack_2_stage", model_class=TwoStageKnapsack, num_decision=10, capacity=20, penalty_add=0.1, penalty_remove=10, values_lb=3, values_ub=8, seed=5
+    name="knapsack_2_stage", model_class=TwoStageKnapsack, num_decisions=10, capacity=20, penalty_add=0.1, penalty_remove=10, values_lb=3, values_ub=8, seed=5
 )
 
 register_model(
