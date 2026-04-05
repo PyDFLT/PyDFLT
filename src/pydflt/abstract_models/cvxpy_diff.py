@@ -42,7 +42,7 @@ class CVXPYDiffModel(OptimizationModel):
                                                                  running optimization.
             model_sense (str): Specifies whether the model minimizes ('MIN') or maximizes ('MAX').
                                Must be either 'MIN' or 'MAX'.
-            extra_param_shapes (Optional[dict[str, tuple[int, ...]]]): An optional dictionary specifying additional
+            extra_param_shapes (dict[str, tuple[int, ...]] | None): An optional dictionary specifying additional
                                                                        parameters that change from sample to sample
                                                                        but are known.
         """
@@ -73,7 +73,7 @@ class CVXPYDiffModel(OptimizationModel):
         Args:
             data_batch (dict[str, torch.Tensor]): A dictionary containing input data for the objective computation.
             decisions_batch (dict[str, torch.Tensor]): A dictionary containing the decision variables.
-            predictions_batch (Optional[dict[str, torch.Tensor]]): An optional dictionary containing the
+            predictions_batch (dict[str, torch.Tensor] | None): An optional dictionary containing the
                                                                   predictions for relevant parameters, if applicable.
 
         Returns:

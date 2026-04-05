@@ -112,8 +112,8 @@ class DFLDataset(Dataset):
         original keys. All added tensors are ensured to be at least 2D and have the correct number of samples.
 
         Args:
-            key (str): The primary key name if `data_to_add` is a single tensor,
-                              or the suffix to append to keys if `data_to_add` is a dictionary.
+            key (str): The primary key name if `data` is a single tensor,
+                              or the suffix to append to keys if `data` is a dictionary.
             data (torch.Tensor | dict[str, torch.Tensor] | list): The data to add.
                 Can be a single torch.Tensor, a dictionary of torch.Tensors, or a list.
                 The first dimension of any tensor must match `self.num_samples`.

@@ -204,22 +204,22 @@ class LancerDecisionMaker(DecisionMaker):
         """
         print(f"Start pretraining surrogate for {max_iter} epochs")
         self.problem.set_mode("train")
-        data = self.problem.read_data(self.problem.mode_to_indices["train"])
+        data_batch = self.problem.read_data(self.problem.mode_to_indices["train"])
 
         # Obtain predictions for all samples in dataset (no grad computation)
-        features = data["features"].to(torch.float32).to(self.device)
+        features = data_batch["features"].to(torch.float32).to(self.device)
 
         # Get predictions and decisions for all training data points
         self.trainable_predictive_model.eval()  # We are not training the predictor right now
         with torch.no_grad():
             predictions = self.predictor.forward(features)
         predictions_dict = self.predictions_to_dict(predictions)
-        true_values = self.dict_to_tensor(data)
+        true_values = self.dict_to_tensor(data_batch)
         decisions = self.decide(predictions_dict)
 
         # Compute losses
-        objectives = self.problem.opt_model.get_objective(data, decisions, predictions_batch=predictions)
-        optimal_objectives = data["objective_optimal"]
+        objectives = self.problem.opt_model.get_objective(data_batch, decisions, predictions_batch=predictions)
+        optimal_objectives = data_batch["objective_optimal"]
 
         # We use absolute regret here, alternatively one could consider relative regret, or only the objective
         losses = (objectives - optimal_objectives) * self.problem.opt_model.model_sense_int
@@ -272,22 +272,22 @@ class LancerDecisionMaker(DecisionMaker):
         # TODO: GV -- are you sure you want to return the loss on the last batch only?
         return loss
 
-    def update_predictor(self, data) -> torch.Tensor:
+    def update_predictor(self, data_batch: dict[str, torch.Tensor]) -> torch.Tensor:
         """
         Updates the predictor model using the surrogate model's approximated gradients.
         This implements the actor-critic approach where the surrogate model (critic) guides
         the predictor model (actor) training.
 
         Args:
-            data (dict[str, torch.Tensor]): Training data batch containing features and true values.
+            data_batch (dict[str, torch.Tensor]): Training data batch containing features and true values.
 
         Returns:
             torch.Tensor: The total surrogate loss accumulated over all predictor update iterations.
         """
         self.surrogate_model.eval()
         self.trainable_predictive_model.train()
-        features = data["features"]
-        true_values = self.dict_to_tensor(data)
+        features = data_batch["features"]
+        true_values = self.dict_to_tensor(data_batch)
         assert features.shape[0] == true_values.shape[0]
         batch_size = self.batch_size_predictor_update
         N = features.shape[0]  # noqa: N806
@@ -338,25 +338,25 @@ class LancerDecisionMaker(DecisionMaker):
             "test",
         ], "Mode must be train/validation/test!"
         self.problem.set_mode(mode)
-        data = self.problem.read_data(self.problem.mode_to_indices[mode])
+        data_batch = self.problem.read_data(self.problem.mode_to_indices[mode])
 
         epoch_results = []
         if mode == "train":
             # Obtain predictions for all samples in dataset (no grad computation)
-            features = data["features"].to(torch.float32).to(self.device)
+            features = data_batch["features"].to(torch.float32).to(self.device)
 
             # Get predictions and decisions for all training data points
             self.trainable_predictive_model.eval()  # We are not training the predictor right now
             with torch.no_grad():
                 predictions = self.predictor.forward(features)
             predictions_dict = self.predictions_to_dict(predictions)
-            true_values = self.dict_to_tensor(data)
+            true_values = self.dict_to_tensor(data_batch)
             decisions = self.decide(predictions_dict)
 
             # Compute losses
-            objectives = self.problem.opt_model.get_objective(data, decisions, predictions_batch=predictions)
+            objectives = self.problem.opt_model.get_objective(data_batch, decisions, predictions_batch=predictions)
             # We can use regret, or relative regret, or only the objective
-            optimal_objectives = data["objective_optimal"]
+            optimal_objectives = data_batch["objective_optimal"]
             losses = (objectives - optimal_objectives) * self.problem.opt_model.model_sense_int
             absolute_regret = losses.detach().numpy().astype(np.float32)
 
@@ -379,7 +379,7 @@ class LancerDecisionMaker(DecisionMaker):
             )
 
             # Step over theta: learning predictor
-            predictor_loss = self.update_predictor(data)
+            predictor_loss = self.update_predictor(data_batch)
 
             # Store train results
             results = {
@@ -387,7 +387,7 @@ class LancerDecisionMaker(DecisionMaker):
                 "train/surrogate_loss": torch.mean(surrogate_loss).detach().numpy(),
                 "train/predictor_loss": torch.mean(predictor_loss).detach().numpy(),
                 "train/eval": absolute_regret,
-                "batch_size": len(data["features"]),
+                "batch_size": len(data_batch["features"]),
             }
             epoch_results.append(results)
 

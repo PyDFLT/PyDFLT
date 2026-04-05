@@ -219,7 +219,7 @@ class SFGEDecisionMaker(DecisionMaker):
         return epoch_results
 
     @staticmethod
-    def standardize(input: torch.Tensor, epsilon: float = 10**-5):
+    def standardize(batch: torch.Tensor, epsilon: float = 10**-5):
         """
         Standardizes a batch of losses along the batch dimension.
 
@@ -227,7 +227,7 @@ class SFGEDecisionMaker(DecisionMaker):
         based on insights from Silvestri et al. (2024).
 
         Args:
-            input (torch.Tensor): Batch losses to standardize.
+            batch (torch.Tensor): Batch losses to standardize.
             epsilon (float): Small value added to the standard deviation to avoid division by zero.
                 Defaults to 1e-5.
 
@@ -235,10 +235,10 @@ class SFGEDecisionMaker(DecisionMaker):
             torch.Tensor: Standardized batch losses with zero mean and unit variance along dim 1.
         """
         # We standardize along the batch dimension (dim=1), using keepdim for broadcasting.
-        mean_input = torch.mean(input, dim=1, keepdim=True)
-        std_input = torch.std(input, dim=1, keepdim=True)
+        mean_batch = torch.mean(batch, dim=1, keepdim=True)
+        std_batch = torch.std(batch, dim=1, keepdim=True)
 
         # Broadcasting handles the element-wise operation correctly for both 1D and 2D cases.
-        standardized = (input - mean_input) / (std_input + epsilon)
+        standardized = (batch - mean_batch) / (std_batch + epsilon)
 
         return standardized

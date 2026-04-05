@@ -36,7 +36,7 @@ class GRBPYTwoStageModel(GRBPYModel):
                                                                  running optimization.
             model_sense (str): Specifies whether the model minimizes ('MIN') or maximizes ('MAX').
                                Must be either 'MIN' or 'MAX'.
-            extra_param_shapes (Optional[dict[str, tuple[int, ...]]]): An optional dictionary specifying additional
+            extra_param_shapes (dict[str, tuple[int, ...]] | None): An optional dictionary specifying additional
                                                                        parameters that change from sample to sample
                                                                        but are known.
         """
@@ -64,7 +64,7 @@ class GRBPYTwoStageModel(GRBPYModel):
                                                   including predicted parameters and extra parameters for each scenario.
             decisions_batch (dict[str, torch.Tensor]): A dictionary containing the computed first-stage decision
                                                        variables for the batch.
-            predictions_batch (Optional[dict[str, torch.Tensor]]): An optional dictionary containing the
+            predictions_batch (dict[str, torch.Tensor] | None): An optional dictionary containing the
                                                                    predictions for relevant parameters, if applicable.
 
         Returns:
