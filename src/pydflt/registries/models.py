@@ -114,7 +114,7 @@ register_model(
 )
 
 register_model(
-    name="WSMC_Schutte2025",
+    name="WSMC_Schutte2026",
     model_class=WeightedSetMultiCover,
     num_items=5,
     num_covers=25,
@@ -123,6 +123,18 @@ register_model(
     cover_costs_ub=50,
     recovery_ratio=0.8,
     seed=5,
+)
+
+register_model(
+    name="tsp_two_stage_probabilistic",
+    model_class=TwoStageProbabilisticTSP,
+    num_cities=10,
+    missed_city_penalty=2.0,
+    recovery_ratio=0.5,
+    radius=10,
+    noise_std=1,
+    seed=5,
+    num_scenarios=1,
 )
 
 register_model(
@@ -146,6 +158,12 @@ Schutte2024
 Noah Schutte, Krzysztof Postek, and Neil Yorke-Smith. Robust losses for decision-focused learning. In Proceedings of
 the Thirty-Third International Joint Conference on Artificial Intelligence, IJCAI'24, pages 4868-4875, 2024.
 doi:10.24963/ijcai.2024/538.
+
+Schutte2026
+Noah Schutte, Grigorii Veviurko, Krzysztof Postek, and Neil Yorke-Smith. Sufficient decision proxies for 
+decision-focused learning. In Proceedings of the Thirty-Fifth International Joint Conference on Artificial Intelligence, 
+IJCAI'26, pages ...., 2026.
+doi:...
 
 Silvestri2024
 Mattia Silvestri, Senne Berden, Jayanta Mandi, Ali Irfan Mahmutogullari, Maxime Mulamba, Allegra De Filippo,

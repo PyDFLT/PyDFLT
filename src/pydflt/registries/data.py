@@ -126,7 +126,7 @@ polynomial_degree = 6, noise_width \in [0, 0.5, 1.0]
 
 
 register_data(
-    "WSMC_Silvestri2024",
+    "wsmc",  #Silvestri2024
     gen_data_wsmc,
     seed=5,
     num_data=2500,  # num_data = ? (train, validation, test split: 80%, 10%, 10%)
