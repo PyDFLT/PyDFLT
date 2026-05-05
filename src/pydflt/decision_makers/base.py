@@ -192,6 +192,8 @@ class DecisionMaker:
                 "num_scenarios" in self.decision_model_kwargs
             ), "If to_decision_pars is specified, num_scenarios has to be given in the decision_model_kwargs."
             self.num_scenarios = self.decision_model_kwargs["num_scenarios"]
+        if self.decision_model_kwargs.get("num_scenarios", 0) > 1:
+            self.num_scenarios = self.decision_model_kwargs["num_scenarios"]
 
         # Initialize main objects
         self._initialize_decision_model()
@@ -564,16 +566,13 @@ class DecisionMaker:
             predictor_kwargs_processed["num_inputs"] = self.problem.num_features
         if "num_scenarios" in self.decision_model_kwargs and self.predictor_str == "MLP":
             # For now when the decision_model kwargs has num_scenarios, the predictor_kwargs gets the same number
-            assert (
-                "num_scenarios" in predictor_kwargs_processed
-            ), "Num scenarios in predictor_kwargs cannot be specified and unequal to num scenarios in decision_model_kwargs."
-            assert (
-                predictor_kwargs_processed["num_scenarios"] != self.decision_model_kwargs["num_scenarios"]
-            ), "Num scenarios in predictor_kwargs cannot be specified and unequal to num scenarios in decision_model_kwargs."
+            if "num_scenarios" in predictor_kwargs_processed:
+                assert (
+                    predictor_kwargs_processed["num_scenarios"] != self.decision_model_kwargs["num_scenarios"]
+                ), "Num scenarios in predictor_kwargs cannot be specified and unequal to num scenarios in decision_model_kwargs."
             predictor_kwargs_processed["num_scenarios"] = self.decision_model_kwargs["num_scenarios"]
-
         # If the standardize_predictions is True or not given, then an additional layer is added to the predictor that
-        # scales with the mean and he std of the training data (only implemented for MLP predictor)
+        # scales with the mean and the std of the training data (only implemented for MLP predictor)
         if self.init_OLS:
             assert not self.standardize_predictions, "When init_OLS is True, standardize_predictions has to be set to False"
             assert (
@@ -582,7 +581,10 @@ class DecisionMaker:
         if self.standardize_predictions:
             assert "shift" not in predictor_kwargs_processed, "When standardize_predictions is not specified or True, it will overwrite scale and shift."
             assert "scale" not in predictor_kwargs_processed, "When standardize_predictions is not specified or True, it will overwrite scale and shift."
-            predictor_kwargs_processed["shift"] = self._get_means()
+            if self.decision_model_str == "scenario_based":
+                predictor_kwargs_processed["shift"] = self._get_quantiles()
+            else:
+                predictor_kwargs_processed["shift"] = self._get_means()
             predictor_kwargs_processed["scale"] = self._get_stds()
 
         # Construct the base predictor

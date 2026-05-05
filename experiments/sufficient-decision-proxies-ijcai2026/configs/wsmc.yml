@@ -3,7 +3,7 @@ model:
 
 data:
   name: 'wsmc'
-  num_data: 100 # TODO adjust
+  num_data: 2500 # TODO adjust
   num_items: 5
 
 runner:
@@ -16,6 +16,7 @@ runner:
   experiments_folder: 'results/'
   store_min_and_max: true
   val_metrics: ['objective', 'abs_regret', 'rel_regret', 'sym_rel_regret']
+  test_metrics: ['objective', 'abs_regret', 'rel_regret', 'sym_rel_regret']
 
 problem:
   train_ratio: 0.4
@@ -25,7 +26,7 @@ problem:
   standardize_features: true
 
 decision_maker:
-  name: sfge
+  name: SFGE
   standardize_predictions: true
   learning_rate: 0.0005
   predictor_str: MLP

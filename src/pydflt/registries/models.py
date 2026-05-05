@@ -17,6 +17,7 @@ from pydflt.concrete_models import (
     ShortestPath,
     TravelingSalesperson,
     TwoStageKnapsack,
+    TwoStageProbabilisticTSP,
     VehicleRouting,
     WeightedSetMultiCover,
 )

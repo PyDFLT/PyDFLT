@@ -23,7 +23,7 @@ experiment_kwargs = {
     },
     '2_point': {
         'decision_maker': {
-            'decision_model_str': 'SAA',
+            'decision_model_str': 'scenario_based',
             'decision_model_kwargs': {
                 'num_scenarios': 2
             }
@@ -31,7 +31,7 @@ experiment_kwargs = {
     },
     '8_point': {
         'decision_maker': {
-            'decision_model_str': 'SAA',
+            'decision_model_str': 'scenario_based',
             'decision_model_kwargs': {
                 'num_scenarios': 8
             }
@@ -55,7 +55,7 @@ experiment_kwargs = {
             'residual_SAA': True,
             'residual_SAA_scenarios': 16,
             'predictor_str': 'Sample',
-            'decision_model_str': 'SAA',
+            'decision_model_str': 'scenario_based',
             'to_decision_pars': 'sample',
             'use_dist_at_mode': 'test',
             'decision_model_kwargs': {
@@ -72,7 +72,7 @@ experiment_kwargs = {
 
 keys_with_randomization = ['runner', 'problem', 'decision_maker', 'data', 'model']
 experiments_to_run = ['pfl', 'residual_SAA', 'point', '2_point', 'qp']
-seeds = range(5) # TODO adjust
+seeds = range(5,6) # TODO adjust
 for experiment_name in experiments_to_run:
     if experiment_name in experiment_kwargs:
         kwargs = experiment_kwargs[experiment_name]
