@@ -83,8 +83,8 @@ experiment_kwargs = {
 
 keys_with_randomization = ['runner', 'problem', 'decision_maker']
 num_relevant_security = 7
-seeds = range(5,6) # TODO adjust
-experiments_to_run = ['pfl', 'residual_SAA', 'qp', 'point', '2_point', '8_point'] # TODO add 16_point
+seeds = range(5,15)
+experiments_to_run = ['pfl', 'residual_SAA', 'qp', 'point', '2_point', '8_point', '16_point']
 for experiment_name in experiments_to_run:
     if experiment_name in experiment_kwargs:
         kwargs = experiment_kwargs[experiment_name]

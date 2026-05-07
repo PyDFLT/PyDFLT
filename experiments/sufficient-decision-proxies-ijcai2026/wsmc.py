@@ -58,7 +58,7 @@ experiment_kwargs = {
 }
 
 keys_with_randomization = ['runner', 'problem', 'decision_maker', 'data', 'model']
-experiments_to_run = ['pfl', 'residual_SAA', 'point', '2_point', 'qp']
+experiments_to_run = ['pfl', 'residual_SAA', 'qp', 'point', '2_point']
 seeds = range(5,15)
 for experiment_name in experiments_to_run:
     if experiment_name in experiment_kwargs:

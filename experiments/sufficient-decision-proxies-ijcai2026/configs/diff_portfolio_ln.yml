@@ -5,7 +5,7 @@ data:
   name: load_data_from_npz
 
 runner:
-  num_epochs: 5 # TODO adjust 250
+  num_epochs: 250
   use_wandb: true
   project_name: portfolio_ijcai2026
   experiment_name: experiment
