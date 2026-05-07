@@ -18,7 +18,7 @@ from pydflt.generate_data_functions import (
     gen_data_traveling_salesperson,
     gen_data_wsmc,
 )
-from pydflt.utils.load import load_data_from_dict
+from pydflt.utils.load import load_data_from_dict, load_data_from_npz
 
 data_registry: dict[str, tuple[Callable, dict[str, Any]]] = {}
 
@@ -67,6 +67,12 @@ def get_data(name: str, **override_params: Any) -> tuple[Any, dict[str, Any]]:
 register_data(
     name="load_data_from_dict",
     data_function=load_data_from_dict,
+    path=None,
+)
+
+register_data(
+    name="load_data_from_npz",
+    data_function=load_data_from_npz,
     path=None,
 )
 

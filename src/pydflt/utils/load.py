@@ -2,6 +2,8 @@ import pickle
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+
 
 def print_registry(registry: dict[str, tuple[Any, dict[str, Any]]], filter_word=""):
     """
@@ -77,6 +79,27 @@ def load_data_from_dict(path: str | None = None) -> dict[str, Any]:
 
     with open(path, "rb") as f:
         data_dict = pickle.load(f)
+    print(f"Loaded data from {path}")
+    for key, value in data_dict.items():
+        print(key, value.shape)
+
+    return data_dict
+
+
+def load_data_from_npz(path: str | None = None) -> dict[str, Any]:
+    """
+    Loads a compressed .npz data dictionary from a specified file path.
+
+    Args:
+        path: The full path to the .npz file containing the data dictionary.
+
+    Returns:
+        The loaded data dictionary, mapping string keys to numpy arrays.
+    """
+    assert path is not None, "Specify the path to data_dict!"
+
+    with np.load(path, allow_pickle=True) as data:
+        data_dict = {key: data[key] for key in data.files}
     print(f"Loaded data from {path}")
     for key, value in data_dict.items():
         print(key, value.shape)

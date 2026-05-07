@@ -1,9 +1,8 @@
 model:
-  name: cvxpy_portfolio_ln
-  num_decisions: 10
+  name: portfolio_ln_Schutte2026
 
 data:
-  name: load_data_from_dict
+  name: load_data_from_npz
 
 runner:
   num_epochs: 5 # TODO adjust 250
@@ -15,6 +14,7 @@ runner:
   save_best: true
   store_min_and_max: true
   val_metrics: ['objective', 'abs_regret', 'rel_regret', 'sym_rel_regret']
+  test_metrics: ['objective', 'abs_regret', 'rel_regret', 'sym_rel_regret']
 
 problem:
   train_ratio: 0.7
@@ -32,4 +32,4 @@ decision_maker:
   predictor_str: MLP
   predictor_kwargs:
     size: 256
-    n_layers: 2
+    num_hidden_layers: 2

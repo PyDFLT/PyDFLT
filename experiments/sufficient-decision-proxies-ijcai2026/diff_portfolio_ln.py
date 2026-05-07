@@ -3,8 +3,8 @@ import os
 sys.path.append(os.getcwd())  # append the current working directory to the Python path
 
 import yaml
-import torch
-from src.pydflt.utils.load import load_data_from_dict
+import numpy as np
+from pydflt.utils.load import load_data_from_npz
 from src.pydflt.utils.experiments import run, update_config
 """ This script is for experiments for Sufficient Decision Proxies for DFL published at IJCAI 2026, by 
     Noah Schutte, Krzysztof Postek, Grigorii Veviurko, Neil Yorke-Smith"""
@@ -50,7 +50,7 @@ experiment_kwargs = {
     },
     'pfl': {
         'decision_maker': {
-            'name': 'pfl',
+            'name': 'PFL',
             'loss_function_str': 'mse',
         },
         'runner': {
@@ -60,7 +60,7 @@ experiment_kwargs = {
         }
     },
     'residual_SAA': {
-        'decision_maker_str': 'pfl',
+        'decision_maker_str': 'PFL',
         'decision_maker': {
             'loss_function_str': 'mse',
             'residual_SAA': True,
@@ -83,19 +83,19 @@ experiment_kwargs = {
 
 keys_with_randomization = ['runner', 'problem', 'decision_maker']
 num_relevant_security = 7
-seeds = range(5) # TODO adjust
-experiments_to_run = ['pfl', 'residual_SAA', 'qp', 'point', '2_point', '8_point', '16_point']
+seeds = range(5,6) # TODO adjust
+experiments_to_run = ['2_point']#'pfl', 'residual_SAA', 'qp', 'point', '2_point', '8_point', '16_point']
 for experiment_name in experiments_to_run:
     if experiment_name in experiment_kwargs:
         kwargs = experiment_kwargs[experiment_name]
         for seed in seeds:
-            config = yaml.safe_load(open("experiments/configs/diff_portfolio_ln.yml"))
-            data_path = f'data/portfolio_10_{seed}.pkl'
+            config = yaml.safe_load(open("experiments/sufficient-decision-proxies-ijcai2026/configs/diff_portfolio_ln.yml"))
+            data_path = f'experiments/sufficient-decision-proxies-ijcai2026/data/portfolio_10_{seed}.npz'
             config['data']['path'] = data_path
             config['runner']['experiment_name'] = f'{experiment_name}'
-            data = load_data_from_dict(data_path)
+            data = load_data_from_npz(data_path)
             relevant_data = data['c'][:int(data['features'].shape[0] * config['problem']['train_ratio'])]
-            bank_return = float(torch.kthvalue(relevant_data, num_relevant_security, dim=1)[0].median())
+            bank_return = float(np.median(np.partition(relevant_data, num_relevant_security - 1, axis=1)[:, num_relevant_security - 1]))
             if experiment_name == '2_point':
                 config['decision_maker']['predictor_kwargs']['shift'] = bank_return
             config['model']['bank_return'] = bank_return
