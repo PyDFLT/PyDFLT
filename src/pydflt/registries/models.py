@@ -153,8 +153,7 @@ register_model(
 register_model(
     name='portfolio_ln_Schutte2026',
     model_class=CVXPYDiffInvestmentModel,
-    num_decisions=50,
-    bank_return=0.00
+    num_decisions=10
 )
 
 """
