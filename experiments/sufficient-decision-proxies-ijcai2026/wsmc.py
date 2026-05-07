@@ -4,7 +4,8 @@ sys.path.append(os.getcwd())  # append the current working directory to the Pyth
 
 import yaml
 from src.pydflt.utils.experiments import run, update_config
-""" This script is for experiments for Sufficient Decision Proxies for DFL"""
+""" This script is for experiments for Sufficient Decision Proxies for DFL published at IJCAI 2026, by 
+    Noah Schutte, Krzysztof Postek, Grigorii Veviurko, Neil Yorke-Smith"""
 
 experiment_kwargs = {
     'point': {

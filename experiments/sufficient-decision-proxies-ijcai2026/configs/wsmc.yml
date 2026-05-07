@@ -1,5 +1,5 @@
 model:
-  name: WSMC_Schutte2026
+  name: wsmc_Schutte2026
 
 data:
   name: 'wsmc'
@@ -11,9 +11,9 @@ runner:
   use_wandb: true
   project_name: wsmc_ijcai2026
   experiment_name: experiment
+  experiments_folder: 'results/'
   main_metric: abs_regret
   save_best: true
-  experiments_folder: 'results/'
   store_min_and_max: true
   val_metrics: ['objective', 'abs_regret', 'rel_regret', 'sym_rel_regret']
   test_metrics: ['objective', 'abs_regret', 'rel_regret', 'sym_rel_regret']
@@ -30,7 +30,6 @@ decision_maker:
   standardize_predictions: true
   learning_rate: 0.0005
   predictor_str: MLP
-  decision_model_str: 'base'
   predictor_kwargs:
     size: 256
     num_hidden_layers: 2
