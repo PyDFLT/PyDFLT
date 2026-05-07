@@ -2,6 +2,7 @@ import cvxpy as cp
 import numpy as np
 import torch
 
+from pydflt.abstract_models.base import MAX
 from pydflt.abstract_models.cvxpy_diff import CVXPYDiffModel
 
 
@@ -55,7 +56,7 @@ class CVXPYDiffKnapsackModel(CVXPYDiffModel):
         self.num_scenarios = num_scenarios
 
         # Setting basic model parameters
-        model_sense = "MAX"
+        model_sense = MAX
         var_shapes = {"select_item": (num_decisions,)}
         _shape = (num_decisions, num_scenarios) if num_scenarios > 1 else (num_decisions,)
         param_to_predict_shapes = {"item_value": _shape}
