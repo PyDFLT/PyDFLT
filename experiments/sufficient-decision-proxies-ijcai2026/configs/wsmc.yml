@@ -3,11 +3,11 @@ model:
 
 data:
   name: 'wsmc'
-  num_data: 2500 # TODO adjust
+  num_data: 2500
   num_items: 5
 
 runner:
-  num_epochs: 5 # TODO adjust
+  num_epochs: 250
   use_wandb: true
   project_name: wsmc_ijcai2026
   experiment_name: experiment

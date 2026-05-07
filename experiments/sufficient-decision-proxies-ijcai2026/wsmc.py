@@ -7,18 +7,6 @@ from src.pydflt.utils.experiments import run, update_config
 """ This script is for experiments for Sufficient Decision Proxies for DFL"""
 
 experiment_kwargs = {
-    'qp': {
-        'decision_maker': {
-            'decision_model_str': 'quadratic',
-            'num_samples': 2,
-        }
-    },
-    'qp_1': {
-        'decision_maker': {
-            'decision_model_str': 'quadratic',
-            'num_samples': 1,
-        }
-    },
     'point': {
     },
     '2_point': {
@@ -29,12 +17,10 @@ experiment_kwargs = {
             }
         }
     },
-    '8_point': {
+    'qp': {
         'decision_maker': {
-            'decision_model_str': 'scenario_based',
-            'decision_model_kwargs': {
-                'num_scenarios': 8
-            }
+            'decision_model_str': 'quadratic',
+            'num_samples': 2,  # makes SFGE more stable
         }
     },
     'pfl': {
@@ -72,7 +58,7 @@ experiment_kwargs = {
 
 keys_with_randomization = ['runner', 'problem', 'decision_maker', 'data', 'model']
 experiments_to_run = ['pfl', 'residual_SAA', 'point', '2_point', 'qp']
-seeds = range(5,6) # TODO adjust
+seeds = range(5,15)
 for experiment_name in experiments_to_run:
     if experiment_name in experiment_kwargs:
         kwargs = experiment_kwargs[experiment_name]
