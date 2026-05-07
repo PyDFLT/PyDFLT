@@ -6,6 +6,7 @@ import torch
 from gurobipy import GRB
 from pyepo.model.grb.tsp import tspDFJModel, unionFind
 
+from pydflt.abstract_models.base import MIN
 from pydflt.abstract_models.grbpy import GRBPYModel
 
 
@@ -39,7 +40,7 @@ class TravelingSalesperson(GRBPYModel, tspDFJModel):
 
         # triangle number for the number of edges
         num_edges = num_nodes * (num_nodes - 1) // 2
-        model_sense = "MIN"
+        model_sense = MIN
         var_shapes = {"select_edge": (num_edges,)}
         param_to_predict_shapes = {"edge_costs": (num_edges,)}
 

@@ -7,6 +7,7 @@ import gurobipy as gp
 import numpy as np
 from gurobipy import GRB
 
+from pydflt.abstract_models.base import MIN
 from pydflt.abstract_models.grbpy_two_stage import GRBPYTwoStageModel
 
 
@@ -58,7 +59,7 @@ class WeightedSetMultiCover(GRBPYTwoStageModel):
         self.num_scenarios = num_scenarios
 
         # Setting basic model parameters
-        model_sense = "MIN"
+        model_sense = MIN
         decision_variables = {"select_cover": (self.num_covers,)}
         # "unmet_coverage": (self.num_covers, num_scenarios)}
         _shape = (self.num_items, num_scenarios) if num_scenarios > 1 else (num_items,)

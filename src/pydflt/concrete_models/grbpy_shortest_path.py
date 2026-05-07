@@ -5,6 +5,7 @@ import torch
 from gurobipy import GRB
 from pyepo.model.grb.grbmodel import optGrbModel
 
+from pydflt.abstract_models.base import MIN
 from pydflt.abstract_models.grbpy import GRBPYModel
 
 
@@ -38,7 +39,7 @@ class ShortestPath(GRBPYModel, optGrbModel):
         self.num_scenarios = num_scenarios
 
         # Setting basic model parameters
-        model_sense = "MIN"
+        model_sense = MIN
         num_coefficients = grid[0] * (grid[1] - 1) + grid[1] * (grid[0] - 1)
         _shape = (num_coefficients, num_scenarios) if num_scenarios > 1 else (num_coefficients,)
         param_to_predict_shapes = {"arc_costs": _shape}
