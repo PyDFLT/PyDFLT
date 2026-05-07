@@ -269,7 +269,8 @@ class DifferentiableDecisionMaker(DecisionMaker):
             "grad_norm": grad_norm,
         }
 
-        evaluate_metrics = ["mse", "mae"]
+        predictions_are_in_data = all(key in data_batch for key in predictions_batch)
+        evaluate_metrics = ["mse", "mae"] if predictions_are_in_data else []
         if self.loss_function_str in ["objective", "regret", "smooth"]:
             evaluate_metrics.extend(["objective", "abs_regret", "rel_regret", "sym_rel_regret"])
         eval_dict = self.problem.evaluate(
