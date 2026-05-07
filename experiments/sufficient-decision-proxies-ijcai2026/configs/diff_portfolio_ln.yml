@@ -1,0 +1,35 @@
+model:
+  name: cvxpy_portfolio_ln
+  num_decisions: 10
+
+data:
+  name: load_data_from_dict
+
+runner:
+  num_epochs: 5 # TODO adjust 250
+  use_wandb: true
+  project_name: portfolio_ijcai2026
+  experiment_name: experiment
+  experiments_folder: 'results/'
+  main_metric: abs_regret
+  save_best: true
+  store_min_and_max: true
+  val_metrics: ['objective', 'abs_regret', 'rel_regret', 'sym_rel_regret']
+
+problem:
+  train_ratio: 0.7
+  val_ratio: 0.15
+  compute_optimal_objectives: true
+  compute_optimal_decisions: true
+  standardize_features: true
+  time_respecting_split: true
+
+decision_maker:
+  name: differentiable
+  learning_rate: 0.00005
+  standardize_predictions: true
+  batch_size: 32
+  predictor_str: MLP
+  predictor_kwargs:
+    size: 256
+    n_layers: 2

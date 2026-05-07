@@ -13,6 +13,7 @@ from typing import Any
 
 from pydflt.concrete_models import (
     CVXPYDiffKnapsackModel,
+    CVXPYDiffInvestmentModel,
     GRBPYKnapsackModel,
     ShortestPath,
     TravelingSalesperson,
@@ -115,7 +116,7 @@ register_model(
 )
 
 register_model(
-    name="WSMC_Schutte2026",
+    name="wsmc_Schutte2026",
     model_class=WeightedSetMultiCover,
     num_items=5,
     num_covers=25,
@@ -139,7 +140,7 @@ register_model(
 )
 
 register_model(
-    name="VRP_Tang2024Cave",
+    name="vrp_Tang2024Cave",
     model_class=VehicleRouting,
     num_nodes=20,  # \in [20, 30]
     capacity=30,
@@ -147,6 +148,13 @@ register_model(
     demands_lb=0.0,
     demands_ub=10.0,
     seed=5,
+)
+
+register_model(
+    name='portfolio_ln_Schutte2026',
+    model_class=CVXPYDiffInvestmentModel,
+    num_decisions=50,
+    bank_return=0.00
 )
 
 """
