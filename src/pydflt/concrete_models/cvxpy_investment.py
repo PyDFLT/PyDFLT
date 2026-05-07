@@ -38,9 +38,9 @@ class CVXPYDiffInvestmentModel(CVXPYDiffModel):
 
         # Setting basic model parameters
         model_sense = MAX
-        var_shapes = {"x": (num_decisions,)}
+        var_shapes = {"investment": (num_decisions,)}
         _shape = (num_decisions, num_scenarios) if num_scenarios > 1 else (num_decisions,)
-        param_to_predict_shapes = {"c": _shape}
+        param_to_predict_shapes = {"return": _shape}
         extra_param_shapes = None
 
         super().__init__(var_shapes, param_to_predict_shapes, model_sense, extra_param_shapes=extra_param_shapes)
@@ -53,8 +53,8 @@ class CVXPYDiffInvestmentModel(CVXPYDiffModel):
         Returns:
             cp.Problem: The CVXPY optimization problem instance.
         """
-        x = self.cp_vars_dict["x"]
-        c = self.cp_params_dict["c"]
+        x = self.cp_vars_dict["investment"]
+        c = self.cp_params_dict["return"]
         constraints = [x >= 0, x <= 1, cp.sum(x) <= 1]
         obj = cp.sum(cp.log(1 + self.bank_return * (1 - cp.sum(x)) + x @ c))  # outside sum is for the scenarios
 
@@ -78,8 +78,8 @@ class CVXPYDiffInvestmentModel(CVXPYDiffModel):
         Returns:
             torch.float: The log-return of the portfolio for the batch.
         """
-        c = data_batch["c"]
-        x = decisions_batch["x"]
+        c = data_batch["return"]
+        x = decisions_batch["investment"]
         obj = torch.log((1 + (self.bank_return * (1 - x.sum(-1))) + (x * c).sum(-1)))
 
         return obj
@@ -117,8 +117,8 @@ class CVXPYDiffInvestmentModel(CVXPYDiffModel):
         Returns:
             torch.Tensor: The gradient of the objective w.r.t. x, shape (batch, num_decisions).
         """
-        x = decisions_batch["x"]
-        c = data_batch["c"]
+        x = decisions_batch["investment"]
+        c = data_batch["return"]
         # BUG: nom should be (c - self.bank_return) since d/dx_i of r*(1-sum(x)) = -r
         # BUG: denom should be the argument of the log, not log of it:
         #      1 + self.bank_return * (1 - x.sum(-1)) + (x * c).sum(-1), unsqueezed for broadcasting

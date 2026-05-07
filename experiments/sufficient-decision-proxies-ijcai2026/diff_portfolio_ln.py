@@ -84,7 +84,7 @@ experiment_kwargs = {
 keys_with_randomization = ['runner', 'problem', 'decision_maker']
 num_relevant_security = 7
 seeds = range(5,6) # TODO adjust
-experiments_to_run = ['2_point']#'pfl', 'residual_SAA', 'qp', 'point', '2_point', '8_point', '16_point']
+experiments_to_run = ['pfl', 'residual_SAA', 'qp', 'point', '2_point', '8_point'] # TODO add 16_point
 for experiment_name in experiments_to_run:
     if experiment_name in experiment_kwargs:
         kwargs = experiment_kwargs[experiment_name]
@@ -94,7 +94,7 @@ for experiment_name in experiments_to_run:
             config['data']['path'] = data_path
             config['runner']['experiment_name'] = f'{experiment_name}'
             data = load_data_from_npz(data_path)
-            relevant_data = data['c'][:int(data['features'].shape[0] * config['problem']['train_ratio'])]
+            relevant_data = data['return'][:int(data['features'].shape[0] * config['problem']['train_ratio'])]
             bank_return = float(np.median(np.partition(relevant_data, num_relevant_security - 1, axis=1)[:, num_relevant_security - 1]))
             if experiment_name == '2_point':
                 config['decision_maker']['predictor_kwargs']['shift'] = bank_return
