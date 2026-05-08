@@ -12,8 +12,8 @@ import copy
 from typing import Any
 
 from pydflt.concrete_models import (
-    CVXPYDiffKnapsackModel,
     CVXPYDiffInvestmentModel,
+    CVXPYDiffKnapsackModel,
     GRBPYKnapsackModel,
     ShortestPath,
     TravelingSalesperson,
@@ -150,11 +150,7 @@ register_model(
     seed=5,
 )
 
-register_model(
-    name='portfolio_ln_Schutte2026',
-    model_class=CVXPYDiffInvestmentModel,
-    num_decisions=10
-)
+register_model(name="portfolio_ln_Schutte2026", model_class=CVXPYDiffInvestmentModel, num_decisions=10)
 
 """
 References
@@ -168,8 +164,8 @@ the Thirty-Third International Joint Conference on Artificial Intelligence, IJCA
 doi:10.24963/ijcai.2024/538.
 
 Schutte2026
-Noah Schutte, Grigorii Veviurko, Krzysztof Postek, and Neil Yorke-Smith. Sufficient decision proxies for 
-decision-focused learning. In Proceedings of the Thirty-Fifth International Joint Conference on Artificial Intelligence, 
+Noah Schutte, Grigorii Veviurko, Krzysztof Postek, and Neil Yorke-Smith. Sufficient decision proxies for
+decision-focused learning. In Proceedings of the Thirty-Fifth International Joint Conference on Artificial Intelligence,
 IJCAI'26, pages ...., 2026.
 doi:...
 

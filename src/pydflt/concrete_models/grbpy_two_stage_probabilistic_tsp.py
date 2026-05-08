@@ -72,7 +72,7 @@ class TwoStageProbabilisticTSP(GRBPYTwoStageModel):
         self.seed = seed
         self.num_scenarios = num_scenarios
 
-        np.random.seed(self.seed)
+        self.rng = np.random.default_rng(self.seed)
         self.num_nodes = self.num_cities + 1
         self.x_coord, self.y_coord = self._get_coords()
         self.distances = self._determine_distances()
@@ -119,16 +119,10 @@ class TwoStageProbabilisticTSP(GRBPYTwoStageModel):
         direct_trip = gp_model.addMVar((self.num_cities,), name="x_direct", vtype=GRB.BINARY)
         city_visited = gp_model.addMVar((self.num_cities,), name="x_visited", vtype=GRB.BINARY)
         tour_exists = gp_model.addMVar((1,), name="x_tour", vtype=GRB.BINARY)
-        city_canceled = gp_model.addMVar(
-            (self.num_cities, self.num_scenarios), name="y_canceled", vtype=GRB.BINARY
-        )
+        city_canceled = gp_model.addMVar((self.num_cities, self.num_scenarios), name="y_canceled", vtype=GRB.BINARY)
 
         # Enforce arc symmetry and no self-loops
-        gp_model.addConstrs(
-            arc_traversed[i, j] == arc_traversed[j, i]
-            for i in range(self.num_nodes)
-            for j in range(i + 1, self.num_nodes)
-        )
+        gp_model.addConstrs(arc_traversed[i, j] == arc_traversed[j, i] for i in range(self.num_nodes) for j in range(i + 1, self.num_nodes))
         gp_model.addConstrs(arc_traversed[i, i] == 0 for i in range(self.num_nodes))
 
         # A direct trip implies the city is visited
@@ -136,21 +130,13 @@ class TwoStageProbabilisticTSP(GRBPYTwoStageModel):
 
         # Degree-2 constraint for cities visited via the tour (not direct trips)
         gp_model.addConstrs(
-            gp.quicksum(arc_traversed[i + 1, j] for j in range(self.num_nodes))
-            == 2 * (city_visited[i] - direct_trip[i])
-            for i in range(self.num_cities)
+            gp.quicksum(arc_traversed[i + 1, j] for j in range(self.num_nodes)) == 2 * (city_visited[i] - direct_trip[i]) for i in range(self.num_cities)
         )
         # Depot has degree 2 iff a tour exists
-        gp_model.addConstr(
-            gp.quicksum(arc_traversed[0, j] for j in range(self.num_nodes)) == 2 * tour_exists[0]
-        )
+        gp_model.addConstr(gp.quicksum(arc_traversed[0, j] for j in range(self.num_nodes)) == 2 * tour_exists[0])
 
         # Tour exists iff at least one city is visited via the tour
-        gp_model.addConstr(
-            tour_exists[0]
-            >= gp.quicksum(city_visited[i] - direct_trip[i] for i in range(self.num_cities))
-            / self.num_cities
-        )
+        gp_model.addConstr(tour_exists[0] >= gp.quicksum(city_visited[i] - direct_trip[i] for i in range(self.num_cities)) / self.num_cities)
 
         vars_dict["x_arc"] = arc_traversed
         vars_dict["x_direct"] = direct_trip
@@ -159,9 +145,7 @@ class TwoStageProbabilisticTSP(GRBPYTwoStageModel):
         second_stage_vars_dict["y_canceled"] = city_canceled
 
         gp_model.modelSense = GRB.MINIMIZE
-        assert self.model_sense_int == gp_model.modelSense, (
-            "Is it a maximization or minimization problem? Check model sense."
-        )
+        assert self.model_sense_int == gp_model.modelSense, "Is it a maximization or minimization problem? Check model sense."
 
         self.second_stage_vars_dict = second_stage_vars_dict
         self.auxiliary_vars_dict = auxiliary_vars_dict
@@ -202,23 +186,13 @@ class TwoStageProbabilisticTSP(GRBPYTwoStageModel):
 
         # Can only cancel a direct trip if the city does not need to be visited
         self.gp_model.addConstrs(
-            (
-                city_canceled[i, k] <= direct_trip[i] * (1 - int(requires_visit[i, k]))
-                for i in range(self.num_cities)
-                for k in range(self.num_scenarios)
-            ),
+            (city_canceled[i, k] <= direct_trip[i] * (1 - int(requires_visit[i, k])) for i in range(self.num_cities) for k in range(self.num_scenarios)),
             name="canceled",
         )
 
         obj = (
-            gp.quicksum(
-                self.distances[i, j] * arc_traversed[i, j]
-                for i in range(self.num_nodes)
-                for j in range(i + 1, self.num_nodes)
-            )
-            + gp.quicksum(
-                2 * self.distances[0, i + 1] * direct_trip[i] for i in range(self.num_cities)
-            )
+            gp.quicksum(self.distances[i, j] * arc_traversed[i, j] for i in range(self.num_nodes) for j in range(i + 1, self.num_nodes))
+            + gp.quicksum(2 * self.distances[0, i + 1] * direct_trip[i] for i in range(self.num_cities))
             + (1 / self.num_scenarios)
             * gp.quicksum(
                 requires_visit[i, k] * (1 - city_visited[i]) * self.missed_city_penalty * 2 * self.distances[0, i + 1]
@@ -226,11 +200,7 @@ class TwoStageProbabilisticTSP(GRBPYTwoStageModel):
                 for k in range(self.num_scenarios)
             )
             - (self.recovery_ratio / self.num_scenarios)
-            * gp.quicksum(
-                2 * self.distances[0, i + 1] * city_canceled[i, k]
-                for i in range(self.num_cities)
-                for k in range(self.num_scenarios)
-            )
+            * gp.quicksum(2 * self.distances[0, i + 1] * city_canceled[i, k] for i in range(self.num_cities) for k in range(self.num_scenarios))
         )
         self.gp_model.setObjective(obj)
 
@@ -243,7 +213,7 @@ class TwoStageProbabilisticTSP(GRBPYTwoStageModel):
                 depot at index 0.
         """
         angles = np.linspace(0, 2 * np.pi, self.num_cities, endpoint=False)
-        noise = np.random.normal(0, self.noise_std, self.num_cities)
+        noise = self.rng.normal(0, self.noise_std, self.num_cities)
         perturbed_x = (self.radius + noise) * np.cos(angles)
         perturbed_y = (self.radius + noise) * np.sin(angles)
         x_coord = np.insert(perturbed_x, 0, 0.0)
@@ -260,10 +230,7 @@ class TwoStageProbabilisticTSP(GRBPYTwoStageModel):
         distances = np.zeros((self.num_nodes, self.num_nodes))
         for i in range(self.num_nodes):
             for j in range(self.num_nodes):
-                distances[i, j] = np.sqrt(
-                    (self.x_coord[i] - self.x_coord[j]) ** 2
-                    + (self.y_coord[i] - self.y_coord[j]) ** 2
-                )
+                distances[i, j] = np.sqrt((self.x_coord[i] - self.x_coord[j]) ** 2 + (self.y_coord[i] - self.y_coord[j]) ** 2)
         return distances
 
     @staticmethod
@@ -312,11 +279,7 @@ class TwoStageProbabilisticTSP(GRBPYTwoStageModel):
         if where == GRB.Callback.MIPSOL:
             arc_vars = [var for var in model.getVars() if "x_arc" in var.VarName]
             vals = model.cbGetSolution(arc_vars)
-            selected = gp.tuplelist(
-                (var.VarName[-4], var.VarName[-2])
-                for i, var in enumerate(arc_vars)
-                if vals[i] > 0.5
-            )
+            selected = gp.tuplelist((var.VarName[-4], var.VarName[-2]) for i, var in enumerate(arc_vars) if vals[i] > 0.5)
 
             direct_vars = [var for var in model.getVars() if "x_direct" in var.VarName]
             direct_vals = model.cbGetSolution(direct_vars)
@@ -342,7 +305,4 @@ class TwoStageProbabilisticTSP(GRBPYTwoStageModel):
                     tour = thiscycle
 
             if len(tour) < to_visit_with_tour:
-                model.cbLazy(
-                    gp.quicksum(arc_vars[i, j] for i, j in combinations(tour, 2))
-                    <= len(tour) - 1
-                )
+                model.cbLazy(gp.quicksum(arc_vars[i, j] for i, j in combinations(tour, 2)) <= len(tour) - 1)

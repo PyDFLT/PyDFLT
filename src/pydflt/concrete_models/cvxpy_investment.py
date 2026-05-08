@@ -80,7 +80,7 @@ class CVXPYDiffInvestmentModel(CVXPYDiffModel):
         """
         c = data_batch["return"]
         x = decisions_batch["investment"]
-        obj = torch.log((1 + (self.bank_return * (1 - x.sum(-1))) + (x * c).sum(-1)))
+        obj = torch.log(1 + (self.bank_return * (1 - x.sum(-1))) + (x * c).sum(-1))
 
         return obj
 

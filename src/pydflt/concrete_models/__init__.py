@@ -1,5 +1,5 @@
-from .cvxpy_knapsack import CVXPYDiffKnapsackModel as CVXPYDiffKnapsackModel
 from .cvxpy_investment import CVXPYDiffInvestmentModel as CVXPYDiffInvestmentModel
+from .cvxpy_knapsack import CVXPYDiffKnapsackModel as CVXPYDiffKnapsackModel
 from .grbpy_knapsack import GRBPYKnapsackModel as GRBPYKnapsackModel
 from .grbpy_shortest_path import ShortestPath as ShortestPath
 from .grbpy_tsp import TravelingSalesperson as TravelingSalesperson

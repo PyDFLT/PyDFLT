@@ -1,5 +1,6 @@
-import sys
 import os
+import sys
+
 sys.path.append(os.getcwd())
 
 import argparse
@@ -7,8 +8,8 @@ from pathlib import Path
 
 import numpy as np
 import yaml
-
 from pydflt.utils.load import load_data_from_npz
+
 from src.pydflt.utils.experiments import run, update_config
 
 """
@@ -64,10 +65,12 @@ def main():
         method_config_path = EXPERIMENT_DIR / "configs" / "methods" / f"{method}.yml"
         if not method_config_path.exists():
             raise FileNotFoundError(f"Method config not found: {method_config_path}")
-        method_config = yaml.safe_load(open(method_config_path)) or {}
+        with open(method_config_path) as f:
+            method_config = yaml.safe_load(f) or {}
 
         for seed in args.seeds:
-            config = yaml.safe_load(open(problem_config_path))
+            with open(problem_config_path) as f:
+                config = yaml.safe_load(f)
 
             # Pop meta-keys before passing config to run()
             keys_with_randomization = config.pop("_keys_with_randomization", ["runner", "problem", "decision_maker", "data", "model"])

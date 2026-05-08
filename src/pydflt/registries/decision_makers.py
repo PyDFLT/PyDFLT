@@ -72,13 +72,13 @@ register_decision_maker(
 )
 
 register_decision_maker(
-    name='PFL',
+    name="PFL",
     model_class=DifferentiableDecisionMaker,
     learning_rate=0.001,
-    device_str='cpu',
-    loss_function_str='mse',
-    predictor_str='MLP',
-    predictor_kwargs={'num_hidden_layers': 2, 'size': 256}
+    device_str="cpu",
+    loss_function_str="mse",
+    predictor_str="MLP",
+    predictor_kwargs={"num_hidden_layers": 2, "size": 256},
 )
 
 register_decision_maker(
