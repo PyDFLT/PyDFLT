@@ -128,13 +128,13 @@ register_model(
 )
 
 register_model(
-    name="tsp_two_stage_probabilistic",
+    name="ptsp_Schutte2026",
     model_class=TwoStageProbabilisticTSP,
     num_cities=10,
-    missed_city_penalty=2.0,
-    recovery_ratio=0.5,
+    missed_city_penalty=5,
+    recovery_ratio=1,
     radius=10,
-    noise_std=1,
+    noise_std=5,
     seed=5,
     num_scenarios=1,
 )

@@ -17,6 +17,7 @@ from pydflt.generate_data_functions import (
     gen_data_shortest_path,
     gen_data_traveling_salesperson,
     gen_data_wsmc,
+    gen_data_ptsp,
 )
 from pydflt.utils.load import load_data_from_dict, load_data_from_npz
 
@@ -135,11 +136,22 @@ register_data(
     "wsmc",  #Silvestri2024
     gen_data_wsmc,
     seed=5,
-    num_data=2500,  # num_data = ? (train, validation, test split: 80%, 10%, 10%)
+    num_data=2000,  # num_data = ? (train, validation, test split: 80%, 10%, 10%)
     num_features=5,
     num_items=10,
     degree=5,
     noise_width=0.5,
+)
+
+register_data(
+    'ptsp', 
+    gen_data_ptsp, 
+    seed=5, 
+    num_data=2000, 
+    num_features=5, 
+    num_customers=10,
+    degree=5, 
+    noise_width=0.5
 )
 
 register_data(
