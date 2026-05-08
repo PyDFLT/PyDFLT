@@ -18,16 +18,13 @@ Noah Schutte, Krzysztof Postek, Grigorii Veviurko, Neil Yorke-Smith.
 
 Usage (use --seeds argument for non-default seeds):
     python experiments/sufficient-decision-proxies-ijcai2026/run.py \\
-        --problem portfolio \\
-        --methods pfl residual_SAA qp point 2_point 8_point 16_point
+        --problem portfolio --methods pfl residual_SAA qp point 2_point 8_point 16_point
 
     python experiments/sufficient-decision-proxies-ijcai2026/run.py \\
-        --problem wsmc \\
-        --methods pfl residual_SAA qp point 2_point
+        --problem wsmc --methods pfl residual_SAA qp point 2_point
 
     python experiments/sufficient-decision-proxies-ijcai2026/run.py \\
-        --problem ptsp \\
-        --methods pfl residual_SAA qp point 2_point 8_point
+        --problem ptsp --methods pfl residual_SAA qp point 2_point 8_point
 """
 
 EXPERIMENT_DIR = Path("experiments/sufficient-decision-proxies-ijcai2026")
