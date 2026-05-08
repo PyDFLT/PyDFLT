@@ -141,6 +141,7 @@ class Problem:
         self.cache_at_val = cache_at_val
         self.solution_pool: np.ndarray | None = None
         self._pyepo_modules: list[Any] = []
+        self._train_seed = seed
 
         # standardize features
         if standardize_features:
@@ -418,6 +419,8 @@ class Problem:
                 to ensure reproducible shuffling and splitting. If None, a fresh
                 unseeded generator is used (non-deterministic). Defaults to None.
         """
+        self._train_seed = seed
+
         if seed is not None:
             rng = np.random.default_rng(seed)
             random.seed(seed)
@@ -472,7 +475,7 @@ class Problem:
         self.mode = mode
         self._print_message(f"Problem mode set to: {self.mode}")
 
-    def generate_batch_indices(self, batch_size: int) -> list[np.ndarray]:
+    def generate_batch_indices(self, batch_size: int, epoch: int = 0) -> list[np.ndarray]:
         """
         Generates a list of index arrays (batches) for the currently set mode. Not that for the 'train' mode,
         the indices are shuffled before being divided into batches. The last batch may be smaller if the number of
@@ -480,6 +483,7 @@ class Problem:
 
         Args:
             batch_size (int): The desired number of samples per batch.
+            epoch (int): Current epoch number, used to seed the shuffle RNG for reproducibility. Defaults to 0.
 
         Returns:
             list[np.ndarray]: A list of NumPy arrays, where each array contains the indices for one batch.
@@ -493,7 +497,8 @@ class Problem:
         ], "Set mode to train, validation, or test before sampling!"
         if self.mode == "train":
             indices_to_use = np.copy(self.train_indices)
-            np.random.default_rng().shuffle(indices_to_use)
+            rng = np.random.default_rng(self._train_seed + epoch if self._train_seed is not None else None)
+            rng.shuffle(indices_to_use)
         elif self.mode == "validation":
             indices_to_use = np.copy(self.validation_indices)
         else:

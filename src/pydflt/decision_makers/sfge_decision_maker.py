@@ -206,7 +206,7 @@ class SFGEDecisionMaker(DecisionMaker):
         epoch_results = []
 
         # Run
-        for idx in self.problem.generate_batch_indices(self.batch_size):
+        for idx in self.problem.generate_batch_indices(self.batch_size, epoch=epoch_num):
             data_batch = self.problem.read_data(idx)
             if mode == "train":
                 batch_results = self.update(data_batch)
