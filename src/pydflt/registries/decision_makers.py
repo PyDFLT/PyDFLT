@@ -78,7 +78,7 @@ register_decision_maker(
     device_str='cpu',
     loss_function_str='mse',
     predictor_str='MLP',
-    predictor_kwargs={'n_layers': 2, 'size': 256}
+    predictor_kwargs={'num_hidden_layers': 2, 'size': 256}
 )
 
 register_decision_maker(
