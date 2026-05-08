@@ -1,0 +1,4 @@
+decision_maker:
+  decision_model_str: scenario_based
+  decision_model_kwargs:
+    num_scenarios: 8

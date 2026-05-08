@@ -1,3 +1,5 @@
+_keys_with_randomization: ['runner', 'problem', 'decision_maker']
+
 model:
   name: portfolio_ln_Schutte2026
 
@@ -27,9 +29,24 @@ problem:
 decision_maker:
   name: differentiable
   learning_rate: 0.00005
+  loss_function_str: regret
   standardize_predictions: true
-  batch_size: 32
   predictor_str: MLP
   predictor_kwargs:
     size: 256
     num_hidden_layers: 2
+
+method_overrides:
+  # We do not standardize predictions for point approaches as we determine bank return based on non-standardized values
+  point:
+    decision_maker:
+      standardize_predictions: false
+  2_point:
+    decision_maker:
+      standardize_predictions: false
+  8_point:
+    decision_maker:
+      standardize_predictions: false
+  16_point:
+    decision_maker:
+      standardize_predictions: false

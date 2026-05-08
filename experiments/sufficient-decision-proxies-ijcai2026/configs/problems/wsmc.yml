@@ -1,14 +1,17 @@
+_keys_with_randomization: ['runner', 'problem', 'decision_maker', 'data', 'model']
+
 model:
-  name: ptsp_Schutte2026
+  name: wsmc_Schutte2026
 
 data:
-  name: ptsp
+  name: wsmc
   num_data: 2500
+  num_items: 5
 
 runner:
-  num_epochs: 25
+  num_epochs: 250
   use_wandb: true
-  project_name: ptsp_ijcai2026
+  project_name: wsmc_ijcai2026
   experiment_name: experiment
   experiments_folder: 'results/'
   main_metric: abs_regret
@@ -28,9 +31,13 @@ decision_maker:
   name: SFGE
   learning_rate: 0.0005
   standardize_predictions: true
-  batch_size: 32
-  device_str: cpu
   predictor_str: MLP
   predictor_kwargs:
     size: 256
     num_hidden_layers: 2
+
+method_overrides:
+  # SFGE has particularly high variance for this problem, using 2 samples reduces this
+  qp:
+    decision_maker:
+      num_samples: 2
