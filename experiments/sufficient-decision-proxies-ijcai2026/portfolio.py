@@ -89,7 +89,7 @@ for experiment_name in experiments_to_run:
     if experiment_name in experiment_kwargs:
         kwargs = experiment_kwargs[experiment_name]
         for seed in seeds:
-            config = yaml.safe_load(open("experiments/sufficient-decision-proxies-ijcai2026/configs/diff_portfolio_ln.yml"))
+            config = yaml.safe_load(open("experiments/sufficient-decision-proxies-ijcai2026/configs/portfolio.yml"))
             data_path = f'experiments/sufficient-decision-proxies-ijcai2026/data/portfolio_10_{seed}.npz'
             config['data']['path'] = data_path
             config['runner']['experiment_name'] = f'{experiment_name}'
