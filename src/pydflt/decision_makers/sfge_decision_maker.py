@@ -145,15 +145,12 @@ class SFGEDecisionMaker(DecisionMaker):
         elif self.loss_function_str == "relative_regret":
             loss_terms = (objectives - optimal_objectives) / optimal_objectives * self.problem.opt_model.model_sense_int
 
-        # loss_terms = loss_terms.mean(dim=0)  # take mean over samples
-        # base_loss = loss_terms.detach().numpy().astype(np.float32)
-        # loss_terms = loss_terms.float()
+        base_loss = loss_terms.mean(dim=0).detach().numpy().astype(np.float32)
 
         if self.standardize_loss:
             loss_terms = self.standardize(loss_terms)
 
         # Compute surrogate loss for gradient
-        base_loss = loss_terms.mean(dim=0).detach().numpy().astype(np.float32)
         loss = (loss_terms * log_probs).mean(dim=0)
         logger_loss = loss.detach().numpy().astype(np.float32)
         loss_mean = torch.mean(loss)
