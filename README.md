@@ -13,6 +13,23 @@ PyDFLT v0.1.0 is now available:
 
 Documentation can be found https://pydflt.github.io/documentation.
 
+### How to cite
+
+If you use PyDFLT in your work, please cite the software. Citation metadata is maintained in [`CITATION.cff`](CITATION.cff) at the repo root, which also drives GitHub's "Cite this repository" widget. A BibTeX entry is provided below:
+
+```bibtex
+@software{pydflt,
+  author  = {Noah Schutte and Kim {van den Houten} and Grigorii Veviurko},
+  title   = {{PyDFLT}: A {Python}-based Decision-Focused Learning Toolbox},
+  year    = {2026},
+  version = {0.1.1},
+  doi     = {10.5281/zenodo.XXXXXXX},
+  url     = {https://github.com/PyDFLT/PyDFLT}
+}
+```
+
+The DOI above is the **Zenodo concept DOI**, which always resolves to the latest archived release of PyDFLT. Update the `version` / `year` fields to match the specific release you used.
+
 ### Using Weights & Biases and Optuna
 Weights & Biases is a helpful tool to analyze experiments, while Optuna is an effective tool for hyperparameter tuning. To use either of these tools, make sure to check out the notebooks in the example folder.
 
@@ -40,6 +57,12 @@ We use **Sphinx** (https://www.sphinx-doc.org/en/master/) for the documentation.
 
 Then, open docs/build/html/api/src.html in a browser to view the created docs.
 
+
+### Reproducing papers
+
+*Sufficient Decision Proxies for Decision-Focused Learning*, IJCAI 2026 by Noah Schutte, Krzysztof Postek, Grigorii Veviurko, and Neil Yorke-Smith
+
+**Running the experiments:** see [`experiments/sufficient-decision-proxies-ijcai2026/REPRODUCE.md`](experiments/sufficient-decision-proxies-ijcai2026/REPRODUCE.md) for the exact run commands per problem (portfolio, WSMC, PTSP).
 
 ### References
 

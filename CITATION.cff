@@ -1,0 +1,36 @@
+cff-version: 1.2.0
+message: "If you use PyDFLT in your work, please cite it using the metadata below."
+type: software
+title: "PyDFLT: A Python-based Decision-Focused Learning Toolbox"
+abstract: >-
+  PyDFLT is a Python toolbox for applying and developing Decision-Focused
+  Learning (DFL) methods. It builds on CVXPYLayers for differentiable
+  optimisation, PyEPO for linear-objective problems, and provides
+  implementations of SFGE and Lancer, while allowing use of
+  Weights & Biases and Optuna.
+authors:
+  - given-names: Noah
+    family-names: Schutte
+    email: n.j.schutte@tudelft.nl
+    affiliation: "Delft University of Technology"
+  - given-names: Kim
+    name-particle: "van den"
+    family-names: Houten
+    email: k.c.vandenhouten@tudelft.nl
+    affiliation: "Delft University of Technology"
+  - given-names: Grigorii
+    family-names: Veviurko
+    email: g.veviurko@tudelft.nl
+    affiliation: "Delft University of Technology"
+repository-code: "https://github.com/PyDFLT/PyDFLT"
+url: "https://pydflt.github.io/documentation"
+license: MIT
+version: "0.1.1"
+date-released: "2026-05-15"  # TODO: fill in at release time
+# doi: "10.5281/zenodo.XXXXXXX"  # TODO: paste the Zenodo *concept* DOI after the first release
+keywords:
+  - decision-focused learning
+  - predict-then-optimize
+  - differentiable optimization
+  - machine learning
+  - operations research
