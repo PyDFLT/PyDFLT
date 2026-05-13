@@ -3,6 +3,7 @@ import gurobipy as gp
 import numpy as np
 from gurobipy import GRB
 
+from pydflt.abstract_models.base import MAX
 from pydflt.abstract_models.grbpy_two_stage import GRBPYTwoStageModel
 
 
@@ -61,7 +62,7 @@ class TwoStageKnapsack(GRBPYTwoStageModel):
         self.seed = seed
 
         # Setting basic model parameters
-        model_sense = "MAX"
+        model_sense = MAX
         decision_variables = {
             "select_item": (num_decisions,),
         }

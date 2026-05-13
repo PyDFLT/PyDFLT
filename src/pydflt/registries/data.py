@@ -14,11 +14,12 @@ from typing import Any
 
 from pydflt.generate_data_functions import (
     gen_data_knapsack,
+    gen_data_ptsp,
     gen_data_shortest_path,
     gen_data_traveling_salesperson,
     gen_data_wsmc,
 )
-from pydflt.utils.load import load_data_from_dict
+from pydflt.utils.load import load_data_from_dict, load_data_from_npz
 
 data_registry: dict[str, tuple[Callable, dict[str, Any]]] = {}
 
@@ -67,6 +68,12 @@ def get_data(name: str, **override_params: Any) -> tuple[Any, dict[str, Any]]:
 register_data(
     name="load_data_from_dict",
     data_function=load_data_from_dict,
+    path=None,
+)
+
+register_data(
+    name="load_data_from_npz",
+    data_function=load_data_from_npz,
     path=None,
 )
 
@@ -126,15 +133,17 @@ polynomial_degree = 6, noise_width \in [0, 0.5, 1.0]
 
 
 register_data(
-    "WSMC_Silvestri2024",
+    "wsmc",  # Silvestri2024
     gen_data_wsmc,
     seed=5,
-    num_data=2500,  # num_data = ? (train, validation, test split: 80%, 10%, 10%)
+    num_data=2000,  # num_data = ? (train, validation, test split: 80%, 10%, 10%)
     num_features=5,
     num_items=10,
     degree=5,
     noise_width=0.5,
 )
+
+register_data("ptsp", gen_data_ptsp, seed=5, num_data=2000, num_features=5, num_customers=10, degree=5, noise_width=0.5)
 
 register_data(
     "VRP_Tang2024Cave",

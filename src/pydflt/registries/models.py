@@ -12,11 +12,13 @@ import copy
 from typing import Any
 
 from pydflt.concrete_models import (
+    CVXPYDiffInvestmentModel,
     CVXPYDiffKnapsackModel,
     GRBPYKnapsackModel,
     ShortestPath,
     TravelingSalesperson,
     TwoStageKnapsack,
+    TwoStageProbabilisticTSP,
     VehicleRouting,
     WeightedSetMultiCover,
 )
@@ -114,7 +116,7 @@ register_model(
 )
 
 register_model(
-    name="WSMC_Schutte2025",
+    name="wsmc_Schutte2026",
     model_class=WeightedSetMultiCover,
     num_items=5,
     num_covers=25,
@@ -126,7 +128,19 @@ register_model(
 )
 
 register_model(
-    name="VRP_Tang2024Cave",
+    name="ptsp_Schutte2026",
+    model_class=TwoStageProbabilisticTSP,
+    num_cities=10,
+    missed_city_penalty=5,
+    recovery_ratio=1,
+    radius=10,
+    noise_std=5,
+    seed=5,
+    num_scenarios=1,
+)
+
+register_model(
+    name="vrp_Tang2024Cave",
     model_class=VehicleRouting,
     num_nodes=20,  # \in [20, 30]
     capacity=30,
@@ -135,6 +149,8 @@ register_model(
     demands_ub=10.0,
     seed=5,
 )
+
+register_model(name="portfolio_ln_Schutte2026", model_class=CVXPYDiffInvestmentModel, num_decisions=10)
 
 """
 References
@@ -146,6 +162,12 @@ Schutte2024
 Noah Schutte, Krzysztof Postek, and Neil Yorke-Smith. Robust losses for decision-focused learning. In Proceedings of
 the Thirty-Third International Joint Conference on Artificial Intelligence, IJCAI'24, pages 4868-4875, 2024.
 doi:10.24963/ijcai.2024/538.
+
+Schutte2026
+Noah Schutte, Grigorii Veviurko, Krzysztof Postek, and Neil Yorke-Smith. Sufficient decision proxies for
+decision-focused learning. In Proceedings of the Thirty-Fifth International Joint Conference on Artificial Intelligence,
+IJCAI'26, pages ...., 2026.
+doi:...
 
 Silvestri2024
 Mattia Silvestri, Senne Berden, Jayanta Mandi, Ali Irfan Mahmutogullari, Maxime Mulamba, Allegra De Filippo,

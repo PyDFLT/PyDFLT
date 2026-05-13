@@ -1,0 +1,43 @@
+_keys_with_randomization: ['runner', 'problem', 'decision_maker', 'data', 'model']
+
+model:
+  name: wsmc_Schutte2026
+
+data:
+  name: wsmc
+  num_data: 2500
+  num_items: 5
+
+runner:
+  num_epochs: 250
+  use_wandb: true
+  project_name: wsmc_ijcai2026
+  experiment_name: experiment
+  experiments_folder: 'results/'
+  main_metric: abs_regret
+  save_best: true
+  store_min_and_max: true
+  val_metrics: ['objective', 'abs_regret', 'rel_regret', 'sym_rel_regret']
+  test_metrics: ['objective', 'abs_regret', 'rel_regret', 'sym_rel_regret']
+
+problem:
+  train_ratio: 0.4
+  val_ratio: 0.1
+  compute_optimal_objectives: true
+  compute_optimal_decisions: true
+  standardize_features: true
+
+decision_maker:
+  name: SFGE
+  learning_rate: 0.0005
+  standardize_predictions: true
+  predictor_str: MLP
+  predictor_kwargs:
+    size: 256
+    num_hidden_layers: 2
+
+method_overrides:
+  # SFGE has particularly high variance for this problem, using 2 samples reduces this
+  qp:
+    decision_maker:
+      num_samples: 2

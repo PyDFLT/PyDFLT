@@ -1,0 +1,16 @@
+decision_maker:
+  name: PFL
+  loss_function_str: mse
+  residual_SAA: true
+  residual_SAA_scenarios: 16
+  predictor_str: Sample
+  decision_model_str: scenario_based
+  to_decision_pars: sample
+  use_dist_at_mode: test
+  decision_model_kwargs:
+    num_scenarios: 1
+
+runner:
+  main_metric: mse
+  val_metrics: ['mse']
+  test_metrics: ['objective', 'abs_regret', 'rel_regret', 'sym_rel_regret']

@@ -8,7 +8,7 @@ from pydflt.problem import Problem
 from pydflt.registries.data import data_registry, get_data
 from pydflt.registries.decision_makers import decision_maker_registry, make_decision_maker
 from pydflt.registries.models import make_model, model_registry
-from pydflt.utils.load import load_data_from_dict
+from pydflt.utils.load import load_data_from_dict, load_data_from_npz
 
 
 class TestRegistries(unittest.TestCase):
@@ -114,7 +114,7 @@ class TestRegistries(unittest.TestCase):
         for name in data_registry:
             with self.subTest(data=name):
                 data_fn, _ = data_registry[name]
-                if data_fn is load_data_from_dict:
+                if data_fn in [load_data_from_dict, load_data_from_npz]:
                     # This entry requires a caller-supplied file path and cannot be
                     # smoke-tested without one; skip it.
                     continue

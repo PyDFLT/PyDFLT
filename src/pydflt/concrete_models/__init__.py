@@ -1,7 +1,9 @@
+from .cvxpy_investment import CVXPYDiffInvestmentModel as CVXPYDiffInvestmentModel
 from .cvxpy_knapsack import CVXPYDiffKnapsackModel as CVXPYDiffKnapsackModel
 from .grbpy_knapsack import GRBPYKnapsackModel as GRBPYKnapsackModel
 from .grbpy_shortest_path import ShortestPath as ShortestPath
 from .grbpy_tsp import TravelingSalesperson as TravelingSalesperson
 from .grbpy_two_stage_knapsack import TwoStageKnapsack as TwoStageKnapsack
+from .grbpy_two_stage_probabilistic_tsp import TwoStageProbabilisticTSP as TwoStageProbabilisticTSP
 from .grbpy_two_stage_weighted_set_multi_cover import WeightedSetMultiCover as WeightedSetMultiCover
 from .grbpy_vrp import VehicleRouting as VehicleRouting

@@ -1,0 +1,8 @@
+decision_maker:
+  name: PFL
+  loss_function_str: mse
+
+runner:
+  main_metric: mse
+  val_metrics: ['mse', 'objective', 'abs_regret', 'rel_regret', 'sym_rel_regret']
+  test_metrics: ['mse', 'objective', 'abs_regret', 'rel_regret', 'sym_rel_regret']

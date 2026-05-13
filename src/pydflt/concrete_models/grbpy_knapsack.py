@@ -5,6 +5,7 @@ import torch
 from gurobipy import GRB
 from pyepo.model.grb.grbmodel import optGrbModel
 
+from pydflt.abstract_models.base import MAX
 from pydflt.abstract_models.grbpy import GRBPYModel
 
 
@@ -68,7 +69,7 @@ class GRBPYKnapsackModel(GRBPYModel, optGrbModel):
         self.time_limit = time_limit
 
         # Setting basic model parameters
-        model_sense = "MAX"
+        model_sense = MAX
         var_shapes = {"select_item": (num_decisions,)}  # x: take item decision
         _shape = (num_decisions, num_scenarios) if num_scenarios > 1 else (num_decisions,)
         param_to_predict_shapes = {"item_value": _shape}
