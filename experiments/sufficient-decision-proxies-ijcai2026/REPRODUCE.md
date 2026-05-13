@@ -79,7 +79,7 @@ For each `(method, seed)` pair, `run.py`:
 
 ## Where results land
 
-Per-experiment outputs are written under `results/` (the path comes from `runner.experiments_folder` in each problem config). When `use_wandb` is enabled, runs additionally stream to the W&B project named in the problem config. Validation and test metrics tracked: `objective`, `abs_regret`, `rel_regret`, `sym_rel_regret` (the primary metric is `abs_regret`). 
+Per-experiment outputs are written under `results/` (the path comes from `runner.experiments_folder` in each problem config). When `use_wandb` is enabled, runs additionally stream to the W&B project named in the problem config. Validation and test metrics tracked: `objective`, `abs_regret`, `rel_regret`, `sym_rel_regret` (the primary metric is `abs_regret`).
 
 Note that results might be slightly different from the paper. This is due to: 1. Making the reproducibility more robust by adjusting the use of seeds in this version of the code. 2. A solver like Gurobi uses randomness that is uncontrollable, which means that each device will result in slightly different results (when there are multiple optimal decisions not always the same one is returned). Despite this results should not be significantly different, due to running 10 seeds in the experiments.
 
