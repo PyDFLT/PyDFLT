@@ -4,18 +4,16 @@ type: software
 title: "PyDFLT: A Python-based Decision-Focused Learning Toolbox"
 abstract: >-
   PyDFLT is a Python toolbox for applying and developing Decision-Focused
-  Learning (DFL) methods. It builds on CVXPYLayers for differentiable
-  optimisation, PyEPO for linear-objective problems, and provides
-  implementations of SFGE and Lancer, while allowing use of
-  Weights & Biases and Optuna.
+  Learning (DFL) methods. It builds on existing DFL packages like CVXPYLayers and PyEPO, provides
+  additional DFL methods like SFGE and Lancer, and supports use of typical ML tools
+  like Weights & Biases and Optuna.
 authors:
   - given-names: Noah
     family-names: Schutte
     email: n.j.schutte@tudelft.nl
     affiliation: "Delft University of Technology"
   - given-names: Kim
-    name-particle: "van den"
-    family-names: Houten
+    family-names: "van den Houten"
     email: k.c.vandenhouten@tudelft.nl
     affiliation: "Delft University of Technology"
   - given-names: Grigorii
