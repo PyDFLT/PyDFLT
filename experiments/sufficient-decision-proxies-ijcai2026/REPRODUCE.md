@@ -7,7 +7,7 @@ This directory contains the driver script, configs, and portfolio data needed to
 
 The reusable contributions (problems, decision makers, predictors, utilities) live in `src/pydflt/`. This directory only contains the experiment-specific runner and configs.
 
-For the exact code snapshot used in the paper, see the top-level `README.md`.
+The exact code snapshot used in the paper is archived at tag [`sufficient-decision-proxies-ijcai2026`](https://github.com/PyDFLT/PyDFLT/tree/sufficient-decision-proxies-ijcai2026) and on Zenodo at [doi:10.5281/zenodo.20177132](https://doi.org/10.5281/zenodo.20177132).
 
 ## Contents
 
@@ -24,7 +24,7 @@ Install dependencies from the repo root using `uv`:
 uv sync --all-extras --all-groups
 ```
 
-(See the top-level `README.md` for full setup instructions.)
+(See the top-level [`README.md`](https://github.com/PyDFLT/PyDFLT/blob/sufficient-decision-proxies-ijcai2026/README.md) for full setup instructions.)
 
 The experiments log to [Weights & Biases](https://wandb.ai/) by default (`use_wandb: true` in each problem config, with project names `portfolio_ijcai2026`, `wsmc_ijcai2026`, `ptsp_ijcai2026`). To run without W&B, set `use_wandb: false` in the relevant problem config.
 
@@ -85,4 +85,4 @@ Note that results might be slightly different from the paper. This is due to: 1.
 
 ## Citing this code
 
-If you use this code, please cite the paper and the software. See the top-level `README.md` "How to cite" section for the canonical BibTeX entries. The exact commit corresponding to the IJCAI 2026 paper is recorded there as well.
+If you use this code, please cite the software (and the paper if applicable). See the ["How to cite"](https://github.com/PyDFLT/PyDFLT/blob/sufficient-decision-proxies-ijcai2026/README.md#how-to-cite) section of the top-level `README.md`.

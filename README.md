@@ -1,4 +1,8 @@
 [![CI](https://github.com/PyDFLT/PyDFLT/actions/workflows/CI.yml/badge.svg)](https://github.com/PyDFLT/PyDFLT/actions/workflows/CI.yml)
+[![PyPI version](https://img.shields.io/pypi/v/pydflt.svg)](https://pypi.org/project/pydflt/)
+[![Python versions](https://img.shields.io/badge/python-3.10%2B-blue)](https://pypi.org/project/pydflt/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.20177131-blue)](https://doi.org/10.5281/zenodo.20177131)
 
 ![alt text](https://github.com/PyDFLT/PyDFLT/blob/main/images/logo.png?raw=true)
 
@@ -23,7 +27,7 @@ If you use PyDFLT in your work, please cite the software. Citation metadata is m
   title   = {{PyDFLT}: A {Python}-based Decision-Focused Learning Toolbox},
   year    = {2026},
   version = {0.1.1},
-  doi     = {10.5281/zenodo.XXXXXXX},
+  doi     = {10.5281/zenodo.20177131},
   url     = {https://github.com/PyDFLT/PyDFLT}
 }
 ```
@@ -62,7 +66,7 @@ Then, open docs/build/html/api/src.html in a browser to view the created docs.
 
 *Sufficient Decision Proxies for Decision-Focused Learning*, IJCAI 2026 by Noah Schutte, Krzysztof Postek, Grigorii Veviurko, and Neil Yorke-Smith
 
-**Running the experiments:** see [`experiments/sufficient-decision-proxies-ijcai2026/REPRODUCE.md`](experiments/sufficient-decision-proxies-ijcai2026/REPRODUCE.md) for the exact run commands per problem (portfolio, WSMC, PTSP).
+**Running the experiments:** See [`experiments/sufficient-decision-proxies-ijcai2026/REPRODUCE.md`](experiments/sufficient-decision-proxies-ijcai2026/REPRODUCE.md) for the exact run commands per problem (portfolio, WSMC, PTSP). The code was published with `v0.1.1` and tag [`sufficient-decision-proxies-ijcai2026`](https://github.com/PyDFLT/PyDFLT/tree/sufficient-decision-proxies-ijcai2026). Code is also archived on Zenodo (https://doi.org/10.5281/zenodo.20177132).
 
 ### References
 

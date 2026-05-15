@@ -24,8 +24,8 @@ repository-code: "https://github.com/PyDFLT/PyDFLT"
 url: "https://pydflt.github.io/documentation"
 license: MIT
 version: "0.1.1"
-date-released: "2026-05-15"  # TODO: fill in at release time
-# doi: "10.5281/zenodo.XXXXXXX"  # TODO: paste the Zenodo *concept* DOI after the first release
+date-released: "2026-05-14"
+doi: "10.5281/zenodo.20177131"
 keywords:
   - decision-focused learning
   - predict-then-optimize
