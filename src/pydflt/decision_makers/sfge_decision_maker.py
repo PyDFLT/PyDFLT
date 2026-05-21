@@ -144,6 +144,8 @@ class SFGEDecisionMaker(DecisionMaker):
             loss_terms = objectives * self.problem.opt_model.model_sense_int
         elif self.loss_function_str == "relative_regret":
             loss_terms = (objectives - optimal_objectives) / optimal_objectives * self.problem.opt_model.model_sense_int
+        else:
+            raise Exception(f"Unsupported loss function: {self.loss_function_str}")
 
         base_loss = loss_terms.mean(dim=0).detach().numpy().astype(np.float32)
 
@@ -163,7 +165,7 @@ class SFGEDecisionMaker(DecisionMaker):
         # Logging
         log_dict = {
             "loss": logger_loss,
-            "eval": base_loss,
+            f"sample_based_{self.loss_function_str}": base_loss,
             "solver_calls": self._solver_calls,
             "sigma": torch.sqrt(distribution.variance).detach().numpy().astype(np.float32),
         }
