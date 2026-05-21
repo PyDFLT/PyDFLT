@@ -163,6 +163,8 @@ class DecisionMaker:
         if seed is not None:
             set_seeds(seed)
 
+        self.rng = np.random.default_rng(seed)
+
         # Store core attributes
         self.problem = problem
         self.device = torch.device(device_str)

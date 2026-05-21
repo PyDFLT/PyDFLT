@@ -252,8 +252,7 @@ class LancerDecisionMaker(DecisionMaker):
         n_batches = int(N / batch_size)
         total_iter = 0
         while total_iter < max_iter:
-            rng = np.random.default_rng()
-            random_indices = rng.permutation(N)
+            random_indices = self.rng.permutation(N)
             for bi in range(n_batches + 1):
                 idx = random_indices[bi * batch_size : (bi + 1) * batch_size]
                 true_value = true_values[idx]
@@ -295,8 +294,7 @@ class LancerDecisionMaker(DecisionMaker):
 
         total_iter = 0
         while total_iter < self.max_iters_predictor_update:
-            rng = np.random.default_rng()
-            rand_indices = rng.permutation(N)
+            rand_indices = self.rng.permutation(N)
             for bi in range(n_batches + 1):
                 idxs = rand_indices[bi * batch_size : (bi + 1) * batch_size]
                 true_values_batch = true_values[idxs].to(torch.float32).to(self.device)

@@ -1,6 +1,5 @@
 import random
 
-import numpy as np
 import torch
 
 
@@ -13,7 +12,8 @@ def set_seeds(seed: int, full_reproducibility_GPUs: bool = False) -> None:
         full_reproducibility_GPUs (bool): Set to True to enable full GPU reproducibility. Might impact performance.
     """
 
-    np.random.seed(seed)  # noqa: NPY002
+    # np.random.seed is the legacy NumPy RNG API and is not used in this codebase;
+    # numpy randomness is handled via np.random.default_rng (stored as self.rng).
     random.seed(seed)
     torch.manual_seed(seed)
     if torch.cuda.is_available():
