@@ -132,6 +132,8 @@ class SFGEDecisionMaker(DecisionMaker):
         for i in range(self.num_samples):
             # Put samples in prediction batch to get decisions and objective values
             predictions_batch = self.predictions_to_dict(samples[i])
+            # Inject known extra parameters (not predicted) so solve_batch can access them
+            predictions_batch.update({key: data_batch[key] for key in self.decision_model.extra_param_names})
             decisions_batch = self.decide(predictions_batch)
             sample_objectives = self.problem.opt_model.get_objective(data_batch, decisions_batch, predictions_batch=predictions_batch)
             objectives[i] = sample_objectives
