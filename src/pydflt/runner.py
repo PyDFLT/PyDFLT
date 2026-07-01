@@ -227,6 +227,10 @@ class Runner:
         if self.last_improvement_time is None:
             self.last_improvement_time = time.perf_counter()
 
+        # Report the initial (untrained) validation to Optuna at step 0
+        if optuna_trial is not None and initial_validation_eval is not None:
+            optuna_trial.report(initial_validation_eval, 0)
+
         self._print_message("Starting training...")
         train_eval = None
         for epoch in range(1, self.num_epochs + 1):
